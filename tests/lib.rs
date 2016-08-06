@@ -22,7 +22,6 @@ impl From<i32> for Authentication {
 
 custom_derive!{
     #[derive(Default)]
-    #[allow(dead_code)]
     struct Channel {
         id: Uuid,
         token: Authentication,
@@ -32,7 +31,6 @@ custom_derive!{
 
 // TODO: make this auto-generated code :-)
 // --- SNIP ---
-#[allow(dead_code)]
 impl Channel {
     fn new<T1: Into<Uuid>, T2: Into<Authentication>> (id: T1, token: T2) -> Channel {
         Channel {
