@@ -1,3 +1,56 @@
+/// Derive a builder for a struct
+///
+/// Use in combiantion with [custom_derive][custom_derive].
+///
+/// [custom_derive]: https://crates.io/crates/custom_derive
+///
+/// # Examples
+///
+/// ```rust
+/// #[macro_use] extern crate custom_derive;
+/// #[macro_use] extern crate derive_builder;
+///
+/// custom_derive!{
+///     #[derive(Debug, PartialEq, Default, Builder)]
+///     struct Lorem {
+///         ipsum: String,
+///         dolor: i32,
+///     }
+/// }
+///
+/// fn main() {
+///     let x = Lorem::default().ipsum("sit").dolor(42);
+///     assert_eq!(x, Lorem { ipsum: "sit".into(), dolor: 42 });
+/// }
+/// ```
+///
+/// ## Generic structs
+///
+/// ```rust
+/// #[macro_use] extern crate custom_derive;
+/// #[macro_use] extern crate derive_builder;
+///
+/// custom_derive!{
+///     #[derive(Debug, PartialEq, Default, Builder)]
+///     struct GenLorem<T> {
+///         ipsum: String,
+///         dolor: T,
+///     }
+/// }
+///
+/// fn main() {
+///     let x = GenLorem::default().ipsum("sit").dolor(42);
+///     assert_eq!(x, GenLorem { ipsum: "sit".into(), dolor: 42 });
+/// }
+/// ```
+///
+/// ## Gotchas
+///
+/// - Tuple structs and unit structs are not supported as they have no field
+///   names.
+/// - When defining a generic struct, you cannot use `V` as a generic parameter
+///   as this is what all setters are using.
+///
 #[macro_export]
 macro_rules! Builder {
     // Strip empty argument list if given (Passed by custom_derive macro)
@@ -13,6 +66,8 @@ macro_rules! Builder {
         Builder! { $($body)* }
     };
 
+    // Struct with generics.
+    //
     // Receive parsed fields of normal struct from `__diesel_parse_struct_body`
     // and add implementation.
     //
@@ -21,7 +76,37 @@ macro_rules! Builder {
     (
         (
             struct_name = $struct_name:ident,
-            $($headers:tt)*
+            generics = ($($generics:ident),*),
+        ),
+        fields = [$({
+            field_name: $field_name:ident,
+            column_name: $column_name:ident,
+            field_ty: $field_ty:ty,
+            field_kind: $field_kind:ident,
+        })+],
+    ) => {
+        #[allow(dead_code)]
+        impl<$($generics),*> $struct_name<$($generics),*> {
+            $(
+                fn $field_name<V: Into<$field_ty>>(mut self, value: V) -> Self {
+                    self.$field_name = value.into();
+                    self
+                }
+            )+
+        }
+    };
+
+    // Struct without generics.
+    //
+    // Receive parsed fields of normal struct from `__diesel_parse_struct_body`
+    // and add implementation.
+    //
+    // These patterns must appear above those which start with an ident to
+    // compile.
+    (
+        (
+            struct_name = $struct_name:ident,
+            generics = (),
         ),
         fields = [$({
             field_name: $field_name:ident,
@@ -33,7 +118,7 @@ macro_rules! Builder {
         #[allow(dead_code)]
         impl $struct_name {
             $(
-                fn $field_name<T: Into<$field_ty>>(mut self, value: T) -> Self {
+                fn $field_name<V: Into<$field_ty>>(mut self, value: V) -> Self {
                     self.$field_name = value.into();
                     self
                 }
@@ -49,7 +134,6 @@ macro_rules! Builder {
         __diesel_parse_struct_body! {
             (
                 struct_name = $struct_name,
-                struct_ty = $struct_name<$($generics),*>,
                 generics = ($($generics),*),
             ),
             callback = Builder,
@@ -65,7 +149,6 @@ macro_rules! Builder {
         __diesel_parse_struct_body! {
             (
                 struct_name = $struct_name,
-                struct_ty = $struct_name,
                 generics = (),
             ),
             callback = Builder,
