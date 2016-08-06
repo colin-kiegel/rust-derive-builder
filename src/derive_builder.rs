@@ -48,8 +48,8 @@
 ///
 /// - Tuple structs and unit structs are not supported as they have no field
 ///   names.
-/// - When defining a generic struct, you cannot use `V` as a generic parameter
-///   as this is what all setters are using.
+/// - When defining a generic struct, you cannot use `VALUE` as a generic
+///   parameter as this is what all setters are using.
 ///
 #[macro_export]
 macro_rules! Builder {
