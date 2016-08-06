@@ -88,7 +88,7 @@ macro_rules! Builder {
         #[allow(dead_code)]
         impl<$($generics),*> $struct_name<$($generics),*> {
             $(
-                fn $field_name<V: Into<$field_ty>>(mut self, value: V) -> Self {
+                fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
                     self.$field_name = value.into();
                     self
                 }
@@ -118,7 +118,7 @@ macro_rules! Builder {
         #[allow(dead_code)]
         impl $struct_name {
             $(
-                fn $field_name<V: Into<$field_ty>>(mut self, value: V) -> Self {
+                fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
                     self.$field_name = value.into();
                     self
                 }
