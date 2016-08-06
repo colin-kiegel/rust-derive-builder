@@ -1,5 +1,6 @@
 [package]
-authors = ["Colin Kiegel <kiegel@gmx.de>"]
+authors = ["Colin Kiegel <kiegel@gmx.de>",
+           "Pascal Hertleif <killercup@gmail.com>"]
 name = "derive_builder"
 version = "0.1.0"
 
