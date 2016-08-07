@@ -50,6 +50,7 @@ fn token<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
 * Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
 * When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
 * This crate exports a macro named `Builder!`, make sure you don't use this name for another macro.
+* If you hit the macro recursion limit, you can increase it by adding this `#![recursion_limit="128"]` to your crate (default is `64`).
 
 ## [Documentation][doc]
 
@@ -76,4 +77,3 @@ Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the work by you, as defined in the Apache-2.0
 license, shall be dual licensed as above, without any additional terms or
 conditions.
-
