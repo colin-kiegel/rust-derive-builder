@@ -5,7 +5,7 @@ custom_derive!{
     #[derive(Debug, PartialEq, Default, Builder)]
     struct GenLorem<T> {
         ipsum: String,
-        dolor: T, // generics are a pain, so this field name is fitting
+        pub dolor: T, // generics are a pain, so this field name is fitting
     }
 }
 

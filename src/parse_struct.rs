@@ -97,21 +97,37 @@ macro_rules! __diesel_parse_struct_body {
         }
     };
 
-    // FIXME: Replace with `vis` specifier if relevant RFC lands
-    // First, strip `pub` if it exists
+    // silently skip meta-tokens (e.g. doc-comments)
     (
         $headers:tt,
         callback = $callback:ident,
         fields = $fields:tt,
         body = (
-            $(#$meta:tt)*
-            pub $($tail:tt)*),
+            #$meta:tt
+            $($tail:tt)*),
     ) => {
         __diesel_parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
-            body = ($(#$meta)* $($tail)*),
+            body = ($($tail)*),
+        }
+    };
+
+    // silently skip visibility specifier
+    (
+        $headers:tt,
+        callback = $callback:ident,
+        fields = $fields:tt,
+        body = (
+            pub
+            $($tail:tt)*),
+    ) => {
+        __diesel_parse_struct_body! {
+            $headers,
+            callback = $callback,
+            fields = $fields,
+            body = ($($tail)*),
         }
     };
 

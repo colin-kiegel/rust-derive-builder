@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 ### Changed
 - setter-methods are public now
+- struct fields can be public
+- struct fields can be annotated
 
 ## [0.1.0] - 2016-08-07
 ### Added

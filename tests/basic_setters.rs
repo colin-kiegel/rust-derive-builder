@@ -5,8 +5,8 @@ custom_derive!{
     #[derive(Debug, PartialEq, Default, Builder)]
     struct Lorem {
         ipsum: String,
-        dolor: String,
-        sit: i32,
+        pub dolor: String,
+        pub sit: i32,
         amet: bool,
     }
 }
