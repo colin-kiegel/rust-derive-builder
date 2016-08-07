@@ -9,7 +9,7 @@ repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://colin-kiegel.github.io/rust-derive-builder/"
 
 license = "MIT/Apache-2.0"
-keywords = ["custom derive", "macro", "builder", "setter", "struct"]
+keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "Readme.md"
 
 [dev-dependencies]
