@@ -1,6 +1,6 @@
 //! Derive a builder for a struct
 //!
-//! Use in combiantion with [custom_derive][custom_derive].
+//! Use in combination with [custom_derive][custom_derive].
 //!
 //! [custom_derive]: https://crates.io/crates/custom_derive
 //!
