@@ -3,7 +3,7 @@
 
 # Builder pattern derive
 
-[Rust][rust] macro based on [custom_derive][custom_derive] to automatically implement the **builder pattern** for arbitrary structs. This is achieved by implementing setter-methods for all struct fields automatically.
+[Rust][rust] macro (based on [custom_derive][custom_derive]) to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
 
 **This is a work in progress.** Use it at your own risk.
 
@@ -14,26 +14,36 @@ And this is how it works:
 #[macro_use] extern crate derive_builder;
 
 custom_derive! {
-    #[derive(Debug, Default, Builder)]
+    #[derive(Default, Builder)]
     struct Channel {
         token: i32,
-        special_info: i32
+        special_info: i32,
+        // .. a whole bunch of other fields ..
+    }
+}
+
+impl Channel {
+    // All that's left to do for you is writing a method,
+    // which actually *does* something. :-)
+    pub fn build(&self) -> String {
+        format!("The meaning of life is {}.", self.special_info)
     }
 }
 
 fn main() {
-    let ch = Channel::default().special_info(42);
-    println!("{:?}", ch);
+    // builder pattern, go, go, go!...
+    let x = Channel::default().special_info(42u8).build();
+    println!("{:?}", x);
 }
 ```
 
-Note that we did not write any implementation of `Channel` or method called `special_info`. Instead the [`custom_derive!`][custom_derive] macro scans the `#[derive(..)]` attribute of the struct for non-std identifiers – in our case `#[derive(Builder)]` – and delegates the code generation to the `Builder!` macro defined in this crate.
+Note that we did not write any implementation of a method called `special_info`. Instead the [`custom_derive!`][custom_derive] macro scans the `#[derive(..)]` attribute of the struct for non-std identifiers – in our case `#[derive(Builder)]` – and delegates the code generation to the `Builder!` macro defined in this crate.
 
-The automatically generated setter method for the `token` field will look like this:
+The automatically generated setter method for the `special_info` field will look like this:
 
 ```rust
-fn token<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
-    self.token = value.into();
+pub fn special_info<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
+    self.special_info = value.into();
     self
 }
 ```
@@ -61,6 +71,12 @@ The builder pattern is explained [here][builder-pattern]. But please note that t
 [custom_derive]: https://crates.io/crates/custom_derive
 [builder-pattern]: https://aturon.github.io/ownership/builders.html
 [into]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
+
+## [Changelog]
+
+Yes, we keep a changelog.
+
+[changelog]: https://github.com/colin-kiegel/rust-derive-builder/blob/master/CHANGELOG.md
 
 ## License
 

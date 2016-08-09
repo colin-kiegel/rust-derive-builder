@@ -1,9 +1,10 @@
 /// `Builder!` macro
 ///
-/// Use in combination with [custom_derive][custom_derive].
+/// Only useful in combination with [custom_derive][custom_derive].
 ///
 /// [custom_derive]: https://crates.io/crates/custom_derive
 #[macro_export]
+#[doc(hidden)]
 macro_rules! Builder {
     // Strip empty argument list if given (Passed by custom_derive macro)
     (() $($body:tt)*) => {
