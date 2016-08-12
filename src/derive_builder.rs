@@ -33,9 +33,7 @@ macro_rules! Builder {
         ),
         fields = [$({
             field_name: $field_name:ident,
-            column_name: $column_name:ident,
             field_ty: $field_ty:ty,
-            field_kind: $field_kind:ident,
         })+],
     ) => {
         #[allow(dead_code)]
@@ -66,9 +64,7 @@ macro_rules! Builder {
         ),
         fields = [$({
             field_name: $field_name:ident,
-            column_name: $column_name:ident,
             field_ty: $field_ty:ty,
-            field_kind: $field_kind:ident,
         })+],
     ) => {
         #[allow(dead_code)]
