@@ -34,13 +34,13 @@ macro_rules! Builder {
         fields = [$({
             field_name: $field_name:ident,
             field_ty: $field_ty:ty,
-            field_attr: [$($attr:tt)*],
+            field_attr: [$(#[$meta:meta])*],
         })*],
     ) => {
         #[allow(dead_code)]
         impl<$($generics),*> $struct_name<$($generics),*> {
             $(
-                $($attr)*
+                $(#[$meta])*
                 pub fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
                     self.$field_name = value.into();
                     self
