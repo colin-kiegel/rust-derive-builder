@@ -1,81 +1,16 @@
 // from <https://github.com/diesel-rs/diesel/blob/8bebe479cb05388220719b8b385fffb727d40588/diesel/src/macros/parse.rs>
 // Copyright (C) 2016 Sean Griffin, licensed under MIT/Apache-2.0
 
-/// Parses the body of a struct field, extracting the relevant information the
-/// relevant information that we care about. This macro can handle either named
-/// structs or tuple structs. It does not handle unit structs.
-///
-/// When calling this macro from the outside, it takes three arguments. The
-/// first is a single token tree of passthrough information, which will be given
-/// to the callback unchanged. The second is the name of the macro to call with
-/// the parsed field. The third is the *entire* body of the struct, including
-/// either the curly braces or parens.
-///
-/// If a tuple struct is given, all fields *must* be annotated with
-/// `#[column_name(name)]`. Due to the nature of non-procedural macros, we
-/// cannot give a helpful error message in this case.
-///
-/// The callback will be called with the given headers, and a list of fields
-/// in record form with the following properties:
-///
-/// - `field_name` is the name of the field on the struct. This will not be
-///   present if the struct is a tuple struct.
-/// - `column_name` is the column the field corresponds to. This will either be
-///   the value of a `#[column_name]` attribute on the field, or the field name
-///   if not present.
-/// - `field_type` is the type of the field on the struct.
-/// - `field_kind` Will be either `regular` or `option` depending on whether
-///   the type of the field was an option or not.
-///
-/// # Example
-///
-/// If this macro is called with:
-///
-/// ```ignore
-/// __diesel_parse_struct_body {
-///     (my original arguments),
-///     callback = my_macro,
-///     body = {
-///         pub foo: i32,
-///         bar: Option<i32>,
-///         #[column_name(other)]
-///         baz: String,
-///     }
-/// }
-/// ```
-///
-/// Then the resulting expansion will be:
-///
-/// ```ignore
-/// my_macro! {
-///     (my original arguments),
-///     fields = [{
-///         field_name: foo,
-///         column_name: foo,
-///         field_ty: i32,
-///         field_kind: regular,
-///     }, {
-///         field_name: bar,
-///         column_name: bar,
-///         field_ty: Option<i32>,
-///         field_kind: option,
-///     }, {
-///         field_name: baz,
-///         column_name: other,
-///         field_ty: String,
-///         field_kind: regular,
-///     }],
-/// }
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __diesel_parse_struct_body {
+macro_rules! __parse_struct_body {
     // Entry point for named structs
     (
         $headers:tt,
         callback = $callback:ident,
         body = {$($body:tt)*},
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [],
@@ -89,7 +24,7 @@ macro_rules! __diesel_parse_struct_body {
         callback = $callback:ident,
         body = ($($body:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [],
@@ -106,7 +41,7 @@ macro_rules! __diesel_parse_struct_body {
             #$meta:tt
             $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
@@ -123,7 +58,7 @@ macro_rules! __diesel_parse_struct_body {
             pub
             $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
@@ -140,7 +75,7 @@ macro_rules! __diesel_parse_struct_body {
         fields = $fields:tt,
         body = (,),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
@@ -158,7 +93,7 @@ macro_rules! __diesel_parse_struct_body {
             #[column_name($column_name:ident)]
             Option<$field_ty:ty> , $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [$($fields)* {
@@ -180,7 +115,7 @@ macro_rules! __diesel_parse_struct_body {
             #[column_name($column_name:ident)]
             $field_ty:ty , $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [$($fields)* {
@@ -201,7 +136,7 @@ macro_rules! __diesel_parse_struct_body {
             #[column_name($column_name:ident)]
             $field_name:ident : $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
@@ -217,7 +152,7 @@ macro_rules! __diesel_parse_struct_body {
         fields = $fields:tt,
         body = ($field_name:ident : $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = $fields,
@@ -232,7 +167,7 @@ macro_rules! __diesel_parse_struct_body {
         fields = [$($fields:tt)*],
         body = ($field_name:ident as $column_name:ident : Option<$field_ty:ty>, $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [$($fields)* {
@@ -252,7 +187,7 @@ macro_rules! __diesel_parse_struct_body {
         fields = [$($fields:tt)*],
         body = ($field_name:ident as $column_name:ident : $field_ty:ty, $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [$($fields)* {
@@ -278,7 +213,7 @@ macro_rules! __diesel_parse_struct_body {
         fields = [$($fields:tt)*],
         body = ($field_ty:ty , $($tail:tt)*),
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             $headers,
             callback = $callback,
             fields = [$($fields)* {
@@ -309,6 +244,6 @@ macro_rules! __diesel_parse_struct_body {
 /// when `tt` fragments are used in specific positions.
 #[doc(hidden)]
 #[macro_export]
-macro_rules!  __diesel_parse_as_item {
+macro_rules!  __parse_as_item {
     ($i:item) => { $i }
 }

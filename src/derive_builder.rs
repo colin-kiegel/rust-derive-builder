@@ -21,7 +21,7 @@ macro_rules! Builder {
 
     // Struct with generics.
     //
-    // Receive parsed fields of normal struct from `__diesel_parse_struct_body`
+    // Receive parsed fields of normal struct from `__parse_struct_body`
     // and add implementation.
     //
     // These patterns must appear above those which start with an ident to
@@ -54,7 +54,7 @@ macro_rules! Builder {
 
     // Struct without generics.
     //
-    // Receive parsed fields of normal struct from `__diesel_parse_struct_body`
+    // Receive parsed fields of normal struct from `__parse_struct_body`
     // and add implementation.
     //
     // These patterns must appear above those which start with an ident to
@@ -90,7 +90,7 @@ macro_rules! Builder {
         $struct_name:ident <$($generics:ident),*>
         $body:tt $(;)*
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             (
                 struct_name = $struct_name,
                 generics = ($($generics),*),
@@ -105,7 +105,7 @@ macro_rules! Builder {
         $struct_name:ident
         $body:tt $(;)*
     ) => {
-        __diesel_parse_struct_body! {
+        __parse_struct_body! {
             (
                 struct_name = $struct_name,
                 generics = (),
