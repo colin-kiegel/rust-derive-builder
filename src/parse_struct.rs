@@ -14,6 +14,7 @@ macro_rules! __parse_struct_body {
             $headers,
             callback = $callback,
             body = ($($body)*,),
+            buff = ( attr [] ),
             fields = [],
         }
     };
@@ -28,23 +29,26 @@ macro_rules! __parse_struct_body {
             $headers,
             callback = $callback,
             body = ($($body)*,),
+            buff = ( attr [] ),
             fields = [],
         }
     };
 
-    // silently skip meta-tokens (e.g. doc-comments)
+    // parse attributes for fields (e.g. doc-comments)
     (
         $headers:tt,
         callback = $callback:ident,
         body = (
-            #$meta:tt
+            #[$meta:meta]
             $($tail:tt)*),
+        buff = ( attr [$($attr:tt)*] ),
         fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
             body = ($($tail)*),
+            buff = ( attr [$($attr:tt)* #[$meta]] ),
             fields = $fields,
         }
     };
@@ -56,12 +60,14 @@ macro_rules! __parse_struct_body {
         body = (
             pub
             $($tail:tt)*),
+        buff = $buff:tt,
         fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
             body = ($($tail)*),
+            buff = $buff,
             fields = $fields,
         }
     };
@@ -73,12 +79,14 @@ macro_rules! __parse_struct_body {
         $headers:tt,
         callback = $callback:ident,
         body = (,),
+        buff = $buff:tt,
         fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
             body = (),
+            buff = $buff,
             fields = $fields,
         }
     };
@@ -88,15 +96,18 @@ macro_rules! __parse_struct_body {
         $headers:tt,
         callback = $callback:ident,
         body = ($field_name:ident : $field_ty:ty, $($tail:tt)*),
+        buff = ( attr $field_attr:tt ),
         fields = [$($fields:tt)*],
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
             body = ($($tail)*),
+            buff = ( attr [] ),
             fields = [$($fields)* {
                 field_name: $field_name,
                 field_ty: $field_ty,
+                field_attr: $field_attr,
             }],
         }
     };
@@ -108,6 +119,7 @@ macro_rules! __parse_struct_body {
         $headers:tt,
         callback = $callback:ident,
         body = (),
+        buff = ( attr [] ),
         fields = $fields:tt,
     ) => {
         $callback! {
