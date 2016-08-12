@@ -19,7 +19,7 @@ macro_rules! Builder {
         Builder! { $($body)* }
     };
 
-    // Struct with generics.
+    // Struct with + without generics.
     //
     // Receive parsed fields of normal struct from `__parse_struct_body`
     // and add implementation.
@@ -39,36 +39,6 @@ macro_rules! Builder {
     ) => {
         #[allow(dead_code)]
         impl<$($generics),*> $struct_name<$($generics),*> {
-            $(
-                $($attr)*
-                pub fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
-                    self.$field_name = value.into();
-                    self
-                }
-            )+
-        }
-    };
-
-    // Struct without generics.
-    //
-    // Receive parsed fields of normal struct from `__parse_struct_body`
-    // and add implementation.
-    //
-    // These patterns must appear above those which start with an ident to
-    // compile.
-    (
-        (
-            struct_name = $struct_name:ident,
-            generics = (),
-        ),
-        fields = [$({
-            field_name: $field_name:ident,
-            field_ty: $field_ty:ty,
-            field_attr: [$($attr:tt)*],
-        })+],
-    ) => {
-        #[allow(dead_code)]
-        impl $struct_name {
             $(
                 $($attr)*
                 pub fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
