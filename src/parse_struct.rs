@@ -83,28 +83,6 @@ macro_rules! __parse_struct_body {
         }
     };
 
-    // When we find #[column_name] followed by an option type, handle the
-    // tuple struct field
-    (
-        $headers:tt,
-        callback = $callback:ident,
-        fields = [$($fields:tt)*],
-        body = (
-            #[column_name($column_name:ident)]
-            Option<$field_ty:ty> , $($tail:tt)*),
-    ) => {
-        __parse_struct_body! {
-            $headers,
-            callback = $callback,
-            fields = [$($fields)* {
-                column_name: $column_name,
-                field_ty: Option<$field_ty>,
-                field_kind: option,
-            }],
-            body = ($($tail)*),
-        }
-    };
-
     // When we find #[column_name] followed by a type, handle the tuple struct
     // field
     (
@@ -160,27 +138,7 @@ macro_rules! __parse_struct_body {
         }
     };
 
-    // At this point we know the column and field name, handle when the type is option
-    (
-        $headers:tt,
-        callback = $callback:ident,
-        fields = [$($fields:tt)*],
-        body = ($field_name:ident as $column_name:ident : Option<$field_ty:ty>, $($tail:tt)*),
-    ) => {
-        __parse_struct_body! {
-            $headers,
-            callback = $callback,
-            fields = [$($fields)* {
-                field_name: $field_name,
-                column_name: $column_name,
-                field_ty: Option<$field_ty>,
-                field_kind: option,
-            }],
-            body = ($($tail)*),
-        }
-    };
-
-    // Handle any type other than option
+    // At this point we know the column and field name, handle the type
     (
         $headers:tt,
         callback = $callback:ident,

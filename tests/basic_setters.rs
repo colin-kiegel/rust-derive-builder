@@ -5,7 +5,7 @@ custom_derive!{
     #[derive(Debug, PartialEq, Default, Builder)]
     struct Lorem {
         ipsum: String,
-        pub dolor: String,
+        pub dolor: Option<String>,
         pub sit: i32,
         amet: bool,
     }
@@ -24,15 +24,15 @@ impl Lorem {
 fn contructor_sanity_check() {
     let x = Lorem::new("lorem");
 
-    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: "".into(), sit: 0, amet: false, });
+    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: None, sit: 0, amet: false, });
 }
 
 #[test]
 fn setters() {
     let x = Lorem::new("lorem")
-        .dolor("dolor")
+        .dolor(Some("dolor".into()))
         .sit(42)
         .amet(true);
 
-    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: "dolor".into(), sit: 42, amet: true, });
+    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: Some("dolor".into()), sit: 42, amet: true, });
 }
