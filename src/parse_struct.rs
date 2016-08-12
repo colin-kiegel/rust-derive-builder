@@ -13,8 +13,8 @@ macro_rules! __parse_struct_body {
         __parse_struct_body! {
             $headers,
             callback = $callback,
-            fields = [],
             body = ($($body)*,),
+            fields = [],
         }
     };
 
@@ -27,8 +27,8 @@ macro_rules! __parse_struct_body {
         __parse_struct_body! {
             $headers,
             callback = $callback,
-            fields = [],
             body = ($($body)*,),
+            fields = [],
         }
     };
 
@@ -36,16 +36,16 @@ macro_rules! __parse_struct_body {
     (
         $headers:tt,
         callback = $callback:ident,
-        fields = $fields:tt,
         body = (
             #$meta:tt
             $($tail:tt)*),
+        fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
-            fields = $fields,
             body = ($($tail)*),
+            fields = $fields,
         }
     };
 
@@ -53,16 +53,16 @@ macro_rules! __parse_struct_body {
     (
         $headers:tt,
         callback = $callback:ident,
-        fields = $fields:tt,
         body = (
             pub
             $($tail:tt)*),
+        fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
-            fields = $fields,
             body = ($($tail)*),
+            fields = $fields,
         }
     };
 
@@ -72,32 +72,32 @@ macro_rules! __parse_struct_body {
     (
         $headers:tt,
         callback = $callback:ident,
-        fields = $fields:tt,
         body = (,),
+        fields = $fields:tt,
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
-            fields = $fields,
             body = (),
+            fields = $fields,
         }
     };
 
-    // handle the named struct field and its type
+    // handle struct field and its type
     (
         $headers:tt,
         callback = $callback:ident,
-        fields = [$($fields:tt)*],
         body = ($field_name:ident : $field_ty:ty, $($tail:tt)*),
+        fields = [$($fields:tt)*],
     ) => {
         __parse_struct_body! {
             $headers,
             callback = $callback,
+            body = ($($tail)*),
             fields = [$($fields)* {
                 field_name: $field_name,
                 field_ty: $field_ty,
             }],
-            body = ($($tail)*),
         }
     };
 
@@ -107,8 +107,8 @@ macro_rules! __parse_struct_body {
     (
         $headers:tt,
         callback = $callback:ident,
-        fields = $fields:tt,
         body = (),
+        fields = $fields:tt,
     ) => {
         $callback! {
             $headers,
