@@ -35,7 +35,7 @@ macro_rules! Builder {
             field_name: $field_name:ident,
             field_ty: $field_ty:ty,
             field_attr: [$($attr:tt)*],
-        })+],
+        })*],
     ) => {
         #[allow(dead_code)]
         impl<$($generics),*> $struct_name<$($generics),*> {
@@ -45,7 +45,7 @@ macro_rules! Builder {
                     self.$field_name = value.into();
                     self
                 }
-            )+
+            )*
         }
     };
 
