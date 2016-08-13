@@ -6,69 +6,62 @@
 macro_rules! __parse_struct_body {
     // Entry point for named structs
     (
-        $headers:tt,
-        callback = $callback:ident,
+        @parse
         body = {$($body:tt)*},
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
             body = ($($body)*,),
             buff = ( attr [] ),
             fields = [],
+            callback = $callback ($($headers)*)
         }
     };
 
     // Entry point for tuple structs
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = ($($body:tt)*),
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
             body = ($($body)*,),
             buff = ( attr [] ),
             fields = [],
+            callback = $callback ($($headers)*)
         }
     };
 
     // parse attributes for fields (e.g. doc-comments)
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = (
-            #[$meta:meta]
+            #[$($meta:tt)*]
             $($tail:tt)*),
         buff = ( attr [$($attr:tt)*] ),
         fields = $fields:tt,
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
             body = ($($tail)*),
-            buff = ( attr [$($attr:tt)* #[$meta]] ),
+            buff = ( attr [$($attr:tt)* #[$($meta)*]] ),
             fields = $fields,
+            callback = $callback ($($headers)*)
         }
     };
 
     // silently skip visibility specifier
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = (
-            pub
+            pub $field_name:ident
             $($tail:tt)*),
         buff = $buff:tt,
         fields = $fields:tt,
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
-            body = ($($tail)*),
+            body = ($field_name $($tail)*),
             buff = $buff,
             fields = $fields,
+            callback = $callback ($($headers)*)
         }
     };
 
@@ -76,32 +69,27 @@ macro_rules! __parse_struct_body {
     // double trailing comma.  If it's the only token left, that's what
     // happened. Strip it.
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = (,),
         buff = $buff:tt,
         fields = $fields:tt,
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
             body = (),
             buff = $buff,
             fields = $fields,
+            callback = $callback ($($headers)*)
         }
     };
 
     // handle struct field and its type
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = ($field_name:ident : $field_ty:ty, $($tail:tt)*),
         buff = ( attr $field_attr:tt ),
         fields = [$($fields:tt)*],
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         __parse_struct_body! {
-            $headers,
-            callback = $callback,
             body = ($($tail)*),
             buff = ( attr [] ),
             fields = [$($fields)* {
@@ -109,6 +97,7 @@ macro_rules! __parse_struct_body {
                 field_ty: $field_ty,
                 field_attr: $field_attr,
             }],
+            callback = $callback ($($headers)*)
         }
     };
 
@@ -116,23 +105,14 @@ macro_rules! __parse_struct_body {
     // for destructuring, and pass all the information back to the main macro
     // to generate the final impl
     (
-        $headers:tt,
-        callback = $callback:ident,
         body = (),
         buff = ( attr [] ),
         fields = $fields:tt,
+        callback = $callback:ident ($($headers:tt)*)
     ) => {
         $callback! {
-            $headers,
+            $($headers)*
             fields = $fields,
         }
     };
-}
-
-/// Hack to tell the compiler that something is in fact an item. This is needed
-/// when `tt` fragments are used in specific positions.
-#[doc(hidden)]
-#[macro_export]
-macro_rules!  __parse_as_item {
-    ($i:item) => { $i }
 }
