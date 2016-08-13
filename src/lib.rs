@@ -59,7 +59,7 @@
 //! #[macro_use] extern crate derive_builder;
 //!
 //! custom_derive!{
-//!     #[derive(Debug, PartialEq, Default, Builder)]
+//!     #[derive(Builder)]
 //!     struct Lorem {
 //!         /// `ipsum` may be any `String` (be creative).
 //!         ipsum: String,
@@ -72,11 +72,7 @@
 //!         Im_a_Mac: bool,
 //!     }
 //! }
-//!
-//! fn main() {
-//!     let x = Lorem::default().ipsum("sit").dolor(42);
-//!     assert_eq!(x, Lorem { ipsum: "sit".into(), dolor: 42, ..Lorem::default() });
-//! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Gotchas
