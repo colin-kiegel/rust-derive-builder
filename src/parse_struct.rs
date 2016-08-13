@@ -42,7 +42,7 @@ macro_rules! __parse_struct_body {
     ) => {
         __parse_struct_body! {
             body = ($($tail)*),
-            buff = ( attr [$($attr:tt)* #[$($meta)*]] ),
+            buff = ( attr [$($attr)* #[$($meta)*]] ),
             fields = $fields,
             callback = $callback ($($headers)*)
         }
