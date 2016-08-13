@@ -44,6 +44,41 @@
 //! }
 //! ```
 //!
+//! ## Doc-Comments and Attributes
+//!
+//! `#[derive(Builder)]` copies doc-comments and attributes `#[...]` from your fields
+//! to the according setter-method, if it is one of the following:
+//!
+//! * `/// ...`
+//! * `#[doc = ...]`
+//! * `#[cfg(...)]`
+//! * `#[allow(...)]`
+//!
+//! ```rust
+//! #[macro_use] extern crate custom_derive;
+//! #[macro_use] extern crate derive_builder;
+//!
+//! custom_derive!{
+//!     #[derive(Debug, PartialEq, Default, Builder)]
+//!     struct Lorem {
+//!         /// `ipsum` may be any `String` (be creative).
+//!         ipsum: String,
+//!         #[doc = r"`dolor` is the estimated amount of work."]
+//!         dolor: i32,
+//!         // `#[derive(Builder)]` understands conditional compilation via cfg-attributes,
+//!         // i.e. => "no field = no setter".
+//!         #[cfg(target_os = "macos")]
+//!         #[allow(non_snake_case)]
+//!         Im_a_Mac: bool,
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let x = Lorem::default().ipsum("sit").dolor(42);
+//!     assert_eq!(x, Lorem { ipsum: "sit".into(), dolor: 42, ..Lorem::default() });
+//! }
+//! ```
+//!
 //! ## Gotchas
 //!
 //! - Tuple structs and unit structs are not supported as they have no field

@@ -13,10 +13,11 @@ custom_derive!{
         undocumented: String,
         #[allow(non_snake_case)]
         CamelCase: i32,
-        #[cfg(target_os = "macos")] // TODO: this fails on linux builds
-        mac_only: (),
-        #[cfg(target_os = "linux")] // TODO: this fails on mac builds
-        linux_only: (),
+        #[cfg(target_os = "macos")]
+        mac_only: bool,
+        #[allow(non_snake_case)]
+        #[cfg(target_os = "linux")]
+        LinuxOnly: (),
     }
 }
 

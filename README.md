@@ -55,6 +55,7 @@ pub fn special_info<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
 * **Extensible**: You can still define your own implementation of the struct and define additional methods. Just make sure to name them differently than the fields.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
+* **Documentation**: Setter methods can be documented by simply documenting the corresponding field.
 
 ## Gotchas
 
