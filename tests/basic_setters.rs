@@ -29,10 +29,10 @@ fn contructor_sanity_check() {
 
 #[test]
 fn setters() {
-    let x = Lorem::new("lorem")
-        .dolor(Some("dolor".into()))
-        .sit(42)
-        .amet(true);
+    let mut x = Lorem::new("lorem");
+    x.dolor(Some("dolor".into()));
+    x.sit(42);
+    x.amet(true);
 
     assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: Some("dolor".into()), sit: 42, amet: true, });
 }

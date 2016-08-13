@@ -3,8 +3,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-### Changed
-- setter-methods are public now
+### Added
 - struct fields can be public
 - struct fields can have attributes
 - the following struct-attributes are copied to the setter-method
@@ -12,6 +11,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
  - `#[doc = ...]`
  - `#[cfg(...)]`
  - `#[allow(...)]`
+
+### Changed
+- setter-methods are non-consuming now -- breaking change
+- setter-methods are public now
+
+### Fixed
+- automatic documentation does not work #16
 
 ## [0.1.0] - 2016-08-07
 ### Added

@@ -1,17 +1,37 @@
 //! Derive a builder for a struct
 //!
-//! Use in combination with [custom_derive][custom_derive].
+//! This crate implements the _non-consuming_ [builder pattern] as an extension of the
+//! [custom_derive] macro.
+//! When applied to a struct, it will derive **setter-methods** for all struct fields.
 //!
+//! **Please note**:
+//!
+//! * There are slightly different ways to implement the builder pattern in rust.
+//!   The preferred way to do it, is the so called _non-consuming_ variant.
+//!   That means: all generated setter-methods take and return `&mut self`.
+//! * To complete the builder pattern you only have to implement at least one method
+//!   which actually builds something based on the struct.
+//!   These custom build methods of yours should also take `&mut self` to take advantage of the
+//!   non-consuming pattern.
+//! * **Don't worry at all** if you have to `clone` or `copy` data in your build methods,
+//!   because luckily the Compiler is smart enough to optimize them away in release builds
+//!   for your every-day use cases. Thats quite a safe bet - we checked this for you. ;-)
+//!   Switching to consuming signatures (=`self`) would not give you any performance
+//!   gain, but only restrict your API for every-day use cases
+//!
+//! [builder pattern]: https://aturon.github.io/ownership/builders.html
 //! [custom_derive]: https://crates.io/crates/custom_derive
 //!
 //! # Examples
+//!
+//! This crate is best used in combination with [custom_derive].
 //!
 //! ```rust
 //! #[macro_use] extern crate custom_derive;
 //! #[macro_use] extern crate derive_builder;
 //!
 //! custom_derive!{
-//!     #[derive(Debug, PartialEq, Default, Builder)]
+//!     #[derive(Debug, PartialEq, Default, Clone, Builder)]
 //!     struct Lorem {
 //!         ipsum: String,
 //!         dolor: i32,
@@ -19,10 +39,15 @@
 //! }
 //!
 //! fn main() {
-//!     let x = Lorem::default().ipsum("sit").dolor(42);
+//!     let x = Lorem::default().ipsum("sit").dolor(42).clone();
 //!     assert_eq!(x, Lorem { ipsum: "sit".into(), dolor: 42 });
 //! }
 //! ```
+//!
+//! In `main()`: The final call of `clone()` represents the act of **building a new struct**
+//! when our builder is ready. For the sake of brevity we chose clone and pretend we get
+//! something brand new. As already mentioned, the compiler will optimize this away in release
+//! mode.
 //!
 //! ## Generic structs
 //!
@@ -31,7 +56,7 @@
 //! #[macro_use] extern crate derive_builder;
 //!
 //! custom_derive!{
-//!     #[derive(Debug, PartialEq, Default, Builder)]
+//!     #[derive(Debug, PartialEq, Default, Clone, Builder)]
 //!     struct GenLorem<T> {
 //!         ipsum: String,
 //!         dolor: T,
@@ -39,7 +64,7 @@
 //! }
 //!
 //! fn main() {
-//!     let x = GenLorem::default().ipsum("sit").dolor(42);
+//!     let x = GenLorem::default().ipsum("sit").dolor(42).clone();
 //!     assert_eq!(x, GenLorem { ipsum: "sit".into(), dolor: 42 });
 //! }
 //! ```

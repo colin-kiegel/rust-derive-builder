@@ -27,8 +27,8 @@ fn contructor_sanity_check() {
 
 #[test]
 fn setters() {
-    let x = GenLorem::new("GenLorem")
-        .dolor(true);
+    let mut x = GenLorem::new("GenLorem");
+    x.dolor(true);
 
     assert_eq!(x, GenLorem { ipsum: "GenLorem".into(), dolor: true, });
 }

@@ -91,7 +91,7 @@ macro_rules! Builder {
         field_ty: $field_ty:ty,
     }) => {
         $(#[$meta])*
-        pub fn $field_name<VALUE: Into<$field_ty>>(mut self, value: VALUE) -> Self {
+        pub fn $field_name<VALUE: Into<$field_ty>>(&mut self, value: VALUE) -> &mut Self {
             self.$field_name = value.into();
             self
         }

@@ -30,6 +30,7 @@ custom_derive!{
 }
 
 fn main() {
-    let ch = Channel::default().special_info(42);
+    let mut ch = Channel::default();
+    ch.special_info(42);
     println!("{:?}", ch);
 }
