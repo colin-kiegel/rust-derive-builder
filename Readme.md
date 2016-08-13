@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
 [![Coverage Status](https://coveralls.io/repos/github/colin-kiegel/rust-derive-builder/badge.svg?branch=master)](https://coveralls.io/github/colin-kiegel/rust-derive-builder?branch=master)
+[![Latest Version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
 
 # Builder pattern derive
 
@@ -72,11 +73,9 @@ The builder pattern is explained [here][builder-pattern]. But please note that t
 [builder-pattern]: https://aturon.github.io/ownership/builders.html
 [into]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 
-## [Changelog]
+## [Changelog](CHANGELOG.md)
 
 Yes, we keep a changelog.
-
-[changelog]: https://github.com/colin-kiegel/rust-derive-builder/blob/master/CHANGELOG.md
 
 ## License
 
