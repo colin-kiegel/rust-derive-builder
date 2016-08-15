@@ -29,7 +29,7 @@ macro_rules! Builder {
     (
         (
             struct_name = $struct_name:ident,
-            generics = ($($generics:ident),*),
+            generics = ($($generics:tt),*),
         ),
         fields = [$({
             field_name: $field_name:ident,
@@ -87,7 +87,7 @@ macro_rules! Builder {
 
     // Handle struct with generics
     (
-        $struct_name:ident <$($generics:ident),*>
+        $struct_name:ident <$($generics:tt),*>
         $body:tt $(;)*
     ) => {
         __diesel_parse_struct_body! {
