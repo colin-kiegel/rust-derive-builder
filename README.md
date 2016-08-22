@@ -43,7 +43,7 @@ Note that we did not write any implementation of a method called `special_info`.
 The automatically generated setter method for the `special_info` field will look like this:
 
 ```rust
-pub fn special_info<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
+pub fn special_info<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
     self.special_info = value.into();
     self
 }
@@ -51,7 +51,7 @@ pub fn special_info<VALUE: Into<i32>>(mut self, value: VALUE) -> Self {
 
 ## Usage and Features
 
-* **Chaining**: The setter calls can be chained, because they consume and return `self`.
+* **Chaining**: The setter calls can be chained, because they consume and return `&mut self`.
 * **Extensible**: You can still define your own implementation of the struct and define additional methods. Just make sure to name them differently than the fields.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
