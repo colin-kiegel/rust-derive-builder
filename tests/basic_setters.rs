@@ -2,7 +2,7 @@
 #[macro_use] extern crate derive_builder;
 
 custom_derive!{
-    #[derive(Debug, PartialEq, Default, Builder)]
+    #[derive(Debug, PartialEq, Default, Builder, Clone)]
     struct Lorem {
         ipsum: String,
         pub dolor: Option<String>,
@@ -29,10 +29,11 @@ fn contructor_sanity_check() {
 
 #[test]
 fn setters() {
-    let mut x = Lorem::new("lorem");
-    x.dolor(Some("dolor".into()));
-    x.sit(42);
-    x.amet(true);
+    let x = Lorem::new("lorem")
+        .dolor(Some("dolor".into()))
+        .sit(42)
+        .amet(true)
+        .clone();
 
     assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: Some("dolor".into()), sit: 42, amet: true, });
 }

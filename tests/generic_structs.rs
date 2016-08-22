@@ -2,7 +2,7 @@
 #[macro_use] extern crate derive_builder;
 
 custom_derive!{
-    #[derive(Debug, PartialEq, Default, Builder)]
+    #[derive(Debug, PartialEq, Default, Builder, Clone)]
     struct GenLorem<T> {
         ipsum: String,
         pub dolor: T, // generics are a pain, so this field name is fitting
@@ -27,8 +27,9 @@ fn contructor_sanity_check() {
 
 #[test]
 fn setters() {
-    let mut x = GenLorem::new("GenLorem");
-    x.dolor(true);
+    let x = GenLorem::new("GenLorem")
+        .dolor(true)
+        .clone();
 
     assert_eq!(x, GenLorem { ipsum: "GenLorem".into(), dolor: true, });
 }
