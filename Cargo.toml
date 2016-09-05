@@ -6,7 +6,7 @@ authors = ["Colin Kiegel <kiegel@gmx.de>",
 
 description = "Rust macro based on custom_derive to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
-documentation = "https://colin-kiegel.github.io/rust-derive-builder/"
+documentation = "https://docs.rs/derive_builder"
 
 license = "MIT/Apache-2.0"
 keywords = ["derive", "macro", "builder", "setter", "struct"]
