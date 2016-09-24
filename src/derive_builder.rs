@@ -105,7 +105,7 @@ macro_rules! Builder {
     }) => {
         Builder!( @impl_setter {
             field_attr_raw: [$($attr_raw)*],
-            field_attr_filtered: [#[doc = $($doc)*] $($attr_filtered)*],
+            field_attr_filtered: [$($attr_filtered)* #[doc = $($doc)*]],
             $($tail)*
         });
     };
@@ -118,7 +118,7 @@ macro_rules! Builder {
     }) => {
         Builder!( @impl_setter {
             field_attr_raw: [$($attr_raw)*],
-            field_attr_filtered: [#[allow($($allow)*)] $($attr_filtered)*],
+            field_attr_filtered: [$($attr_filtered)* #[allow($($allow)*)]],
             $($tail)*
         });
     };
@@ -131,7 +131,7 @@ macro_rules! Builder {
     }) => {
         Builder!( @impl_setter {
             field_attr_raw: [$($attr_raw)*],
-            field_attr_filtered: [#[cfg($($cfg)*)] $($attr_filtered)*],
+            field_attr_filtered: [$($attr_filtered)* #[cfg($($cfg)*)]],
             $($tail)*
         });
     };
