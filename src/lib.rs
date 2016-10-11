@@ -1,7 +1,6 @@
 //! Derive a builder for a struct
 //!
-//! This crate implements the _non-consuming_ [builder pattern] as an extension of the
-//! [custom_derive] macro.
+//! This crate implements the _non-consuming_ [builder pattern].
 //! When applied to a struct, it will derive **setter-methods** for all struct fields.
 //!
 //! **Please note**:
@@ -20,11 +19,8 @@
 //!   gain, but only restrict your API for every-day use cases
 //!
 //! [builder pattern]: https://aturon.github.io/ownership/builders.html
-//! [custom_derive]: https://crates.io/crates/custom_derive
 //!
 //! # Examples
-//!
-//! This crate is best used in combination with [custom_derive].
 //!
 //! ```rust
 //! #[macro_use] extern crate derive_builder;

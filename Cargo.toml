@@ -4,7 +4,7 @@ version = "0.2.1"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>"]
 
-description = "Rust macro based on custom_derive to automatically implement the builder pattern for arbitrary structs."
+description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://docs.rs/derive_builder"
 

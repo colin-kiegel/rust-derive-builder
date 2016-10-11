@@ -4,23 +4,21 @@
 
 # Builder pattern derive
 
-[Rust][rust] macro (based on [custom_derive][custom_derive]) to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
+[Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
 
 **This is a work in progress.** Use it at your own risk.
 
 And this is how it works:
 
 ```rust
-#[macro_use] extern crate custom_derive;
+#![feature(proc_macro)]
 #[macro_use] extern crate derive_builder;
 
-custom_derive! {
-    #[derive(Default, Builder)]
-    struct Channel {
-        token: i32,
-        special_info: i32,
-        // .. a whole bunch of other fields ..
-    }
+#[derive(Default, Builder)]
+struct Channel {
+    token: i32,
+    special_info: i32,
+    // .. a whole bunch of other fields ..
 }
 
 impl Channel {
@@ -38,7 +36,7 @@ fn main() {
 }
 ```
 
-Note that we did not write any implementation of a method called `special_info`. Instead the [`custom_derive!`][custom_derive] macro scans the `#[derive(..)]` attribute of the struct for non-std identifiers – in our case `#[derive(Builder)]` – and delegates the code generation to the `Builder!` macro defined in this crate.
+Note that we did not write any implementation of a method called `special_info`. Instead the `derive_builder` crate acts on a `#[derive(Builder)]` and generates the necessary code at compile time.
 
 The automatically generated setter method for the `special_info` field will look like this:
 
@@ -70,7 +68,6 @@ The builder pattern is explained [here][builder-pattern], including its variants
 
 [doc]: https://colin-kiegel.github.io/rust-derive-builder
 [rust]: https://www.rust-lang.org/
-[custom_derive]: https://crates.io/crates/custom_derive
 [builder-pattern]: https://aturon.github.io/ownership/builders.html
 [into]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 
