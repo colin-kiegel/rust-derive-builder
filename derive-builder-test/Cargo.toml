@@ -1,0 +1,8 @@
+[package]
+name = "derive_builder_test"
+version = "0.1.0"
+
+description = "Test derive_builder"
+
+[dependencies]
+derive_builder = { path = "../" }
