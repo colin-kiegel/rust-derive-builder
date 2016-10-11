@@ -27,15 +27,12 @@
 //! This crate is best used in combination with [custom_derive].
 //!
 //! ```rust
-//! #[macro_use] extern crate custom_derive;
 //! #[macro_use] extern crate derive_builder;
 //!
-//! custom_derive!{
-//!     #[derive(Debug, PartialEq, Default, Clone, Builder)]
-//!     struct Lorem {
-//!         ipsum: String,
-//!         dolor: i32,
-//!     }
+//! #[derive(Debug, PartialEq, Default, Clone, Builder)]
+//! struct Lorem {
+//!     ipsum: String,
+//!     dolor: i32,
 //! }
 //!
 //! fn main() {
@@ -52,15 +49,12 @@
 //! ## Generic structs
 //!
 //! ```rust
-//! #[macro_use] extern crate custom_derive;
 //! #[macro_use] extern crate derive_builder;
 //!
-//! custom_derive!{
-//!     #[derive(Debug, PartialEq, Default, Clone, Builder)]
-//!     struct GenLorem<T> {
-//!         ipsum: String,
-//!         dolor: T,
-//!     }
+//! #[derive(Debug, PartialEq, Default, Clone, Builder)]
+//! struct GenLorem<T> {
+//!     ipsum: String,
+//!     dolor: T,
 //! }
 //!
 //! fn main() {
@@ -80,22 +74,19 @@
 //! * `#[allow(...)]`
 //!
 //! ```rust
-//! #[macro_use] extern crate custom_derive;
 //! #[macro_use] extern crate derive_builder;
 //!
-//! custom_derive!{
-//!     #[derive(Builder)]
-//!     struct Lorem {
-//!         /// `ipsum` may be any `String` (be creative).
-//!         ipsum: String,
-//!         #[doc = r"`dolor` is the estimated amount of work."]
-//!         dolor: i32,
-//!         // `#[derive(Builder)]` understands conditional compilation via cfg-attributes,
-//!         // i.e. => "no field = no setter".
-//!         #[cfg(target_os = "macos")]
-//!         #[allow(non_snake_case)]
-//!         Im_a_Mac: bool,
-//!     }
+//! #[derive(Builder)]
+//! struct Lorem {
+//!     /// `ipsum` may be any `String` (be creative).
+//!     ipsum: String,
+//!     #[doc = r"`dolor` is the estimated amount of work."]
+//!     dolor: i32,
+//!     // `#[derive(Builder)]` understands conditional compilation via cfg-attributes,
+//!     // i.e. => "no field = no setter".
+//!     #[cfg(target_os = "macos")]
+//!     #[allow(non_snake_case)]
+//!     Im_a_Mac: bool,
 //! }
 //! # fn main() {}
 //! ```
@@ -107,5 +98,47 @@
 //! - When defining a generic struct, you cannot use `VALUE` as a generic
 //!   parameter as this is what all setters are using.
 
-mod parse_struct;
-mod derive_builder;
+#![crate_type = "proc-macro"]
+#![feature(proc_macro, proc_macro_lib)]
+
+extern crate proc_macro;
+extern crate syn;
+#[macro_use]
+extern crate quote;
+
+use proc_macro::TokenStream;
+
+#[proc_macro_derive(Builder)]
+pub fn derive(input: TokenStream) -> TokenStream {
+    let input: String = input.to_string();
+
+    let ast = syn::parse_macro_input(&input).expect("Couldn't parse item");
+
+    let result = builder_for_struct(ast);
+
+    format!("{}\n{}", input, result).parse().expect("couldn't parse string to tokens")
+}
+
+fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
+    let fields = match ast.body {
+        syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
+        _ => panic!("#[derive(new)] can only be used with braced structs"),
+    };
+
+    let name = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+    let funcs = fields.iter().map(|f| {
+        let f_name = &f.ident;
+        let ty = &f.ty;
+        quote!(pub fn #f_name<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+            self.#f_name = value.into();
+            self
+        })
+    });
+
+    quote! {
+        impl #impl_generics #name #ty_generics #where_clause {
+            #(funcs)*
+        }
+    }
+}
