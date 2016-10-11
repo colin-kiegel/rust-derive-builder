@@ -1,12 +1,10 @@
-#[macro_use] extern crate custom_derive;
+#![feature(proc_macro)]
 #[macro_use] extern crate derive_builder;
 
-custom_derive!{
-    #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    struct GenLorem<T> {
-        ipsum: String,
-        pub dolor: T, // generics are a pain, so this field name is fitting
-    }
+#[derive(Debug, PartialEq, Default, Builder, Clone)]
+struct GenLorem<T> {
+    ipsum: String,
+    pub dolor: T, // generics are a pain, so this field name is fitting
 }
 
 impl<T: Default> GenLorem<T> {

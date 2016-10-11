@@ -1,14 +1,12 @@
-#[macro_use] extern crate custom_derive;
+#![feature(proc_macro)]
 #[macro_use] extern crate derive_builder;
 
-custom_derive!{
-    #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    struct Lorem {
-        ipsum: String,
-        pub dolor: Option<String>,
-        pub sit: i32,
-        amet: bool,
-    }
+#[derive(Debug, PartialEq, Default, Builder, Clone)]
+struct Lorem {
+    ipsum: String,
+    pub dolor: Option<String>,
+    pub sit: i32,
+    amet: bool,
 }
 
 impl Lorem {
