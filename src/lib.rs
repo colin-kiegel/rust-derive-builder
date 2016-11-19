@@ -134,7 +134,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
     quote! {
         impl #impl_generics #name #ty_generics #where_clause {
-            #(funcs)*
+            #(#funcs)*
         }
     }
 }
