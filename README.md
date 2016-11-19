@@ -7,7 +7,7 @@
 [Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
 
 **This is a work in progress.** Use it at your own risk.  
-**This currently requires Rust nightly, due to the usage of Macros 1.1**
+**This currently requires Rust nightly (2016-11-19 or newer), due to the usage of Macros 1.1.**
 
 And this is how it works:
 
