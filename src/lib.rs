@@ -112,13 +112,40 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let result = builder_for_struct(ast);
 
-    format!("{}\n{}", input, result).parse().expect("couldn't parse string to tokens")
+    format!("{}\n{}", input, result).parse().expect("Couldn't parse string to tokens")
+}
+
+fn filter_attr(attr: &&syn::Attribute) -> bool {
+    if attr.style != syn::AttrStyle::Outer {
+        return false
+    }
+
+    if attr.is_sugared_doc == true {
+        if let syn::MetaItem::NameValue(ref ident, _) = attr.value {
+            // example:
+            // Attribute { style: Outer, value: NameValue(Ident("doc"), Str("/// This is a doc comment for a field", Cooked)), is_sugared_doc: true }
+            if ident == "doc" {
+                return true
+            }
+        }
+    } else {
+        if let syn::MetaItem::List(ref ident, _) = attr.value {
+            // example:
+            // Attribute { style: Outer, value: List(Ident("allow"), [MetaItem(Word(Ident("non_snake_case")))]), is_sugared_doc: false }
+            return match ident.as_ref() {
+                "cfg" => true,
+                "allow" => true,
+                _ => false,
+            }
+        }
+    }
+    false
 }
 
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
-        _ => panic!("#[derive(new)] can only be used with braced structs"),
+        _ => panic!("#[derive(Builder)] can only be used with braced structs"),
     };
 
     let name = &ast.ident;
@@ -126,13 +153,20 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let funcs = fields.iter().map(|f| {
         let f_name = &f.ident;
         let ty = &f.ty;
-        quote!(pub fn #f_name<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+
+        let attrs = f.attrs.iter()
+            .filter(filter_attr);
+
+        quote!(
+            #(#attrs)*
+            pub fn #f_name<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
             self.#f_name = value.into();
             self
         })
     });
 
     quote! {
+        #[allow(dead_code)]
         impl #impl_generics #name #ty_generics #where_clause {
             #(#funcs)*
         }
