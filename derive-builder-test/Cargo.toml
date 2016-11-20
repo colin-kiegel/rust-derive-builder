@@ -5,4 +5,5 @@ version = "0.1.0"
 description = "Test derive_builder"
 
 [dependencies]
+log = "0.3"
 derive_builder = { path = "../" }
