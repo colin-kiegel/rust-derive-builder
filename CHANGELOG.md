@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+- migration to macros 1.1
+- different setter pattern, e.g. `#[setters(immutable)]`
+- private setters
+- additional debug info via env_logger, e.g. `RUST_LOG=derive_builder=trace cargo test`
+
 ## [0.2.1] - 2016-09-24
 
 ### Fixed

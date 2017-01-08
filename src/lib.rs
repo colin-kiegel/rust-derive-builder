@@ -104,9 +104,12 @@ extern crate quote;
 extern crate log;
 extern crate env_logger;
 
-use proc_macro::TokenStream;
+mod options;
 
-#[proc_macro_derive(Builder, attributes(owned, mutable, immutable))]
+use proc_macro::TokenStream;
+use options::{Options, SetterPattern};
+
+#[proc_macro_derive(Builder, attributes(setters, getters, setter, getter))]
 pub fn derive(input: TokenStream) -> TokenStream {
     env_logger::init().unwrap();
 
@@ -146,78 +149,15 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
     false
 }
 
-#[derive(PartialEq, Debug)]
-enum ReferenceType {
-    Owned,
-    Mutable,
-    Immutable
-}
-
-impl Default for ReferenceType {
-    fn default() -> ReferenceType {
-        ReferenceType::Mutable
-    }
-}
-
-impl quote::ToTokens for ReferenceType {
-    fn to_tokens(&self, tokens: &mut quote::Tokens) {
-        match *self {
-            ReferenceType::Mutable => tokens.append("&mut"),
-            ReferenceType::Immutable => tokens.append("&"),
-            ReferenceType::Owned => {}, //tokens.append("mut"),
-        }
-    }
-}
-
-impl std::str::FromStr for ReferenceType {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "owned" => Ok(ReferenceType::Owned),
-            "mutable" => Ok(ReferenceType::Mutable),
-            "immutable" => Ok(ReferenceType::Immutable),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Default, Debug)]
-struct Options {
-    ref_type: ReferenceType
-}
-
-impl<T> From<T> for Options where
-    T: IntoIterator<Item=syn::Attribute>
-{
-    fn from(attributes: T) -> Self {
-        trace!("Parsing struct attributes.");
-        let mut opts = Options::default();
-
-        for attr in attributes {
-            debug!("Found attribute {:?}.", attr);
-            if attr.style != syn::AttrStyle::Outer || attr.is_sugared_doc {
-                debug!("Ignoring attribute.");
-                continue
-            }
-
-            if let syn::MetaItem::Word(ref ident) = attr.value {
-                if let Ok(ref_type) = str::parse::<ReferenceType>(ident.as_ref()) {
-                    debug!("Setting reference type {:?}", ref_type);
-                    opts.ref_type = ref_type;
-                }
-            } else {
-                debug!("Ignoring attribute.")
-            }
-        }
-
-        opts
-    }
-}
-
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
-    trace!("Deriving Builder for '{}'.", ast.ident);
+    debug!("Deriving Builder for '{}'.", ast.ident);
     let opts = Options::from(ast.attrs);
-    let ref_type = opts.ref_type;
+    if !opts.setter_enabled() {
+        trace!("Setters disabled for '{}'.", ast.ident);
+        return quote!();
+    }
+    debug!("Deriving Setters for '{}'.", ast.ident);
+    let setter_pattern = opts.setter_pattern();
 
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
@@ -241,27 +181,30 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
                 keep
             });
 
-        match ref_type {
-            ReferenceType::Owned => quote!(
+        let vis = opts.setter_visibility();
+        debug!("Setter visibility = {:?}", vis);
+
+        match *setter_pattern {
+            SetterPattern::Owned => quote!(
                     #(#attrs)*
-                    pub fn #f_name<VALUE: Into<#ty>>(#ref_type self, value: VALUE) -> #ref_type Self {
+                    #vis fn #f_name<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
                         let mut new = self;
                         new.#f_name = value.into();
                         new
                 }),
-            ReferenceType::Mutable => quote!(
+            SetterPattern::Mutable => quote!(
                     #(#attrs)*
-                    pub fn #f_name<VALUE: Into<#ty>>(#ref_type self, value: VALUE) -> #ref_type Self {
-                        let mut ret = self;
-                        ret.#f_name = value.into();
-                        ret
+                    #vis fn #f_name<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                        let mut new = self;
+                        new.#f_name = value.into();
+                        new
                 }),
-            ReferenceType::Immutable => quote!(
+            SetterPattern::Immutable => quote!(
                     #(#attrs)*
-                    pub fn #f_name<VALUE: Into<#ty>>(#ref_type self, value: VALUE) -> Self {
-                        let mut ret = self.clone();
-                        ret.#f_name = value.into();
-                        ret
+                    #vis fn #f_name<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
+                        let mut new = self.clone();
+                        new.#f_name = value.into();
+                        new
                 }),
         }
     });

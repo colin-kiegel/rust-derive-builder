@@ -1,7 +1,7 @@
 #[macro_use] extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[mutable]
+#[setters(mutable)]
 struct Lorem {
     ipsum: String,
 }
@@ -22,11 +22,12 @@ fn contructor_sanity_check() {
 }
 
 #[test]
-fn mutable() {
-    let f: fn(&mut Lorem, String) -> &mut Lorem = Lorem::ipsum;
+fn mutable_setter() {
+    // the setter must have the correct signature
+    let mutable_setter: fn(&mut Lorem, String) -> &mut Lorem = Lorem::ipsum;
 
     let mut old = Lorem::new("lorem");
-    let new = f(&mut old, "new".to_string());
+    let new = mutable_setter(&mut old, "new".to_string());
 
     assert_eq!(*new, Lorem { ipsum: "new".into() });
 }
