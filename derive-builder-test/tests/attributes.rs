@@ -1,4 +1,3 @@
-#![feature(proc_macro)]
 #[macro_use] extern crate derive_builder;
 
 /// This is a doc comment for the struct

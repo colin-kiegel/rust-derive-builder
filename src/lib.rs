@@ -95,7 +95,6 @@
 //!   parameter as this is what all setters are using.
 
 #![crate_type = "proc-macro"]
-#![feature(proc_macro, proc_macro_lib)]
 
 extern crate proc_macro;
 extern crate syn;
