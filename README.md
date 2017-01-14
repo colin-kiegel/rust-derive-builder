@@ -7,12 +7,11 @@
 [Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
 
 **This is a work in progress.** Use it at your own risk.  
-**This currently requires Rust nightly (2016-11-19 or newer), due to the usage of Macros 1.1.**
+**This requires Rust 1.15, due to the usage of Macros 1.1.**
 
 And this is how it works:
 
 ```rust
-#![feature(proc_macro)]
 #[macro_use] extern crate derive_builder;
 
 #[derive(Default, Builder)]
@@ -50,18 +49,21 @@ pub fn special_info<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
 
 ## Usage and Features
 
-* **Chaining**: The setter calls can be chained, because they consume and return `&mut self`.
+* **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
 * **Extensible**: You can still define your own implementation of the struct and define additional methods. Just make sure to name them differently than the fields.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
 * **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
+* **Builder patterns**: You can opt into other builder patterns by preceding your struct with `#[setters(owned)]` or `#[setters(immutable)]`.
+* **Visibility**: You can opt into private setter by preceding your struct with `#[setters(private)]`.
+* **Logging**: If anything works unexpectedly you can enable detailed logs by setting this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
+
+For more information and examples please take a look at our [documentation][doc].
 
 ## Gotchas
 
 * Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
 * When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
-* This crate exports a macro named `Builder!`, make sure you don't use this name for another macro.
-* If you hit the macro recursion limit, you can increase it by adding this `#![recursion_limit="128"]` to your crate (default is `64`).
 
 ## [Documentation][doc]
 
