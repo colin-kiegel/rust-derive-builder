@@ -29,7 +29,7 @@ macro_rules! Builder {
     (
         @impl_struct
         struct_name = $struct_name:ident,
-        generics = ($($generics:ident),*),
+        generics = ($($generics:tt),*),
         fields = [$({
             field_name: $field_name:ident,
             field_ty: $field_ty:ty,
@@ -52,7 +52,7 @@ macro_rules! Builder {
     // Handle struct with generics
     (
         @parse
-        $struct_name:ident <$($generics:ident),*>
+        $struct_name:ident <$($generics:tt),*>
         $body:tt $(;)*
     ) => {
         __parse_struct_body! {
