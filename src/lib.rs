@@ -203,8 +203,10 @@ extern crate env_logger;
 
 mod options;
 
+use std::borrow::Cow;
 use proc_macro::TokenStream;
-use options::{Options, SetterPattern};
+use quote::ToTokens;
+use options::{Options, OptionsBuilder, FieldMode, SetterPattern};
 
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(setters, getters, setter, getter))]
@@ -249,13 +251,11 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
 
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     debug!("Deriving Builder for '{}'.", ast.ident);
-    let opts = Options::from(ast.attrs);
+    let opts = Options::from(&ast.attrs);
     if !opts.setter_enabled() {
         trace!("Setters disabled for '{}'.", ast.ident);
         return quote!();
     }
-    debug!("Deriving Setters for '{}'.", ast.ident);
-    let setter_pattern = opts.setter_pattern();
 
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
@@ -265,46 +265,30 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
     let funcs = fields.iter().map(|f| {
-        let f_name = &f.ident;
-        let ty = &f.ty;
 
-        trace!("Filtering field attributes");
-        let attrs = f.attrs.iter()
-            .filter(|a| {
-                let keep = filter_attr(a);
-                match keep {
-                    true => trace!("Keeping field attribute for setter {:?}", a),
-                    false => trace!("Ignoring field attribute {:?}", a)
-                }
-                keep
-            });
+        trace!("Parsing field {:?}.", f.ident.as_ref().map(|i| i.as_ref()).unwrap_or_default());
 
-        let vis = opts.setter_visibility();
-        debug!("Setter visibility = {:?}", vis);
+        let f_opts = OptionsBuilder::<FieldMode>::default()
+            .parse_attributes(&f.attrs)
+            .with_struct_options(&opts);
 
-        match *setter_pattern {
-            SetterPattern::Owned => quote!(
-                    #(#attrs)*
-                    #vis fn #f_name<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
-                        let mut new = self;
-                        new.#f_name = value.into();
-                        new
-                }),
-            SetterPattern::Mutable => quote!(
-                    #(#attrs)*
-                    #vis fn #f_name<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
-                        let mut new = self;
-                        new.#f_name = value.into();
-                        new
-                }),
-            SetterPattern::Immutable => quote!(
-                    #(#attrs)*
-                    #vis fn #f_name<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
-                        let mut new = self.clone();
-                        new.#f_name = value.into();
-                        new
-                }),
+        debug!("Setter prefix is {:?}", f_opts.setter_prefix());
+
+        let mut tokens = quote::Tokens::new();
+
+        if f_opts.setter_enabled() {
+            derive_setter(f, &f_opts).to_tokens(&mut tokens);
+        } else {
+            trace!("Skipping setter.");
         }
+
+        if f_opts.getter_enabled() {
+            derive_getter(f, &f_opts).to_tokens(&mut tokens);
+        } else {
+            trace!("Skipping getter.");
+        }
+
+        tokens
     });
 
     quote! {
@@ -313,4 +297,61 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             #(#funcs)*
         }
     }
+}
+
+fn derive_setter(f: &syn::Field, opts: &Options) -> quote::Tokens {
+    trace!("Deriving setter.");
+    let ty = &f.ty;
+    let pattern = opts.setter_pattern();
+    let vis = opts.setter_visibility();
+    let fieldname = f.ident.as_ref().expect(&format!("Missing identifier for field {:?}.", f));
+    let funcname = if opts.setter_prefix().len() > 0 {
+        Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
+    } else {
+        Cow::Borrowed(fieldname)
+    };
+
+    trace!("Filtering field attributes");
+    let attrs = f.attrs.iter()
+        .filter(|a| {
+            let keep = filter_attr(a);
+            match keep {
+                true => trace!("Keeping field attribute for setter {:?}", a),
+                false => trace!("Ignoring field attribute {:?}", a)
+            }
+            keep
+        });
+
+    let setter = match *pattern {
+        SetterPattern::Owned => quote!(
+                #(#attrs)*
+                #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
+                    let mut new = self;
+                    new.#fieldname = value.into();
+                    new
+            }),
+        SetterPattern::Mutable => quote!(
+                #(#attrs)*
+                #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                    let mut new = self;
+                    new.#fieldname = value.into();
+                    new
+            }),
+        SetterPattern::Immutable => quote!(
+                #(#attrs)*
+                #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
+                    let mut new = self.clone();
+                    new.#fieldname = value.into();
+                    new
+            }),
+    };
+
+    debug!("Setter is {:?}", setter);
+
+    setter
+}
+
+fn derive_getter(f: &syn::Field, _opts: &Options) -> quote::Tokens {
+    trace!("Deriving getter for {:?}.", f);
+    unimplemented!()
 }
