@@ -2,9 +2,10 @@
 name = "derive_builder"
 version = "0.2.1"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
-           "Pascal Hertleif <killercup@gmail.com>"]
+           "Pascal Hertleif <killercup@gmail.com>",
+           "Jan-Erik Rediger <janerik@fnordig.de>"]
 
-description = "Rust macro based on custom_derive to automatically implement the builder pattern for arbitrary structs."
+description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://docs.rs/derive_builder"
 
@@ -12,5 +13,11 @@ license = "MIT/Apache-2.0"
 keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "README.md"
 
-[dev-dependencies]
-custom_derive = "0.1.5"
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "0.10"
+quote = "0.3"
+log = "0.3"
+env_logger = "0.3"

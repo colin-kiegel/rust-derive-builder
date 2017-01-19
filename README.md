@@ -5,23 +5,21 @@
 
 # Builder pattern derive
 
-[Rust][rust] macro (based on [custom_derive][custom_derive]) to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
+[Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
 
-**This is a work in progress.** Use it at your own risk.
+**This is a work in progress.** Use it at your own risk.  
+**This requires Rust 1.15, due to the usage of Macros 1.1.**
 
 And this is how it works:
 
 ```rust
-#[macro_use] extern crate custom_derive;
 #[macro_use] extern crate derive_builder;
 
-custom_derive! {
-    #[derive(Default, Builder)]
-    struct Channel {
-        token: i32,
-        special_info: i32,
-        // .. a whole bunch of other fields ..
-    }
+#[derive(Default, Builder)]
+struct Channel {
+    token: i32,
+    special_info: i32,
+    // .. a whole bunch of other fields ..
 }
 
 impl Channel {
@@ -39,7 +37,7 @@ fn main() {
 }
 ```
 
-Note that we did not write any implementation of a method called `special_info`. Instead the [`custom_derive!`][custom_derive] macro scans the `#[derive(..)]` attribute of the struct for non-std identifiers – in our case `#[derive(Builder)]` – and delegates the code generation to the `Builder!` macro defined in this crate.
+Note that we did not write any implementation of a method called `special_info`. Instead the `derive_builder` crate acts on a `#[derive(Builder)]` and generates the necessary code at compile time.
 
 The automatically generated setter method for the `special_info` field will look like this:
 
@@ -52,18 +50,21 @@ pub fn special_info<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
 
 ## Usage and Features
 
-* **Chaining**: The setter calls can be chained, because they consume and return `&mut self`.
+* **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
 * **Extensible**: You can still define your own implementation of the struct and define additional methods. Just make sure to name them differently than the fields.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
 * **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
+* **Builder patterns**: You can opt into other builder patterns by preceding your struct with `#[setters(owned)]` or `#[setters(immutable)]`.
+* **Visibility**: You can opt into private setter by preceding your struct with `#[setters(private)]`.
+* **Logging**: If anything works unexpectedly you can enable detailed logs by setting this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
+
+For more information and examples please take a look at our [documentation][doc].
 
 ## Gotchas
 
 * Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
 * When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
-* This crate exports a macro named `Builder!`, make sure you don't use this name for another macro.
-* If you hit the macro recursion limit, you can increase it by adding this `#![recursion_limit="128"]` to your crate (default is `64`).
 
 ## [Documentation][doc]
 
@@ -71,7 +72,6 @@ The builder pattern is explained [here][builder-pattern], including its variants
 
 [doc]: https://colin-kiegel.github.io/rust-derive-builder
 [rust]: https://www.rust-lang.org/
-[custom_derive]: https://crates.io/crates/custom_derive
 [builder-pattern]: https://aturon.github.io/ownership/builders.html
 [into]: https://doc.rust-lang.org/nightly/std/convert/trait.Into.html
 

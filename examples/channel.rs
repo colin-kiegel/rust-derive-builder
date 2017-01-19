@@ -1,4 +1,3 @@
-#[macro_use] extern crate custom_derive;
 #[macro_use] extern crate derive_builder;
 
 use std::convert::From;
@@ -20,13 +19,11 @@ impl From<i32> for Authentication {
     }
 }
 
-custom_derive!{
-    #[derive(Debug, Default, Builder)]
-    struct Channel {
-        id: Uuid,
-        token: Authentication,
-        special_info: i32
-    }
+#[derive(Debug, Default, Builder)]
+struct Channel {
+    id: Uuid,
+    token: Authentication,
+    special_info: i32
 }
 
 fn main() {

@@ -1,8 +1,6 @@
 sudo: false
 language: rust
 rust:
-- stable
-- beta
 - nightly
 env:
   global:
@@ -27,8 +25,7 @@ before_script: |
   export PATH=$LOCAL/bin:$PATH
 script: |
   travis-cargo build &&
-  travis-cargo test &&
-  travis-cargo bench &&
+  (cd derive-builder-test && travis-cargo test) &&
   travis-cargo doc
 after_success: |
   # upload the documentation from the build with stable (automatically only actually
