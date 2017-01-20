@@ -25,6 +25,8 @@ before_script: |
   export PATH=$LOCAL/bin:$PATH
 script: |
   travis-cargo build &&
+  # doc-tests only work if env_logger is disabled (=> no-default-features)
+  travis-cargo test --no-default-features && 
   (cd derive-builder-test && travis-cargo test) &&
   travis-cargo doc
 after_success: |

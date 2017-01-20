@@ -16,8 +16,17 @@ readme = "README.md"
 [lib]
 proc-macro = true
 
+[features]
+# NOTE: We need to be able to disable initialisation of the env_logger to
+# have doc-tests right now. This might be a cargo bug! (TODO: check).
+#
+# As a workaround we keep the dependency on log otherwise we would need
+# to fake all the log macros.
+default = ["logging"]
+logging = ["env_logger"]
+
 [dependencies]
 syn = "0.10"
 quote = "0.3"
 log = "0.3"
-env_logger = "0.3"
+env_logger = { version = "0.3", optional = true }

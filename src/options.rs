@@ -16,22 +16,14 @@ impl Default for SetterPattern {
 
 #[derive(Debug, Clone)]
 pub struct Options {
-    /// e.g. `#[setters]` (defaults to true)
+    // e.g. `#[setter]` (defaults to true)
     setter_enabled: bool,
-    /// e.g. `#[setters(owned)]` (defaults to mutable)
+    // e.g. `#[setter(owned)]` (defaults to mutable)
     setter_pattern: SetterPattern,
-    /// e.g. `#[setters(prefix="with")]` (defaults to None)
+    // e.g. `#[setter(prefix="with")]` (defaults to None)
     setter_prefix: String,
-    /// e.g. `#[setters(private)]` (defaults to public)
+    // e.g. `#[setter(private)]` (defaults to public)
     setter_public: bool,
-    /// e.g. `#[setters(options="implicit")]` (defaults to explicit)
-    setter_implicit_options: bool,
-    /// e.g. `#[getters]` (defaults to false)
-    getter_enabled: bool,
-    /// e.g. `#[getters(prefix="with")]` (defaults to None)
-    getter_prefix: String,
-    /// e.g. `#[getters(private)]` (defaults to public)
-    getter_public: bool,
 }
 
 impl Options {
@@ -54,22 +46,6 @@ impl Options {
     pub fn setter_prefix(&self) -> &str {
         &self.setter_prefix
     }
-
-    pub fn getter_enabled(&self) -> bool {
-        self.getter_enabled
-    }
-
-    pub fn _getter_visibility(&self) -> Option<quote::Tokens> {
-        if self.getter_public {
-            Some(quote!(pub))
-        } else {
-            None
-        }
-    }
-
-    pub fn _getter_prefix(&self) -> &str {
-        &self.getter_prefix
-    }
 }
 
 impl<'a, T> From<T> for Options where
@@ -84,27 +60,17 @@ impl<'a, T> From<T> for Options where
     }
 }
 
-pub trait OptionsBuilderMode {
-    // associated consts are not a thing yet :-/
-    // https://github.com/rust-lang/rust/issues/29646
-    fn setter_attribute_ident() -> &'static str;
-    fn getter_attribute_ident() -> &'static str;
-}
+pub trait OptionsBuilderMode {}
 
 #[derive(Default)]
 pub struct StructMode;
+
+impl OptionsBuilderMode for StructMode {}
+
 #[derive(Default)]
 pub struct FieldMode;
 
-impl OptionsBuilderMode for StructMode {
-    fn setter_attribute_ident() -> &'static str { "setters" }
-    fn getter_attribute_ident() -> &'static str { "getters" }
-}
-
-impl OptionsBuilderMode for FieldMode {
-    fn setter_attribute_ident() -> &'static str { "setter" }
-    fn getter_attribute_ident() -> &'static str { "getter" }
-}
+impl OptionsBuilderMode for FieldMode {}
 
 #[derive(Default, Debug)]
 pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
@@ -112,11 +78,7 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     setter_pattern: Option<SetterPattern>,
     setter_prefix: Option<String>,
     setter_public: Option<bool>,
-    setter_implicit_options: Option<bool>,
-    getter_enabled: Option<bool>,
-    getter_prefix: Option<String>,
-    getter_public: Option<bool>,
-    phantom: ::std::marker::PhantomData<Mode>,
+    mode: Mode,
 }
 
 impl From<OptionsBuilder<StructMode>> for Options {
@@ -126,10 +88,6 @@ impl From<OptionsBuilder<StructMode>> for Options {
             setter_pattern: b.setter_pattern.unwrap_or_default(),
             setter_prefix: b.setter_prefix.unwrap_or_default(),
             setter_public: b.setter_public.unwrap_or(true),
-            setter_implicit_options: b.setter_implicit_options.unwrap_or(false),
-            getter_enabled: b.getter_enabled.unwrap_or(false),
-            getter_prefix: b.getter_prefix.unwrap_or_default(),
-            getter_public: b.getter_public.unwrap_or(true),
         }
     }
 }
@@ -141,11 +99,6 @@ impl OptionsBuilder<FieldMode> {
             setter_pattern: self.setter_pattern.clone().unwrap_or(o.setter_pattern.clone()),
             setter_prefix: self.setter_prefix.clone().unwrap_or(o.setter_prefix.clone()),
             setter_public: self.setter_public.unwrap_or(o.setter_public),
-            setter_implicit_options: self.setter_implicit_options
-                .unwrap_or(o.setter_implicit_options),
-            getter_enabled: self.getter_enabled.unwrap_or(o.getter_enabled),
-            getter_prefix: self.getter_prefix.clone().unwrap_or(o.getter_prefix.clone()),
-            getter_public: self.getter_public.unwrap_or(o.getter_public),
         }
     }
 }
@@ -180,24 +133,6 @@ impl<Mode> OptionsBuilder<Mode> where
         self
     }
 
-    fn setter_implicit_options(&mut self, x: bool) -> &mut Self {
-        if self.setter_implicit_options.is_some() {
-            warn!("Setter implicit options already defined as {:?}, new value is {:?}.",
-                self.setter_implicit_options, x);
-        }
-        self.setter_implicit_options = Some(x);
-        self
-    }
-
-    fn getter_enabled(&mut self, x: bool) -> &mut Self {
-        if self.getter_enabled.is_some() {
-            warn!("Getter enabled already defined as {:?}, new value is {:?}.",
-                self.getter_enabled, x);
-        }
-        self.getter_enabled = Some(x);
-        self
-    }
-
     pub fn parse_attributes<'a, T>(&mut self, attributes: T) -> &mut Self where
         T: IntoIterator<Item=&'a syn::Attribute>
     {
@@ -216,37 +151,32 @@ impl<Mode> OptionsBuilder<Mode> where
             return
         }
 
-        // e.g. `#[setters]`
+        const SETTER_ATTRIBUTE_IDENT: &'static str = "setter";
+
+        // e.g. `#[setter]`
         if let syn::MetaItem::Word(ref ident) = attr.value {
-            if ident == Mode::setter_attribute_ident() {
+            if ident == SETTER_ATTRIBUTE_IDENT {
                 self.setter_enabled(true);
-                return
-            } else if ident == Mode::getter_attribute_ident() {
-                self.getter_enabled(true);
                 return
             }
         }
 
-        // e.g. `#[setters(...)]`
+        // e.g. `#[setter(...)]`
         if let syn::MetaItem::List(ref ident, ref nested_attrs) = attr.value {
-            if ident == Mode::setter_attribute_ident() {
+            if ident == SETTER_ATTRIBUTE_IDENT {
                 self.setter_enabled(true);
-                self.parse_setters_options(nested_attrs);
-                return
-            } else if ident == Mode::getter_attribute_ident() {
-                self.getter_enabled(true);
-                self.parse_getters_options(nested_attrs);
+                self.parse_setter_options(nested_attrs);
                 return
             }
         }
         debug!("Ignoring attribute.");
     }
 
-    fn parse_setters_options(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_setter_options(&mut self, nested: &[syn::NestedMetaItem]) {
         trace!("Parsing setter options.");
         for x in nested {
             if let syn::NestedMetaItem::MetaItem(ref meta_item) = *x {
-                self.parse_setters_options_metaItem(meta_item)
+                self.parse_setter_options_metaItem(meta_item)
             } else {
                 panic!("Expected NestedMetaItem::MetaItem, found {:?}", x)
             }
@@ -254,14 +184,14 @@ impl<Mode> OptionsBuilder<Mode> where
     }
 
     #[allow(non_snake_case)]
-    fn parse_setters_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
+    fn parse_setter_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
         trace!("Parsing MetaItem {:?}", meta_item);
         match *meta_item {
             syn::MetaItem::Word(ref ident) => {
-                self.parse_setters_options_word(ident)
+                self.parse_setter_options_word(ident)
             },
             syn::MetaItem::NameValue(ref ident, ref lit) => {
-                self.parse_setters_options_nameValue(ident, lit)
+                self.parse_setter_options_nameValue(ident, lit)
             },
             _ => {
                 panic!("Expected MetaItem::Word/NameValue, found {:?}", meta_item)
@@ -269,8 +199,8 @@ impl<Mode> OptionsBuilder<Mode> where
         }
     }
 
-    /// e.g `owned` in `#[setters(owned)]`
-    fn parse_setters_options_word(&mut self, ident: &syn::Ident) {
+    /// e.g `owned` in `#[setter(owned)]`
+    fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
         trace!("Parsing word {:?}", ident);
         match ident.as_ref() {
             "owned" => {
@@ -294,42 +224,25 @@ impl<Mode> OptionsBuilder<Mode> where
         };
     }
 
-    /// e.g `prefix="with"` in `#[setters(prefix="with")]`
+    /// e.g `prefix="with"` in `#[setter(prefix="with")]`
     #[allow(non_snake_case)]
-    fn parse_setters_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
+    fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value {:?} = {:?}", ident, lit);
         match ident.as_ref() {
             "prefix" => {
-                self.parse_setters_prefix(lit)
+                self.parse_setter_prefix(lit)
             },
-            "option" => {
-                self.parse_setters_implicit_options(lit)
-            }
             _ => {
                 panic!("Unknown option {:?}", ident)
             }
         }
     }
 
-    fn parse_setters_prefix(&mut self, lit: &syn::Lit) {
+    fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
         trace!("Parsing prefix {:?}", lit);
         let value = parse_lit_as_cooked_string(lit);
         debug!("Setting prefix {:?}", value);
         self.setter_prefix = Some(value.clone());
-    }
-
-    fn parse_setters_implicit_options(&mut self, lit: &syn::Lit) {
-        trace!("Parsing implicit options {:?}", lit);
-        let value = parse_lit_as_cooked_string(lit);
-        match value.as_str() {
-            "implicit" => self.setter_implicit_options(true),
-            "explicit" => self.setter_implicit_options(true),
-            _ => panic!("Unknown value {:?}", value),
-        };
-    }
-
-    fn parse_getters_options(&mut self, nested: &[syn::NestedMetaItem]) -> &mut Self {
-        panic!("TODO: parse getter options -> {:?}", nested);
     }
 }
 
