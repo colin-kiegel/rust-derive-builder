@@ -2,9 +2,17 @@
 
 #[allow(dead_code)]
 #[derive(Builder)]
-struct IgnoreEmptyStruct {  }
+struct Foo {
+    lorem: bool
+}
+
+#[allow(dead_code)] 
+#[derive(Builder)]
+struct Bar {
+    ipsum: bool
+}
 
 #[test]
-fn empty_struct() {
+fn multiple_builder_derives() {
     // this is just a compile-test - no run time checks required.
 }

@@ -6,6 +6,12 @@ struct GenLorem<T> {
     pub dolor: T, // generics are a pain, so this field name is fitting
 }
 
+#[derive(Debug, PartialEq, Default, Builder, Clone)]
+struct GenLorem2<T> {
+    ipsum: String,
+    pub dolor: T, // generics are a pain, so this field name is fitting
+}
+
 impl<T: Default> GenLorem<T> {
     pub fn new<V: Into<String>>(value: V) -> Self {
         GenLorem {

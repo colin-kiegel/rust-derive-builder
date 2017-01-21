@@ -213,7 +213,6 @@ extern crate syn;
 extern crate quote;
 #[macro_use]
 extern crate log;
-#[cfg(feature = "logging")]
 extern crate env_logger;
 
 mod options;
@@ -223,11 +222,16 @@ use proc_macro::TokenStream;
 use quote::ToTokens;
 use options::{Options, OptionsBuilder, FieldMode, SetterPattern};
 
+// beware: static muts are not threadsafe. :-)
+static mut LOGGER_INITIALIZED: bool = false;
+
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(setter))]
 pub fn derive(input: TokenStream) -> TokenStream {
-    #[cfg(feature = "logging")]
-    env_logger::init().unwrap();
+    if unsafe { !LOGGER_INITIALIZED } {
+        unsafe { LOGGER_INITIALIZED = true }
+        env_logger::init().unwrap();
+    }
 
     let input = input.to_string();
 
