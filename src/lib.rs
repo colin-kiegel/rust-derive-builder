@@ -221,15 +221,15 @@ use std::borrow::Cow;
 use proc_macro::TokenStream;
 use quote::ToTokens;
 use options::{Options, OptionsBuilder, FieldMode, SetterPattern};
+use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
 // beware: static muts are not threadsafe. :-)
-static mut LOGGER_INITIALIZED: bool = false;
+static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
 
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(setter))]
 pub fn derive(input: TokenStream) -> TokenStream {
-    if unsafe { !LOGGER_INITIALIZED } {
-        unsafe { LOGGER_INITIALIZED = true }
+    if unsafe { !LOGGER_INITIALIZED.compare_and_swap(false, true, Ordering::SeqCst) } {
         env_logger::init().unwrap();
     }
 
