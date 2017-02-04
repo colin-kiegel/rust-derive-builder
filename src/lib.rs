@@ -186,7 +186,7 @@
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[builder(prefix="xyz")` to change the method
+//! You can precede your struct (or field) with e.g. `#[builder(setter_prefix="xyz")` to change the method
 //! name to `xyz_foo` if the field is named `foo`. Note that an underscore is included by default,
 //! since Rust favors snake case here.
 //!

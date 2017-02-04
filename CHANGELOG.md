@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - different setter pattern, e.g. `#[builder(pattern="immutable")]`
 - private setters, e.g. `#[builder(private)]`
 - additional debug info via env_logger, e.g. `RUST_LOG=derive_builder=trace cargo test`
-- prefixes, e.g. `#[builder(prefix="with")]`
+- prefixes, e.g. `#[builder(setter_prefix="with")]`
 - field specific overrides
 
 ### Changed

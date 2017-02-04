@@ -20,7 +20,7 @@ pub struct Options {
     setter_enabled: bool,
     // e.g. `#[builder(pattern="owned")]` (defaults to mutable)
     setter_pattern: SetterPattern,
-    // e.g. `#[builder(prefix="with")]` (defaults to None)
+    // e.g. `#[builder(setter_prefix="with")]` (defaults to None)
     setter_prefix: String,
     // e.g. `#[builder(private)]` (defaults to public)
     setter_public: bool,
@@ -215,12 +215,12 @@ impl<Mode> OptionsBuilder<Mode> where
         };
     }
 
-    /// e.g `prefix="with"` in `#[builder(prefix="with")]`
+    /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`
     #[allow(non_snake_case)]
     fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value {:?} = {:?}", ident, lit);
         match ident.as_ref() {
-            "prefix" => {
+            "setter_prefix" => {
                 self.parse_setter_prefix(lit)
             },
             "pattern" => {
