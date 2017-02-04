@@ -4,9 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- different setter pattern, e.g. `#[setters(immutable)]`
-- private setters, e.g. `#[setters(private)]`
+- different setter pattern, e.g. `#[setter(immutable)]`
+- private setters, e.g. `#[setter(private)]`
 - additional debug info via env_logger, e.g. `RUST_LOG=derive_builder=trace cargo test`
+- prefixes, e.g. `#[setter(prefix="with")]`
+- field specific overrides
 
 ### Changed
 - migration to macros 1.1, please refer to the new docs

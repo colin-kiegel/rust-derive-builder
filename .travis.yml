@@ -25,6 +25,7 @@ before_script: |
   export PATH=$LOCAL/bin:$PATH
 script: |
   travis-cargo build &&
+  travis-cargo test &&
   (cd derive-builder-test && travis-cargo test) &&
   travis-cargo doc
 after_success: |
