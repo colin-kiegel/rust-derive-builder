@@ -90,7 +90,7 @@
 //!
 //! ## Owned, aka Consuming
 //!
-//! Precede your struct (or field) with `#[builder(owned)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern="owned")]` to opt into this pattern.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -100,7 +100,7 @@
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
-//! You can precede your struct (or field) with `#[builder(mutable)]` to make this choice explicit.
+//! You can precede your struct (or field) with `#[builder(pattern="mutable")]` to make this choice explicit.
 //!
 //! * Setters take and return `&mut self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -109,7 +109,7 @@
 //!
 //! ## Immutable
 //!
-//! Precede your struct (or field) with `#[builder(immutable)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern="immutable")]` to opt into this pattern.
 //!
 //! * Setters take and return `&self`.
 //! * PRO: Setter calls and final build method can be chained.

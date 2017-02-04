@@ -18,7 +18,7 @@ impl Default for SetterPattern {
 pub struct Options {
     // e.g. `#[builder]` (defaults to true)
     setter_enabled: bool,
-    // e.g. `#[builder(owned)]` (defaults to mutable)
+    // e.g. `#[builder(pattern="owned")]` (defaults to mutable)
     setter_pattern: SetterPattern,
     // e.g. `#[builder(prefix="with")]` (defaults to None)
     setter_prefix: String,
@@ -199,19 +199,10 @@ impl<Mode> OptionsBuilder<Mode> where
         }
     }
 
-    /// e.g `owned` in `#[builder(owned)]`
+    /// e.g `private` in `#[builder(private)]`
     fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
         trace!("Parsing word {:?}", ident);
         match ident.as_ref() {
-            "owned" => {
-                self.setter_pattern(SetterPattern::Owned)
-            },
-            "mutable" => {
-                self.setter_pattern(SetterPattern::Mutable)
-            },
-            "immutable" => {
-                self.setter_pattern(SetterPattern::Immutable)
-            },
             "public" => {
                 self.setter_public(true)
             },
@@ -232,6 +223,9 @@ impl<Mode> OptionsBuilder<Mode> where
             "prefix" => {
                 self.parse_setter_prefix(lit)
             },
+            "pattern" => {
+                self.parse_setter_pattern(lit)
+            },
             _ => {
                 panic!("Unknown option {:?}", ident)
             }
@@ -243,6 +237,25 @@ impl<Mode> OptionsBuilder<Mode> where
         let value = parse_lit_as_cooked_string(lit);
         debug!("Setting prefix {:?}", value);
         self.setter_prefix = Some(value.clone());
+    }
+
+    fn parse_setter_pattern(&mut self, lit: &syn::Lit) {
+        trace!("Parsing pattern {:?}", lit);
+        let value = parse_lit_as_cooked_string(lit);
+        match value.as_ref() {
+            "owned" => {
+                self.setter_pattern(SetterPattern::Owned)
+            },
+            "mutable" => {
+                self.setter_pattern(SetterPattern::Mutable)
+            },
+            "immutable" => {
+                self.setter_pattern(SetterPattern::Immutable)
+            },
+            _ => {
+                panic!("Unknown option {:?}", value)
+            }
+        };
     }
 }
 

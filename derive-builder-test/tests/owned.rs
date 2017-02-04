@@ -1,7 +1,7 @@
 #[macro_use] extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(owned)]
+#[builder(pattern="owned")]
 struct Lorem {
     ipsum: String,
 }
