@@ -90,7 +90,7 @@
 //!
 //! ## Owned, aka Consuming
 //!
-//! Precede your struct (or field) with `#[setter(owned)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(owned)]` to opt into this pattern.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -100,7 +100,7 @@
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
-//! You can precede your struct (or field) with `#[setter(mutable)]` to make this choice explicit.
+//! You can precede your struct (or field) with `#[builder(mutable)]` to make this choice explicit.
 //!
 //! * Setters take and return `&mut self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -109,7 +109,7 @@
 //!
 //! ## Immutable
 //!
-//! Precede your struct (or field) with `#[setter(immutable)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(immutable)]` to opt into this pattern.
 //!
 //! * Setters take and return `&self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -177,16 +177,16 @@
 //!
 //! ## Setter Visibility
 //!
-//! Setters are public by default. You can precede your struct (or field) with `#[setter(public)]`
+//! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
 //! to make this explicit.
 //!
-//! Otherwise precede your struct (or field) with `#[setter(private)]` to opt into private setters.
+//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private setters.
 //!
 //! ## Setter Prefixes
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[setter(prefix="xyz")` to change the method
+//! You can precede your struct (or field) with e.g. `#[builder(prefix="xyz")` to change the method
 //! name to `xyz_foo` if the field is named `foo`. Note that an underscore is included by default,
 //! since Rust favors snake case here.
 //!
@@ -227,7 +227,7 @@ use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
 
 #[doc(hidden)]
-#[proc_macro_derive(Builder, attributes(setter))]
+#[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(input: TokenStream) -> TokenStream {
     if unsafe { !LOGGER_INITIALIZED.compare_and_swap(false, true, Ordering::SeqCst) } {
         env_logger::init().unwrap();

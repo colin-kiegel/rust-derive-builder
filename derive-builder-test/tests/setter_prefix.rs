@@ -1,10 +1,10 @@
 #[macro_use] extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[setter(prefix="with")]
+#[builder(prefix="with")]
 struct Lorem {
     ipsum: String,
-    #[setter(prefix="set")]
+    #[builder(prefix="set")]
     pub dolor: Option<String>,
 }
 

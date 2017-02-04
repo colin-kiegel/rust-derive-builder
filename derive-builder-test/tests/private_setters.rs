@@ -2,7 +2,7 @@
 
 pub mod foo {
     #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    #[setter(private)]
+    #[builder(private)]
     pub struct Lorem {
         pub ipsum: String,
     }

@@ -16,13 +16,13 @@ impl Default for SetterPattern {
 
 #[derive(Debug, Clone)]
 pub struct Options {
-    // e.g. `#[setter]` (defaults to true)
+    // e.g. `#[builder]` (defaults to true)
     setter_enabled: bool,
-    // e.g. `#[setter(owned)]` (defaults to mutable)
+    // e.g. `#[builder(owned)]` (defaults to mutable)
     setter_pattern: SetterPattern,
-    // e.g. `#[setter(prefix="with")]` (defaults to None)
+    // e.g. `#[builder(prefix="with")]` (defaults to None)
     setter_prefix: String,
-    // e.g. `#[setter(private)]` (defaults to public)
+    // e.g. `#[builder(private)]` (defaults to public)
     setter_public: bool,
 }
 
@@ -151,19 +151,19 @@ impl<Mode> OptionsBuilder<Mode> where
             return
         }
 
-        const SETTER_ATTRIBUTE_IDENT: &'static str = "setter";
+        const BUILDER_ATTRIBUTE_IDENT: &'static str = "builder";
 
-        // e.g. `#[setter]`
+        // e.g. `#[builder]`
         if let syn::MetaItem::Word(ref ident) = attr.value {
-            if ident == SETTER_ATTRIBUTE_IDENT {
+            if ident == BUILDER_ATTRIBUTE_IDENT {
                 self.setter_enabled(true);
                 return
             }
         }
 
-        // e.g. `#[setter(...)]`
+        // e.g. `#[builder(...)]`
         if let syn::MetaItem::List(ref ident, ref nested_attrs) = attr.value {
-            if ident == SETTER_ATTRIBUTE_IDENT {
+            if ident == BUILDER_ATTRIBUTE_IDENT {
                 self.setter_enabled(true);
                 self.parse_setter_options(nested_attrs);
                 return
@@ -199,7 +199,7 @@ impl<Mode> OptionsBuilder<Mode> where
         }
     }
 
-    /// e.g `owned` in `#[setter(owned)]`
+    /// e.g `owned` in `#[builder(owned)]`
     fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
         trace!("Parsing word {:?}", ident);
         match ident.as_ref() {
@@ -224,7 +224,7 @@ impl<Mode> OptionsBuilder<Mode> where
         };
     }
 
-    /// e.g `prefix="with"` in `#[setter(prefix="with")]`
+    /// e.g `prefix="with"` in `#[builder(prefix="with")]`
     #[allow(non_snake_case)]
     fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value {:?} = {:?}", ident, lit);
