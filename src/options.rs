@@ -15,7 +15,15 @@ impl Default for SetterPattern {
 }
 
 #[derive(Debug, Clone)]
-pub struct Options {
+pub struct StructOptions {
+    //
+    builder_name: String,
+    // see below
+    field_defaults: FieldOptions,
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldOptions {
     // e.g. `#[builder]` (defaults to true)
     setter_enabled: bool,
     // e.g. `#[builder(pattern="owned")]` (defaults to mutable)
@@ -26,7 +34,17 @@ pub struct Options {
     setter_public: bool,
 }
 
-impl Options {
+impl StructOptions {
+    pub fn field_defaults(&self) -> &FieldOptions {
+        &self.field_defaults
+    }
+
+    pub fn builder_name(&self) -> &str {
+        &self.builder_name
+    }
+}
+
+impl FieldOptions {
     pub fn setter_enabled(&self) -> bool {
         self.setter_enabled
     }
@@ -48,29 +66,44 @@ impl Options {
     }
 }
 
-impl<'a, T> From<T> for Options where
-    T: IntoIterator<Item=&'a syn::Attribute>
-{
-    fn from(attributes: T) -> Self {
+impl<'a> From<&'a syn::MacroInput> for StructOptions {
+    fn from(ast: &'a syn::MacroInput) -> Self {
         trace!("Parsing struct attributes.");
         let mut builder = OptionsBuilder::<StructMode>::default();
-        builder.parse_attributes(attributes);
+        builder.parse_attributes(&ast.attrs);
+
+        builder.mode.struct_name = ast.ident.as_ref().to_string();
 
         builder.into()
     }
 }
 
-pub trait OptionsBuilderMode {}
+pub trait OptionsBuilderMode {
+    fn parse_builder_name(&mut self, lit: &syn::Lit);
+}
 
 #[derive(Default)]
-pub struct StructMode;
+pub struct StructMode{
+    builder_name: Option<String>,
+    struct_name: String,
+}
 
-impl OptionsBuilderMode for StructMode {}
+impl OptionsBuilderMode for StructMode {
+    fn parse_builder_name(&mut self, lit: &syn::Lit) {
+        trace!("Parsing builder name {:?}", lit);
+        let value = parse_lit_as_cooked_string(lit);
+        self.builder_name = Some(value.clone());
+    }
+}
 
 #[derive(Default)]
 pub struct FieldMode;
 
-impl OptionsBuilderMode for FieldMode {}
+impl OptionsBuilderMode for FieldMode {
+    fn parse_builder_name(&mut self, _: &syn::Lit) {
+        panic!("Builder name can only be set on the stuct level")
+    }
+}
 
 #[derive(Default, Debug)]
 pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
@@ -81,24 +114,30 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     mode: Mode,
 }
 
-impl From<OptionsBuilder<StructMode>> for Options {
-    fn from(b: OptionsBuilder<StructMode>) -> Options {
-        Options {
+impl From<OptionsBuilder<StructMode>> for StructOptions {
+    fn from(b: OptionsBuilder<StructMode>) -> StructOptions {
+        let field_defaults = FieldOptions {
             setter_enabled: b.setter_enabled.unwrap_or(true),
             setter_pattern: b.setter_pattern.unwrap_or_default(),
             setter_prefix: b.setter_prefix.unwrap_or_default(),
             setter_public: b.setter_public.unwrap_or(true),
+        };
+
+        StructOptions {
+            field_defaults: field_defaults,
+            builder_name: b.mode.builder_name.unwrap_or(format!("{}Builder", b.mode.struct_name)),
         }
     }
 }
 
 impl OptionsBuilder<FieldMode> {
-    pub fn with_struct_options<'a>(&self, o: &'a Options) -> Options {
-        Options {
-            setter_enabled: self.setter_enabled.unwrap_or(o.setter_enabled),
-            setter_pattern: self.setter_pattern.clone().unwrap_or(o.setter_pattern.clone()),
-            setter_prefix: self.setter_prefix.clone().unwrap_or(o.setter_prefix.clone()),
-            setter_public: self.setter_public.unwrap_or(o.setter_public),
+    pub fn with_struct_options<'a>(&self, struct_opts: &'a StructOptions) -> FieldOptions {
+        let x = struct_opts.field_defaults();
+        FieldOptions {
+            setter_enabled: self.setter_enabled.unwrap_or(x.setter_enabled),
+            setter_pattern: self.setter_pattern.clone().unwrap_or(x.setter_pattern.clone()),
+            setter_prefix: self.setter_prefix.clone().unwrap_or(x.setter_prefix.clone()),
+            setter_public: self.setter_public.unwrap_or(x.setter_public),
         }
     }
 }
@@ -226,6 +265,9 @@ impl<Mode> OptionsBuilder<Mode> where
             "pattern" => {
                 self.parse_setter_pattern(lit)
             },
+            "name" => {
+                self.mode.parse_builder_name(lit)
+            },
             _ => {
                 panic!("Unknown option {:?}", ident)
             }
@@ -235,7 +277,6 @@ impl<Mode> OptionsBuilder<Mode> where
     fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
         trace!("Parsing prefix {:?}", lit);
         let value = parse_lit_as_cooked_string(lit);
-        debug!("Setting prefix {:?}", value);
         self.setter_prefix = Some(value.clone());
     }
 

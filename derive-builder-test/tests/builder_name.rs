@@ -1,6 +1,7 @@
 #[macro_use] extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
+#[builder(name="MyBuilder")]
 struct Lorem {
     ipsum: String,
     pub dolor: Option<String>,

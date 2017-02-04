@@ -220,7 +220,7 @@ mod options;
 use std::borrow::Cow;
 use proc_macro::TokenStream;
 use quote::ToTokens;
-use options::{Options, OptionsBuilder, FieldMode, SetterPattern};
+use options::{StructOptions, FieldOptions, OptionsBuilder, FieldMode, SetterPattern};
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
 // beware: static muts are not threadsafe. :-)
@@ -271,11 +271,7 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
 
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     debug!("Deriving Builder for '{}'.", ast.ident);
-    let opts = Options::from(&ast.attrs);
-    if !opts.setter_enabled() {
-        trace!("Setters disabled for '{}'.", ast.ident);
-        return quote!();
-    }
+    let opts = StructOptions::from(&ast);
 
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
@@ -313,7 +309,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     }
 }
 
-fn derive_setter(f: &syn::Field, opts: &Options) -> quote::Tokens {
+fn derive_setter(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
     trace!("Deriving setter.");
     let ty = &f.ty;
     let pattern = opts.setter_pattern();
