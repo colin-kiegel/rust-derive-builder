@@ -296,10 +296,6 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let mut initializers   = Vec::<quote::Tokens>::with_capacity(fields.len());
 
     for f in fields {
-        let ident = &f.ident;
-        let vis = &f.vis;
-        let ty = &f.ty;
-        // let attrs = &f.attrs;
         let name = f.ident.as_ref()
             .expect(&format!("Missing identifier for field {:?}.", f))
             .as_ref();
@@ -309,16 +305,20 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             .parse_attributes(&f.attrs)
             .build(name, &opts);
 
-        if f_opts.setter_enabled() {
-            setter_fns.push(derive_setter(f, &f_opts));
-            builder_fields.push(quote!(#vis #ident: Option<#ty>,));
-            initializers.push(derive_initializer(f, &f_opts));
-        } else {
-            trace!("Skipping setter for {}.", name);
-            trace!("Skipping builder field for {}.", name);
-            trace!("Fallback to default initializer for {}.", name);
-            initializers.push(quote!( #ident: default::Default(), ));
-        }
+        trace!("Filtering field attributes");
+        let attrs: Vec<&syn::Attribute> = f.attrs.iter()
+            .filter(|a| {
+                let keep = filter_attr(a);
+                match keep {
+                    true => trace!("Keeping field attribute for builder field and setter {:?}", a),
+                    false => trace!("Ignoring field attribute for builder field and setter {:?}", a)
+                }
+                keep
+            }).collect();
+
+        setter_fns.push(derive_setter(f, &f_opts, &attrs));
+        builder_fields.push(derive_builder_field(f, &f_opts, &attrs));
+        initializers.push(derive_initializer(f, &f_opts));
         // NOTE: Looking forward for computation in interpolation
         // - https://github.com/dtolnay/quote/issues/10
         // => `quote!(#{f.vis} ...)
@@ -356,6 +356,19 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     }
 }
 
+fn derive_builder_field(f: &syn::Field, opts: &FieldOptions, attrs: &Vec<&syn::Attribute>) -> quote::Tokens {
+    if opts.setter_enabled() {
+        trace!("Deriving builder field for {}.", opts.field_name());
+        let vis = &f.vis;
+        let ident = &f.ident;
+        let ty = &f.ty;
+        quote!(#(#attrs)* #vis #ident: Option<#ty>,)
+    } else {
+        trace!("Skipping builder field for {}.", opts.field_name());
+        quote!()
+    }
+}
+
 fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
     trace!("Deriving initializer for {}.", opts.field_name());
 
@@ -364,69 +377,68 @@ fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
     let ident = &f.ident;
     // let attrs = &f.attrs;
 
-    let initializer = match *pattern {
-        SetterPattern::Owned => quote!(
-                #ident: self.#ident.ok_or(#err_uninitizalied)?,
-            ),
-        SetterPattern::Mutable
-        | SetterPattern::Immutable => quote!(
-                #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
-            ),
-    };
+    if opts.setter_enabled() {
+        let initializer = match *pattern {
+            SetterPattern::Owned => quote!(
+                    #ident: self.#ident.ok_or(#err_uninitizalied)?,
+                ),
+            SetterPattern::Mutable
+            | SetterPattern::Immutable => quote!(
+                    #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
+                ),
+        };
 
-    debug!("Initializer is {:?}", initializer);
+        debug!("Initializer is {:?}", initializer);
 
-    initializer
+        initializer
+    } else {
+        trace!("Fallback to default initializer for {}.", opts.field_name());
+        quote!( #ident: default::Default(), )
+    }
 }
 
-fn derive_setter(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
-    trace!("Deriving setter for {:?}.", opts.field_name());
-    let ty = &f.ty;
-    let pattern = opts.setter_pattern();
-    let vis = opts.setter_visibility();
-    let fieldname = f.ident.as_ref().expect(&format!("Missing identifier for field {:?}.", f));
-    let funcname = if opts.setter_prefix().len() > 0 {
-        Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
+fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &Vec<&syn::Attribute>) -> quote::Tokens {
+    if opts.setter_enabled() {
+        trace!("Deriving setter for {:?}.", opts.field_name());
+        let ty = &f.ty;
+        let pattern = opts.setter_pattern();
+        let vis = opts.setter_visibility();
+        let fieldname = f.ident.as_ref().expect(&format!("Missing identifier for field {:?}.", f));
+        let funcname = if opts.setter_prefix().len() > 0 {
+            Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
+        } else {
+            Cow::Borrowed(fieldname)
+        };
+
+        let setter = match *pattern {
+            SetterPattern::Owned => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
+                        let mut new = self;
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+            SetterPattern::Mutable => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                        let mut new = self;
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+            SetterPattern::Immutable => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
+                        let mut new = Clone::clone(self);
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+        };
+
+        debug!("Setter is {:?}", setter);
+
+        setter
     } else {
-        Cow::Borrowed(fieldname)
-    };
-
-    trace!("Filtering field attributes");
-    let attrs = f.attrs.iter()
-        .filter(|a| {
-            let keep = filter_attr(a);
-            match keep {
-                true => trace!("Keeping field attribute for setter {:?}", a),
-                false => trace!("Ignoring field attribute {:?}", a)
-            }
-            keep
-        });
-
-    let setter = match *pattern {
-        SetterPattern::Owned => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
-                    let mut new = self;
-                    new.#fieldname = Some(value.into());
-                    new
-            }),
-        SetterPattern::Mutable => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
-                    let mut new = self;
-                    new.#fieldname = Some(value.into());
-                    new
-            }),
-        SetterPattern::Immutable => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
-                    let mut new = Clone::clone(self);
-                    new.#fieldname = Some(value.into());
-                    new
-            }),
-    };
-
-    debug!("Setter is {:?}", setter);
-
-    setter
+        trace!("Skipping setter for {}.", opts.field_name());
+        quote!()
+    }
 }
