@@ -215,7 +215,6 @@ mod options;
 
 use std::borrow::Cow;
 use proc_macro::TokenStream;
-use quote::ToTokens;
 use options::{StructOptions, FieldOptions, OptionsBuilder, FieldMode, SetterPattern};
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
@@ -278,7 +277,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let builder_name = syn::Ident::from(opts.builder_name());
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    let mut funcs          = Vec::<quote::Tokens>::with_capacity(fields.len());
+    let mut setter_fns     = Vec::<quote::Tokens>::with_capacity(fields.len());
     let mut builder_fields = Vec::<quote::Tokens>::with_capacity(fields.len());
     let mut initializers   = Vec::<quote::Tokens>::with_capacity(fields.len());
 
@@ -296,51 +295,36 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             .parse_attributes(&f.attrs)
             .build(name, &opts);
 
-        // Setter
         if f_opts.setter_enabled() {
-            let mut tokens = quote::Tokens::new();
-            derive_setter(f, &f_opts).to_tokens(&mut tokens);
-            funcs.push(tokens);
-        } else {
-            trace!("Skipping setter for {}.", name);
-        }
-
-        // Initializer
-        if f_opts.setter_enabled() {
-            // let mut tokens = quote::Tokens::new();
-            // derive_initializer(f, &f_opts).to_tokens(&mut tokens);
+            setter_fns.push(derive_setter(f, &f_opts));
+            builder_fields.push(quote!(#vis #ident: Option<#ty>,));
             initializers.push(derive_initializer(f, &f_opts));
         } else {
+            trace!("Skipping setter for {}.", name);
+            trace!("Skipping builder field for {}.", name);
             trace!("Fallback to default initializer for {}.", name);
             initializers.push(quote!( #ident: default::Default(), ));
         }
-
-        // builder fields
-        if f_opts.setter_enabled() {
-            builder_fields.push(quote!(#vis #ident: Option<#ty>,));
-        } else {
-            trace!("Skipping builder field for {}.", name);
-        };
         // NOTE: Looking forward for computation in interpolation
         // - https://github.com/dtolnay/quote/issues/10
         // => `quote!(#{f.vis} ...)
     }
 
-    let ref_self = match *opts.field_defaults().setter_pattern() {
-        SetterPattern::Owned => quote!(self),
-        SetterPattern::Mutable => quote!(&self),
-        SetterPattern::Immutable => quote!(&self),
-    };
-    debug!("{:?}", ref_self);
-    let build = quote!(
-        fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
-            Ok(#struct_name{
-                #(#initializers)*
-            })
-        }
-    );
-
     let builder_vis = opts.builder_visibility();
+    let build_fn = {
+        let ref_self = match *opts.field_defaults().setter_pattern() {
+            SetterPattern::Owned => quote!(self),
+            SetterPattern::Mutable => quote!(&self),
+            SetterPattern::Immutable => quote!(&self),
+        };
+        quote!(
+            #builder_vis fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
+                Ok(#struct_name{
+                    #(#initializers)*
+                })
+            }
+        )
+    };
 
     // We need to `#[derive(Clone)]` only for the immutable builder pattern
     quote! {
@@ -351,9 +335,9 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
         #[allow(dead_code)]
         impl #impl_generics #builder_name #ty_generics #where_clause {
-            #(#funcs)*
+            #(#setter_fns)*
 
-            #builder_vis #build
+            #build_fn
         }
     }
 }

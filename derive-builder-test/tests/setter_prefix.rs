@@ -1,4 +1,5 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(setter_prefix="with")]
@@ -16,5 +17,9 @@ fn prefixed_setters() {
         .build()
         .unwrap();
 
-    assert_eq!(x, Lorem { ipsum: "ipsum".into(), dolor: Some("dolor".into())});
+    assert_eq!(x,
+               Lorem {
+                   ipsum: "ipsum".into(),
+                   dolor: Some("dolor".into()),
+               });
 }

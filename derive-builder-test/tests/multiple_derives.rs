@@ -1,15 +1,16 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[allow(dead_code)]
 #[derive(Builder)]
 struct Foo {
-    lorem: bool
+    lorem: bool,
 }
 
-#[allow(dead_code)] 
+#[allow(dead_code)]
 #[derive(Builder)]
 struct Bar {
-    ipsum: bool
+    ipsum: bool,
 }
 
 #[test]

@@ -1,4 +1,5 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 pub mod foo {
     #[derive(Debug, PartialEq, Default, Builder, Clone)]
@@ -25,7 +26,11 @@ pub mod foo {
             .build()
             .unwrap();
 
-        assert_eq!(x, Lorem { public: "Hello".into(), private: "world!".into() });
+        assert_eq!(x,
+                   Lorem {
+                       public: "Hello".into(),
+                       private: "world!".into(),
+                   });
 
         let y = IpsumBuilder::default()
             .public("Hello")
@@ -33,7 +38,11 @@ pub mod foo {
             .build()
             .unwrap();
 
-        assert_eq!(y, Ipsum { public: "Hello".into(), private: "world!".into() });
+        assert_eq!(y,
+                   Ipsum {
+                       public: "Hello".into(),
+                       private: "world!".into(),
+                   });
     }
 }
 
@@ -45,7 +54,7 @@ fn public_setters_override_foreign_module() {
         .build()
         .unwrap();
 
-    assert_eq!(x.public, String::from("Hello") );
+    assert_eq!(x.public, String::from("Hello"));
 }
 
 #[test]
@@ -56,7 +65,7 @@ fn public_setters_foreign_module() {
         .build()
         .unwrap();
 
-    assert_eq!(y.public, String::from("Hello") );
+    assert_eq!(y.public, String::from("Hello"));
 }
 
 // compile-test should fail with "error: method `ipsum` is private"

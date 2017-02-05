@@ -1,4 +1,5 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(name="MyBuilder")]
@@ -17,7 +18,7 @@ fn panic_if_uninitialized() {
 
 #[test]
 fn builder() {
-    let x : Lorem = MyBuilder::default()
+    let x: Lorem = MyBuilder::default()
         .ipsum("lorem")
         .dolor(Some("dolor".into()))
         .sit(42)
@@ -25,5 +26,11 @@ fn builder() {
         .build()
         .unwrap();
 
-    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: Some("dolor".into()), sit: 42, amet: true, });
+    assert_eq!(x,
+               Lorem {
+                   ipsum: "lorem".into(),
+                   dolor: Some("dolor".into()),
+                   sit: 42,
+                   amet: true,
+               });
 }

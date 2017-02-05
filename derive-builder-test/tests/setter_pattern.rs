@@ -1,4 +1,5 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(pattern="immutable")]
@@ -53,37 +54,35 @@ fn mutable() {
     assert_eq!(old.mutable, Some(42));
 }
 
-// NOTE: These kinds of overrides probably don't make sense!
-// #[test]
-// fn mutable_override() {
-//     // the setter must have the correct signature
-//     let mutable_setter: MutableSetter<LoremBuilder, u32> = LoremBuilder::mutable_override;
-//
-//     let mut old = LoremBuilder::default();
-//     mutable_setter(&mut old, 42);
-//     assert_eq!(old.mutable_override, Some(42));
-// }
+#[test]
+fn mutable_override() {
+    // the setter must have the correct signature
+    let mutable_setter: MutableSetter<LoremBuilder, u32> = LoremBuilder::mutable_override;
+
+    let mut old = LoremBuilder::default();
+    mutable_setter(&mut old, 42);
+    assert_eq!(old.mutable_override, Some(42));
+}
 
 #[test]
 fn immutable() {
     // the setter must have the correct signature
-    let immutable_setter : ImmutableSetter<LoremBuilder, u32> = LoremBuilder::immutable;
+    let immutable_setter: ImmutableSetter<LoremBuilder, u32> = LoremBuilder::immutable;
 
     let old = LoremBuilder::default();
     let new = immutable_setter(&old, 42);
     assert_eq!(new.immutable, Some(42));
 }
 
-// NOTE: These kinds of overrides probably don't make sense!
-// #[test]
-// fn immutable_override() {
-//     // the setter must have the correct signature
-//     let immutable_setter: ImmutableSetter<DolorBuilder, u32> = DolorBuilder::immutable_override;
-//
-//     let old = DolorBuilder::default();
-//     let new = immutable_setter(&old, 42);
-//     assert_eq!(new.immutable_override, Some(42));
-// }
+#[test]
+fn immutable_override() {
+    // the setter must have the correct signature
+    let immutable_setter: ImmutableSetter<DolorBuilder, u32> = DolorBuilder::immutable_override;
+
+    let old = DolorBuilder::default();
+    let new = immutable_setter(&old, 42);
+    assert_eq!(new.immutable_override, Some(42));
+}
 
 #[test]
 fn owned() {
@@ -95,13 +94,12 @@ fn owned() {
     assert_eq!(new.owned, Some(42));
 }
 
-// NOTE: These kinds of overrides probably don't make sense!
-// #[test]
-// fn owned_override() {
-//     // the setter must have the correct signature
-//     let owned_setter: OwnedSetter<IpsumBuilder, u32> = IpsumBuilder::owned_override;
-//
-//     let old = IpsumBuilder::default();
-//     let new = owned_setter(old, 42);
-//     assert_eq!(new.owned_override, Some(42));
-// }
+#[test]
+fn owned_override() {
+    // the setter must have the correct signature
+    let owned_setter: OwnedSetter<IpsumBuilder, u32> = IpsumBuilder::owned_override;
+
+    let old = IpsumBuilder::default();
+    let new = owned_setter(old, 42);
+    assert_eq!(new.owned_override, Some(42));
+}

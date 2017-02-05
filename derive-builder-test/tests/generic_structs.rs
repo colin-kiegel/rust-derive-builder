@@ -1,16 +1,17 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem<T> where
-    T: std::clone::Clone
+struct GenLorem<T>
+    where T: std::clone::Clone
 {
     ipsum: String,
     pub dolor: T,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem2<T> where
-    T: std::clone::Clone
+struct GenLorem2<T>
+    where T: std::clone::Clone
 {
     ipsum: String,
     pub dolor: T,
@@ -30,5 +31,9 @@ fn builder() {
         .build()
         .unwrap();
 
-    assert_eq!(x, GenLorem { ipsum: "GenLorem".into(), dolor: true, });
+    assert_eq!(x,
+               GenLorem {
+                   ipsum: "GenLorem".into(),
+                   dolor: true,
+               });
 }
