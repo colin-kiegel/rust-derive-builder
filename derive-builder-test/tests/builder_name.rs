@@ -9,29 +9,21 @@ struct Lorem {
     amet: bool,
 }
 
-impl Lorem {
-    pub fn new<T: Into<String>>(value: T) -> Self {
-        Lorem {
-            ipsum: value.into(),
-            ..Default::default()
-        }
-    }
+#[test]
+#[should_panic(expected = "ipsum must be initialized")]
+fn panic_if_uninitialized() {
+    MyBuilder::default().build().unwrap();
 }
 
 #[test]
-fn contructor_sanity_check() {
-    let x = Lorem::new("lorem");
-
-    assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: None, sit: 0, amet: false, });
-}
-
-#[test]
-fn setters() {
-    let x = Lorem::new("lorem")
+fn builder() {
+    let x : Lorem = MyBuilder::default()
+        .ipsum("lorem")
         .dolor(Some("dolor".into()))
         .sit(42)
         .amet(true)
-        .clone();
+        .build()
+        .unwrap();
 
     assert_eq!(x, Lorem { ipsum: "lorem".into(), dolor: Some("dolor".into()), sit: 42, amet: true, });
 }

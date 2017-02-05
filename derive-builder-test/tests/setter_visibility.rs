@@ -19,33 +19,42 @@ pub mod foo {
 
     #[test]
     fn setters_same_module() {
-        let x = Lorem::default()
+        let x = LoremBuilder::default()
             .public("Hello")
             .private("world!")
-            .clone();
+            .build()
+            .unwrap();
 
         assert_eq!(x, Lorem { public: "Hello".into(), private: "world!".into() });
 
-        let y = Ipsum::default()
+        let y = IpsumBuilder::default()
             .public("Hello")
             .private("world!")
-            .clone();
+            .build()
+            .unwrap();
 
         assert_eq!(y, Ipsum { public: "Hello".into(), private: "world!".into() });
     }
 }
 
 #[test]
-fn public_setters_foreign_module() {
-    let x = foo::Lorem::default()
+#[should_panic(expected="private must be initialized")]
+fn public_setters_override_foreign_module() {
+    let x = foo::LoremBuilder::default()
         .public("Hello")
-        .clone();
+        .build()
+        .unwrap();
 
     assert_eq!(x.public, String::from("Hello") );
+}
 
-    let y = foo::Ipsum::default()
+#[test]
+#[should_panic(expected="private must be initialized")]
+fn public_setters_foreign_module() {
+    let y = foo::IpsumBuilder::default()
         .public("Hello")
-        .clone();
+        .build()
+        .unwrap();
 
     assert_eq!(y.public, String::from("Hello") );
 }

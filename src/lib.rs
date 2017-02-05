@@ -237,9 +237,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let ast = syn::parse_macro_input(&input).expect("Couldn't parse item");
 
-    let result = builder_for_struct(ast);
+    let result = builder_for_struct(ast).to_string();
 
-    format!("{}", result).parse().expect("Couldn't parse string to tokens")
+    result.parse().expect(&format!("Couldn't parse {:?} to tokens", result))
 }
 
 fn filter_attr(attr: &&syn::Attribute) -> bool {
@@ -278,39 +278,115 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         _ => panic!("#[derive(Builder)] can only be used with braced structs"),
     };
 
-    let name = &ast.ident;
+    let struct_name = &ast.ident;
+    let builder_name = syn::Ident::from(opts.builder_name());
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-    let funcs = fields.iter().map(|f| {
 
-        trace!("Parsing field {:?}.", f.ident.as_ref().map(|i| i.as_ref()).unwrap_or_default());
+    let mut funcs          = Vec::<quote::Tokens>::with_capacity(fields.len());
+    let mut builder_fields = Vec::<quote::Tokens>::with_capacity(fields.len());
+    let mut initializers   = Vec::<quote::Tokens>::with_capacity(fields.len());
+
+    for f in fields {
+        let ident = &f.ident;
+        let vis = &f.vis;
+        let ty = &f.ty;
+        // let attrs = &f.attrs;
+        let name = f.ident.as_ref()
+            .expect(&format!("Missing identifier for field {:?}.", f))
+            .as_ref();
+        trace!("Parsing field {}.", name);
 
         let f_opts = OptionsBuilder::<FieldMode>::default()
             .parse_attributes(&f.attrs)
-            .with_struct_options(&opts);
+            .build(name, &opts);
 
-        debug!("Setter prefix is {:?}", f_opts.setter_prefix());
-
-        let mut tokens = quote::Tokens::new();
-
+        // Setter
         if f_opts.setter_enabled() {
+            let mut tokens = quote::Tokens::new();
             derive_setter(f, &f_opts).to_tokens(&mut tokens);
+            funcs.push(tokens);
         } else {
-            trace!("Skipping setter.");
+            trace!("Skipping setter for {}.", name);
         }
 
-        tokens
-    });
+        // Initializer
+        if f_opts.setter_enabled() {
+            // let mut tokens = quote::Tokens::new();
+            // derive_initializer(f, &f_opts).to_tokens(&mut tokens);
+            initializers.push(derive_initializer(f, &f_opts));
+        } else {
+            trace!("Fallback to default initializer for {}.", name);
+            initializers.push(quote!( #ident: default::Default(), ));
+        }
 
+        // builder fields
+        if f_opts.setter_enabled() {
+            builder_fields.push(quote!(#vis #ident: Option<#ty>,));
+        } else {
+            trace!("Skipping builder field for {}.", name);
+        };
+        // NOTE: Looking forward for computation in interpolation
+        // - https://github.com/dtolnay/quote/issues/10
+        // => `quote!(#{f.vis} ...)
+    }
+
+    let ref_self = match *opts.field_defaults().setter_pattern() {
+        SetterPattern::Owned => quote!(self),
+        SetterPattern::Mutable => quote!(&self),
+        SetterPattern::Immutable => quote!(&self),
+    };
+    debug!("{:?}", ref_self);
+    let build = quote!(
+        fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
+            Ok(#struct_name{
+                #(#initializers)*
+            })
+        }
+    );
+
+    let builder_vis = opts.builder_visibility();
+
+    // We need to `#[derive(Clone)]` only for the immutable builder pattern
     quote! {
+        #[derive(Default, Clone)]
+        #builder_vis struct #builder_name #ty_generics #where_clause {
+            #(#builder_fields)*
+        }
+
         #[allow(dead_code)]
-        impl #impl_generics #name #ty_generics #where_clause {
+        impl #impl_generics #builder_name #ty_generics #where_clause {
             #(#funcs)*
+
+            #builder_vis #build
         }
     }
 }
 
+fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
+    trace!("Deriving initializer for {}.", opts.field_name());
+
+    let err_uninitizalied = format!("{} must be initialized", opts.field_name());
+    let pattern = opts.setter_pattern();
+    let ident = &f.ident;
+    // let attrs = &f.attrs;
+
+    let initializer = match *pattern {
+        SetterPattern::Owned => quote!(
+                #ident: self.#ident.ok_or(#err_uninitizalied)?,
+            ),
+        SetterPattern::Mutable
+        | SetterPattern::Immutable => quote!(
+                #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
+            ),
+    };
+
+    debug!("Initializer is {:?}", initializer);
+
+    initializer
+}
+
 fn derive_setter(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
-    trace!("Deriving setter.");
+    trace!("Deriving setter for {:?}.", opts.field_name());
     let ty = &f.ty;
     let pattern = opts.setter_pattern();
     let vis = opts.setter_visibility();
@@ -337,21 +413,21 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
                 #(#attrs)*
                 #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
                     let mut new = self;
-                    new.#fieldname = value.into();
+                    new.#fieldname = Some(value.into());
                     new
             }),
         SetterPattern::Mutable => quote!(
                 #(#attrs)*
                 #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
                     let mut new = self;
-                    new.#fieldname = value.into();
+                    new.#fieldname = Some(value.into());
                     new
             }),
         SetterPattern::Immutable => quote!(
                 #(#attrs)*
                 #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
-                    let mut new = self.clone();
-                    new.#fieldname = value.into();
+                    let mut new = Clone::clone(self);
+                    new.#fieldname = Some(value.into());
                     new
             }),
     };

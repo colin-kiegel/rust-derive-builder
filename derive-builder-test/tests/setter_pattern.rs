@@ -36,69 +36,72 @@ type MutableSetter<T, U> = fn(&mut T, U) -> &mut T;
 #[test]
 fn mutable_by_default() {
     // the setter must have the correct signature
-    let mutable_setter: MutableSetter<Sit, u32> = Sit::default;
+    let mutable_setter: MutableSetter<SitBuilder, u32> = SitBuilder::default;
 
-    let mut old = <Sit as Default>::default();
+    let mut old = <SitBuilder as Default>::default();
     mutable_setter(&mut old, 42);
-    assert_eq!(old.default, 42);
+    assert_eq!(old.default, Some(42));
 }
 
 #[test]
 fn mutable() {
     // the setter must have the correct signature
-    let mutable_setter: MutableSetter<Ipsum, u32> = Ipsum::mutable;
+    let mutable_setter: MutableSetter<IpsumBuilder, u32> = IpsumBuilder::mutable;
 
-    let mut old = Ipsum::default();
+    let mut old = IpsumBuilder::default();
     mutable_setter(&mut old, 42);
-    assert_eq!(old.mutable, 42);
+    assert_eq!(old.mutable, Some(42));
 }
 
-#[test]
-fn mutable_override() {
-    // the setter must have the correct signature
-    let mutable_setter: MutableSetter<Lorem, u32> = Lorem::mutable_override;
-
-    let mut old = Lorem::default();
-    mutable_setter(&mut old, 42);
-    assert_eq!(old.mutable_override, 42);
-}
+// NOTE: These kinds of overrides probably don't make sense!
+// #[test]
+// fn mutable_override() {
+//     // the setter must have the correct signature
+//     let mutable_setter: MutableSetter<LoremBuilder, u32> = LoremBuilder::mutable_override;
+//
+//     let mut old = LoremBuilder::default();
+//     mutable_setter(&mut old, 42);
+//     assert_eq!(old.mutable_override, Some(42));
+// }
 
 #[test]
 fn immutable() {
     // the setter must have the correct signature
-    let immutable_setter: ImmutableSetter<Lorem, u32> = Lorem::immutable;
+    let immutable_setter : ImmutableSetter<LoremBuilder, u32> = LoremBuilder::immutable;
 
-    let old = Lorem::default();
+    let old = LoremBuilder::default();
     let new = immutable_setter(&old, 42);
-    assert_eq!(new.immutable, 42);
+    assert_eq!(new.immutable, Some(42));
 }
 
-#[test]
-fn immutable_override() {
-    // the setter must have the correct signature
-    let immutable_setter: ImmutableSetter<Dolor, u32> = Dolor::immutable_override;
-
-    let old = Dolor::default();
-    let new = immutable_setter(&old, 42);
-    assert_eq!(new.immutable_override, 42);
-}
+// NOTE: These kinds of overrides probably don't make sense!
+// #[test]
+// fn immutable_override() {
+//     // the setter must have the correct signature
+//     let immutable_setter: ImmutableSetter<DolorBuilder, u32> = DolorBuilder::immutable_override;
+//
+//     let old = DolorBuilder::default();
+//     let new = immutable_setter(&old, 42);
+//     assert_eq!(new.immutable_override, Some(42));
+// }
 
 #[test]
 fn owned() {
     // the setter must have the correct signature
-    let owned_setter: OwnedSetter<Dolor, u32> = Dolor::owned;
+    let owned_setter: OwnedSetter<DolorBuilder, u32> = DolorBuilder::owned;
 
-    let old = Dolor::default();
+    let old = DolorBuilder::default();
     let new = owned_setter(old, 42);
-    assert_eq!(new.owned, 42);
+    assert_eq!(new.owned, Some(42));
 }
 
-#[test]
-fn owned_override() {
-    // the setter must have the correct signature
-    let owned_setter: OwnedSetter<Ipsum, u32> = Ipsum::owned_override;
-
-    let old = Ipsum::default();
-    let new = owned_setter(old, 42);
-    assert_eq!(new.owned_override, 42);
-}
+// NOTE: These kinds of overrides probably don't make sense!
+// #[test]
+// fn owned_override() {
+//     // the setter must have the correct signature
+//     let owned_setter: OwnedSetter<IpsumBuilder, u32> = IpsumBuilder::owned_override;
+//
+//     let old = IpsumBuilder::default();
+//     let new = owned_setter(old, 42);
+//     assert_eq!(new.owned_override, Some(42));
+// }

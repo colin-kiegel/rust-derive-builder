@@ -10,10 +10,11 @@ struct Lorem {
 
 #[test]
 fn prefixed_setters() {
-    let x = Lorem::default()
+    let x = LoremBuilder::default()
         .with_ipsum("ipsum")
         .set_dolor(Some("dolor".into()))
-        .clone();
+        .build()
+        .unwrap();
 
     assert_eq!(x, Lorem { ipsum: "ipsum".into(), dolor: Some("dolor".into())});
 }

@@ -1,5 +1,4 @@
 use syn;
-use quote;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum SetterPattern {
@@ -16,8 +15,10 @@ impl Default for SetterPattern {
 
 #[derive(Debug, Clone)]
 pub struct StructOptions {
-    //
+    // defaults to format!("{}Builder", struct_name)
     builder_name: String,
+    // defaults to struct_vis
+    builder_vis: syn::Visibility,
     // see below
     field_defaults: FieldOptions,
 }
@@ -31,12 +32,18 @@ pub struct FieldOptions {
     // e.g. `#[builder(setter_prefix="with")]` (defaults to None)
     setter_prefix: String,
     // e.g. `#[builder(private)]` (defaults to public)
-    setter_public: bool,
+    setter_vis: syn::Visibility,
+    // the _original_ field name
+    field_name: String,
 }
 
 impl StructOptions {
     pub fn field_defaults(&self) -> &FieldOptions {
         &self.field_defaults
+    }
+
+    pub fn builder_visibility(&self) -> &syn::Visibility {
+        &self.builder_vis
     }
 
     pub fn builder_name(&self) -> &str {
@@ -53,16 +60,16 @@ impl FieldOptions {
         &self.setter_pattern
     }
 
-    pub fn setter_visibility(&self) -> Option<quote::Tokens> {
-        if self.setter_public {
-            Some(quote!(pub))
-        } else {
-            None
-        }
+    pub fn setter_visibility(&self) -> &syn::Visibility {
+        &self.setter_vis
     }
 
     pub fn setter_prefix(&self) -> &str {
         &self.setter_prefix
+    }
+
+    pub fn field_name(&self) -> &str {
+        &self.field_name
     }
 }
 
@@ -73,6 +80,7 @@ impl<'a> From<&'a syn::MacroInput> for StructOptions {
         builder.parse_attributes(&ast.attrs);
 
         builder.mode.struct_name = ast.ident.as_ref().to_string();
+        builder.mode.struct_vis = Some(ast.vis.clone());
 
         builder.into()
     }
@@ -85,7 +93,9 @@ pub trait OptionsBuilderMode {
 #[derive(Default)]
 pub struct StructMode{
     builder_name: Option<String>,
+    builder_vis: Option<syn::Visibility>,
     struct_name: String,
+    struct_vis: Option<syn::Visibility>,
 }
 
 impl OptionsBuilderMode for StructMode {
@@ -110,7 +120,7 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     setter_enabled: Option<bool>,
     setter_pattern: Option<SetterPattern>,
     setter_prefix: Option<String>,
-    setter_public: Option<bool>,
+    setter_vis: Option<syn::Visibility>,
     mode: Mode,
 }
 
@@ -120,24 +130,31 @@ impl From<OptionsBuilder<StructMode>> for StructOptions {
             setter_enabled: b.setter_enabled.unwrap_or(true),
             setter_pattern: b.setter_pattern.unwrap_or_default(),
             setter_prefix: b.setter_prefix.unwrap_or_default(),
-            setter_public: b.setter_public.unwrap_or(true),
+            setter_vis: b.setter_vis.unwrap_or(syn::Visibility::Public),
+            field_name: String::from(""),
         };
 
         StructOptions {
             field_defaults: field_defaults,
             builder_name: b.mode.builder_name.unwrap_or(format!("{}Builder", b.mode.struct_name)),
+            builder_vis: b.mode.builder_vis.unwrap_or(
+                b.mode.struct_vis.expect("struct visibility must be initialized")
+            )
         }
     }
 }
 
 impl OptionsBuilder<FieldMode> {
-    pub fn with_struct_options<'a>(&self, struct_opts: &'a StructOptions) -> FieldOptions {
+    pub fn build<'a, T>(&self, name: T, struct_opts: &'a StructOptions) -> FieldOptions where
+        T: Into<String>
+    {
         let x = struct_opts.field_defaults();
         FieldOptions {
             setter_enabled: self.setter_enabled.unwrap_or(x.setter_enabled),
             setter_pattern: self.setter_pattern.clone().unwrap_or(x.setter_pattern.clone()),
             setter_prefix: self.setter_prefix.clone().unwrap_or(x.setter_prefix.clone()),
-            setter_public: self.setter_public.unwrap_or(x.setter_public),
+            setter_vis: self.setter_vis.as_ref().unwrap_or(&x.setter_vis).clone(),
+            field_name: name.into(),
         }
     }
 }
@@ -164,11 +181,11 @@ impl<Mode> OptionsBuilder<Mode> where
     }
 
     fn setter_public(&mut self, x: bool) -> &mut Self {
-        if self.setter_public.is_some() {
+        if self.setter_vis.is_some() {
             warn!("Setter visibility already defined as {:?}, new value is {:?}.",
-                self.setter_public, x);
+                self.setter_vis, x);
         }
-        self.setter_public = Some(x);
+        self.setter_vis = Some(syn::Visibility::Public);
         self
     }
 
