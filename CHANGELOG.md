@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - migration to macros 1.1
 - migration to traditional builder pattern
+  i.e. seperate `FooBuilder` struct to build `Foo`
 => please refer to the new docs
 
 ### Fixed

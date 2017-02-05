@@ -3,13 +3,13 @@
 [![Latest Version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
 [![Documentation](https://docs.rs/derive_builder/badge.svg)](https://docs.rs/derive_builder)
 
-# Builder pattern derive
+# Builder Pattern Derive
 
 [Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate a `FooBuilder` for your struct `Foo` with all setter-methods and a build method.
 
 **This requires Rust 1.15, due to the usage of Macros 1.1.**
 
-And this is how it works:
+## How it Works
 
 ```rust
 #[macro_use]
@@ -102,7 +102,7 @@ This is a work in progress. So expect even more features in the future. :-)
 
 ## [Documentation][doc]
 
-The builder pattern is explained [here][builder-pattern], including its variants.
+Detailed explaination of all features and tips for troubleshooting. You'll also find a discussion of different builder patterns.
 
 [doc]: https://colin-kiegel.github.io/rust-derive-builder
 [rust]: https://www.rust-lang.org/
