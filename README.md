@@ -37,7 +37,7 @@ Note that we did not write any definition or implementation of `ChannelBuilder`.
 
 This is the generated boilerplate code you didn't need to write. :-)
 
-```rust
+```rust,ignore
 #[derive(Clone, Default)]
 struct ChannelBuilder {
     token: Option<i32>,
@@ -60,7 +60,7 @@ impl ChannelBuilder {
         Ok(Channel {
             token: Clone::clone(self.token
                 .as_ref()
-                .ok_or(// builder pattern, go, go, go!...
+                .ok_or(
                        "token must be initialized")?),
             special_info: Clone::clone(self.special_info
                 .as_ref()

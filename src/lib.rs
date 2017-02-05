@@ -25,7 +25,15 @@
 //!
 //! ## What you get
 //!
-//! ```rust,ignore
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! # struct Lorem {
+//! #     ipsum: String,
+//! # }
+//! # fn main() {}
+//!
 //! #[derive(Clone, Default)]
 //! struct LoremBuilder {
 //!     ipsum: Option<String>,
@@ -61,20 +69,31 @@
 //!
 //! Let's look again at the example above. You can build structs like this:
 //!
-//! ```rust,ignore
-//! let x: Lorem = LoremBuilder::default().ipsum("42").build()?
+//! ```rust
+//! # #[macro_use] extern crate derive_builder;
+//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # fn try_main() -> Result<(), String> {
+//! let x: Lorem = LoremBuilder::default().ipsum("42").build()?;
+//! # Ok(())
+//! # } fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! Ok, _chaining_ method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
 //!
 //! So let's make this call conditional
 //!
-//! ```rust,ignore
+//! ```rust
+//! # #[macro_use] extern crate derive_builder;
+//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # fn try_main() -> Result<(), String> {
+//! # let geek = true;
 //! let mut builder = LoremBuilder::default();
 //! if geek {
 //!     builder.ipsum("42");
 //! }
 //! let x: Lorem = builder.build()?;
+//! # Ok(())
+//! # } fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! Now it comes in handy that our setter methods takes and returns a mutable reference. Otherwise
@@ -232,6 +251,9 @@ use proc_macro::TokenStream;
 use options::{StructOptions, FieldOptions, OptionsBuilder, FieldMode, SetterPattern};
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
+type TokenVec = Vec<quote::Tokens>;
+type AttrVec<'a> = Vec<&'a syn::Attribute>;
+
 // beware: static muts are not threadsafe. :-)
 static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
 
@@ -248,7 +270,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let result = builder_for_struct(ast).to_string();
 
-    result.parse().expect(&format!("Couldn't parse {:?} to tokens", result))
+    result.parse().expect(&format!("Couldn't parse `{}` to tokens", result))
 }
 
 fn filter_attr(attr: &&syn::Attribute) -> bool {
@@ -279,7 +301,7 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
 }
 
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
-    debug!("Deriving Builder for '{}'.", ast.ident);
+    debug!("Deriving Builder for `{}`.", ast.ident);
     let opts = StructOptions::from(&ast);
 
     let fields = match ast.body {
@@ -291,27 +313,27 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     let builder_name = syn::Ident::from(opts.builder_name());
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    let mut setter_fns     = Vec::<quote::Tokens>::with_capacity(fields.len());
-    let mut builder_fields = Vec::<quote::Tokens>::with_capacity(fields.len());
-    let mut initializers   = Vec::<quote::Tokens>::with_capacity(fields.len());
+    let mut setter_fns     = TokenVec::with_capacity(fields.len());
+    let mut builder_fields = TokenVec::with_capacity(fields.len());
+    let mut initializers   = TokenVec::with_capacity(fields.len());
 
     for f in fields {
         let name = f.ident.as_ref()
-            .expect(&format!("Missing identifier for field {:?}.", f))
+            .expect(&format!("Missing identifier for field `{:?}`.", f))
             .as_ref();
-        trace!("Parsing field {}.", name);
+        trace!("Parsing field `{}`.", name);
 
         let f_opts = OptionsBuilder::<FieldMode>::default()
             .parse_attributes(&f.attrs)
             .build(name, &opts);
 
         trace!("Filtering field attributes");
-        let attrs: Vec<&syn::Attribute> = f.attrs.iter()
+        let attrs: AttrVec = f.attrs.iter()
             .filter(|a| {
                 let keep = filter_attr(a);
                 match keep {
-                    true => trace!("Keeping field attribute for builder field and setter {:?}", a),
-                    false => trace!("Ignoring field attribute for builder field and setter {:?}", a)
+                    true => trace!("Keeping field attribute for builder field and setter `{:?}`", a),
+                    false => trace!("Ignoring field attribute for builder field and setter `{:?}`", a)
                 }
                 keep
             }).collect();
@@ -333,7 +355,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         };
         quote!(
             #builder_vis fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
-                Ok(#struct_name{
+                Ok(#struct_name {
                     #(#initializers)*
                 })
             }
@@ -356,54 +378,56 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     }
 }
 
-fn derive_builder_field(f: &syn::Field, opts: &FieldOptions, attrs: &Vec<&syn::Attribute>) -> quote::Tokens {
+fn derive_builder_field(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
+    -> quote::Tokens
+{
     if opts.setter_enabled() {
-        trace!("Deriving builder field for {}.", opts.field_name());
-        let vis = &f.vis;
-        let ident = &f.ident;
-        let ty = &f.ty;
+        trace!("Deriving builder field for `{}``.", opts.field_name());
+        let (vis, ident, ty) = (&f.vis, &f.ident, &f.ty);
         quote!(#(#attrs)* #vis #ident: Option<#ty>,)
     } else {
-        trace!("Skipping builder field for {}.", opts.field_name());
+        trace!("Skipping builder field for `{}`.", opts.field_name());
         quote!()
     }
 }
 
 fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
-    trace!("Deriving initializer for {}.", opts.field_name());
+    trace!("Deriving initializer for `{}`.", opts.field_name());
 
-    let err_uninitizalied = format!("{} must be initialized", opts.field_name());
+    let err_uninitizalied = format!("`{}` must be initialized", opts.field_name());
     let pattern = opts.setter_pattern();
     let ident = &f.ident;
-    // let attrs = &f.attrs;
 
     if opts.setter_enabled() {
         let initializer = match *pattern {
             SetterPattern::Owned => quote!(
                     #ident: self.#ident.ok_or(#err_uninitizalied)?,
                 ),
-            SetterPattern::Mutable
-            | SetterPattern::Immutable => quote!(
+            SetterPattern::Mutable |
+            SetterPattern::Immutable => quote!(
                     #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
                 ),
         };
 
-        debug!("Initializer is {:?}", initializer);
+        debug!("Initializer is `{:?}`", initializer);
 
         initializer
     } else {
-        trace!("Fallback to default initializer for {}.", opts.field_name());
+        trace!("Fallback to default initializer for `{}`.", opts.field_name());
         quote!( #ident: default::Default(), )
     }
 }
 
-fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &Vec<&syn::Attribute>) -> quote::Tokens {
+fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
+    -> quote::Tokens
+{
     if opts.setter_enabled() {
-        trace!("Deriving setter for {:?}.", opts.field_name());
+        trace!("Deriving setter for `{}`.", opts.field_name());
         let ty = &f.ty;
         let pattern = opts.setter_pattern();
         let vis = opts.setter_visibility();
-        let fieldname = f.ident.as_ref().expect(&format!("Missing identifier for field {:?}.", f));
+        let fieldname = f.ident.as_ref()
+            .expect(&format!("Missing identifier for field `{:?}`.", f));
         let funcname = if opts.setter_prefix().len() > 0 {
             Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
         } else {
@@ -434,11 +458,11 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &Vec<&syn::Attribut
                 }),
         };
 
-        debug!("Setter is {:?}", setter);
+        debug!("Setter is `{:?}`", setter);
 
         setter
     } else {
-        trace!("Skipping setter for {}.", opts.field_name());
+        trace!("Skipping setter for `{}`.", opts.field_name());
         quote!()
     }
 }

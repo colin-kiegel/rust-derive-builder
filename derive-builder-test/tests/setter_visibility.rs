@@ -47,7 +47,7 @@ pub mod foo {
 }
 
 #[test]
-#[should_panic(expected="private must be initialized")]
+#[should_panic(expected="`private` must be initialized")]
 fn public_setters_override_foreign_module() {
     let x = foo::LoremBuilder::default()
         .public("Hello")
@@ -58,7 +58,7 @@ fn public_setters_override_foreign_module() {
 }
 
 #[test]
-#[should_panic(expected="private must be initialized")]
+#[should_panic(expected="`private` must be initialized")]
 fn public_setters_foreign_module() {
     let y = foo::IpsumBuilder::default()
         .public("Hello")

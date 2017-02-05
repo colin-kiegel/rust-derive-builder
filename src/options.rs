@@ -15,25 +15,25 @@ impl Default for SetterPattern {
 
 #[derive(Debug, Clone)]
 pub struct StructOptions {
-    // defaults to format!("{}Builder", struct_name)
+    /// defaults to format!("{}Builder", struct_name)
     builder_name: String,
-    // defaults to struct_vis
+    /// defaults to struct_vis
     builder_vis: syn::Visibility,
-    // see below
+    /// see below
     field_defaults: FieldOptions,
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldOptions {
-    // e.g. `#[builder]` (defaults to true)
+    /// currently hard-wired to true
     setter_enabled: bool,
-    // e.g. `#[builder(pattern="owned")]` (defaults to mutable)
+    /// e.g. `#[builder(pattern="owned")]` (defaults to mutable)
     setter_pattern: SetterPattern,
-    // e.g. `#[builder(setter_prefix="with")]` (defaults to None)
+    /// e.g. `#[builder(setter_prefix="with")]` (defaults to None)
     setter_prefix: String,
-    // e.g. `#[builder(private)]` (defaults to public)
+    /// e.g. `#[builder(private)]` (defaults to public)
     setter_vis: syn::Visibility,
-    // the _original_ field name
+    /// the _original_ field name
     field_name: String,
 }
 
@@ -91,7 +91,7 @@ pub trait OptionsBuilderMode {
 }
 
 #[derive(Default)]
-pub struct StructMode{
+pub struct StructMode {
     builder_name: Option<String>,
     builder_vis: Option<syn::Visibility>,
     struct_name: String,
@@ -99,9 +99,9 @@ pub struct StructMode{
 }
 
 impl OptionsBuilderMode for StructMode {
-    fn parse_builder_name(&mut self, lit: &syn::Lit) {
-        trace!("Parsing builder name {:?}", lit);
-        let value = parse_lit_as_cooked_string(lit);
+    fn parse_builder_name(&mut self, name: &syn::Lit) {
+        trace!("Parsing builder name `{:?}`", name);
+        let value = parse_lit_as_cooked_string(name);
         self.builder_name = Some(value.clone());
     }
 }
@@ -110,7 +110,7 @@ impl OptionsBuilderMode for StructMode {
 pub struct FieldMode;
 
 impl OptionsBuilderMode for FieldMode {
-    fn parse_builder_name(&mut self, _: &syn::Lit) {
+    fn parse_builder_name(&mut self, _name: &syn::Lit) {
         panic!("Builder name can only be set on the stuct level")
     }
 }
@@ -138,7 +138,7 @@ impl From<OptionsBuilder<StructMode>> for StructOptions {
             field_defaults: field_defaults,
             builder_name: b.mode.builder_name.unwrap_or(format!("{}Builder", b.mode.struct_name)),
             builder_vis: b.mode.builder_vis.unwrap_or(
-                b.mode.struct_vis.expect("struct visibility must be initialized")
+                b.mode.struct_vis.expect("Struct visibility must be initialized")
             )
         }
     }
@@ -164,7 +164,7 @@ impl<Mode> OptionsBuilder<Mode> where
 {
     fn setter_enabled(&mut self, x: bool) -> &mut Self {
         if self.setter_enabled.is_some() {
-            warn!("Setter enabled already defined as {:?}, new value is {:?}.",
+            warn!("Setter enabled already defined as `{:?}`, new value is `{:?}`.",
                 self.setter_enabled, x);
         }
         self.setter_enabled = Some(x);
@@ -173,7 +173,7 @@ impl<Mode> OptionsBuilder<Mode> where
 
     fn setter_pattern(&mut self, x: SetterPattern) -> &mut Self {
         if self.setter_pattern.is_some() {
-            warn!("Setter pattern already defined as {:?}, new value is {:?}.",
+            warn!("Setter pattern already defined as `{:?}`, new value is `{:?}`.",
                 self.setter_pattern, x);
         }
         self.setter_pattern = Some(x);
@@ -182,7 +182,7 @@ impl<Mode> OptionsBuilder<Mode> where
 
     fn setter_public(&mut self, x: bool) -> &mut Self {
         if self.setter_vis.is_some() {
-            warn!("Setter visibility already defined as {:?}, new value is {:?}.",
+            warn!("Setter visibility already defined as `{:?}`, new value is `{:?}`.",
                 self.setter_vis, x);
         }
         self.setter_vis = Some(syn::Visibility::Public);
@@ -201,7 +201,7 @@ impl<Mode> OptionsBuilder<Mode> where
     }
 
     fn parse_attribute(&mut self, attr: &syn::Attribute) {
-        trace!("Parsing attribute {:?}.", attr);
+        trace!("Parsing attribute `{:?}`.", attr);
         if attr.style != syn::AttrStyle::Outer || attr.is_sugared_doc {
             trace!("Ignoring attribute (outer or sugared doc).");
             return
@@ -234,14 +234,14 @@ impl<Mode> OptionsBuilder<Mode> where
             if let syn::NestedMetaItem::MetaItem(ref meta_item) = *x {
                 self.parse_setter_options_metaItem(meta_item)
             } else {
-                panic!("Expected NestedMetaItem::MetaItem, found {:?}", x)
+                panic!("Expected NestedMetaItem::MetaItem, found `{:?}`", x)
             }
         }
     }
 
     #[allow(non_snake_case)]
     fn parse_setter_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
-        trace!("Parsing MetaItem {:?}", meta_item);
+        trace!("Parsing MetaItem `{:?}`", meta_item);
         match *meta_item {
             syn::MetaItem::Word(ref ident) => {
                 self.parse_setter_options_word(ident)
@@ -250,14 +250,14 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.parse_setter_options_nameValue(ident, lit)
             },
             _ => {
-                panic!("Expected MetaItem::Word/NameValue, found {:?}", meta_item)
+                panic!("Expected MetaItem::Word/NameValue, found `{:?}`", meta_item)
             }
         }
     }
 
     /// e.g `private` in `#[builder(private)]`
     fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
-        trace!("Parsing word {:?}", ident);
+        trace!("Parsing word `{:?}`", ident);
         match ident.as_ref() {
             "public" => {
                 self.setter_public(true)
@@ -266,7 +266,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_public(false)
             },
             _ => {
-                panic!("Unknown option {:?}", ident)
+                panic!("Unknown option `{:?}`", ident)
             }
         };
     }
@@ -274,7 +274,7 @@ impl<Mode> OptionsBuilder<Mode> where
     /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`
     #[allow(non_snake_case)]
     fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
-        trace!("Parsing named value {:?} = {:?}", ident, lit);
+        trace!("Parsing named value `{:?}` = `{:?}`", ident, lit);
         match ident.as_ref() {
             "setter_prefix" => {
                 self.parse_setter_prefix(lit)
@@ -286,19 +286,19 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.mode.parse_builder_name(lit)
             },
             _ => {
-                panic!("Unknown option {:?}", ident)
+                panic!("Unknown option `{:?}`", ident)
             }
         }
     }
 
     fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
-        trace!("Parsing prefix {:?}", lit);
+        trace!("Parsing prefix `{:?}`", lit);
         let value = parse_lit_as_cooked_string(lit);
         self.setter_prefix = Some(value.clone());
     }
 
     fn parse_setter_pattern(&mut self, lit: &syn::Lit) {
-        trace!("Parsing pattern {:?}", lit);
+        trace!("Parsing pattern `{:?}`", lit);
         let value = parse_lit_as_cooked_string(lit);
         match value.as_ref() {
             "owned" => {
@@ -311,7 +311,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_pattern(SetterPattern::Immutable)
             },
             _ => {
-                panic!("Unknown option {:?}", value)
+                panic!("Unknown option `{:?}`", value)
             }
         };
     }
@@ -320,10 +320,10 @@ impl<Mode> OptionsBuilder<Mode> where
 fn parse_lit_as_cooked_string(lit: &syn::Lit) -> &String {
     if let syn::Lit::Str(ref value, str_style) = *lit {
         if str_style != syn::StrStyle::Cooked {
-            panic!("Value must be a *standard* string, but found {:?}", lit);
+            panic!("Value must be a *standard* string, but found `{:?}`", lit);
         }
         value
     } else {
-        panic!("Value must be a string, but found {:?}", lit);
+        panic!("Value must be a string, but found `{:?}`", lit);
     }
 }

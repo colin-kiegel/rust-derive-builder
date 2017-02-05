@@ -18,7 +18,7 @@ struct GenLorem2<T>
 }
 
 #[test]
-#[should_panic(expected = "ipsum must be initialized")]
+#[should_panic(expected="`ipsum` must be initialized")]
 fn panic_if_uninitialized() {
     GenLoremBuilder::<String>::default().build().unwrap();
 }
