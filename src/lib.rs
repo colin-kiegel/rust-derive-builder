@@ -48,19 +48,13 @@
 //!
 //! #[derive(Builder, Default)]
 //! struct Lorem {
-//!     ipsum: String,
+//!     pub ipsum: String,
 //!     // ..
 //! }
 //!
-//! impl Lorem {
-//!     pub fn build(&self) -> String {
-//!         format!("The meaning of life is {}.", self.ipsum)
-//!     }
-//! }
-//!
 //! fn main() {
-//!     let x = Lorem::default().ipsum("42").build();
-//!     println!("{:?}", x);
+//!     let x = LoremBuilder::default().ipsum("42").build().unwrap();
+//!     println!("{:?}", x.ipsum);
 //! }
 //! ```
 //!
@@ -136,13 +130,15 @@
 //! #[macro_use] extern crate derive_builder;
 //!
 //! #[derive(Builder, Debug, PartialEq, Default, Clone)]
-//! struct GenLorem<T> {
+//! struct GenLorem<T> where
+//!     T: Clone
+//! {
 //!     ipsum: String,
 //!     dolor: T,
 //! }
 //!
 //! fn main() {
-//!     let x = GenLorem::default().ipsum("sit").dolor(42).clone();
+//!     let x = GenLoremBuilder::default().ipsum("sit").dolor(42).build().unwrap();
 //!     assert_eq!(x, GenLorem { ipsum: "sit".into(), dolor: 42 });
 //! }
 //! ```

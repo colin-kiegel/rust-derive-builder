@@ -30,7 +30,7 @@ fn main() {
     let ch = ChannelBuilder::default()
         .special_info(42)
         .id(0)
-        .token(54915641902)
+        .token(5494192)
         .build()
         .unwrap();
     println!("{:?}", ch);
