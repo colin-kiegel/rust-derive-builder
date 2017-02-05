@@ -27,7 +27,11 @@ struct Channel {
 }
 
 fn main() {
-    let mut ch = Channel::default();
-    ch.special_info(42);
+    let ch = ChannelBuilder::default()
+        .special_info(42)
+        .id(0)
+        .token(54915641902)
+        .build()
+        .unwrap();
     println!("{:?}", ch);
 }
