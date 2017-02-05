@@ -5,61 +5,95 @@
 
 # Builder pattern derive
 
-[Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate code of public setter-methods for all struct fields.
+[Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate a `FooBuilder` for your struct `Foo` with all setter-methods and a build method.
 
-**This is a work in progress.** Use it at your own risk.  
 **This requires Rust 1.15, due to the usage of Macros 1.1.**
 
 And this is how it works:
 
 ```rust
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
-#[derive(Default, Builder)]
+#[derive(Default, Builder, Debug)]
 struct Channel {
     token: i32,
     special_info: i32,
     // .. a whole bunch of other fields ..
 }
 
-impl Channel {
-    // All that's left to do for you is writing a method,
-    // which actually *does* something. :-)
-    pub fn build(&self) -> String {
-        format!("The meaning of life is {}.", self.special_info)
-    }
-}
-
 fn main() {
     // builder pattern, go, go, go!...
-    let x = Channel::default().special_info(42u8).build();
-    println!("{:?}", x);
+    let ch = ChannelBuilder::default()
+        .special_info(42u8)
+        .token(19124)
+        .build()
+        .unwrap();
+    println!("{:?}", ch);
 }
 ```
 
-Note that we did not write any implementation of a method called `special_info`. Instead the `derive_builder` crate acts on a `#[derive(Builder)]` and generates the necessary code at compile time.
+Note that we did not write any definition or implementation of `ChannelBuilder`. Instead the `derive_builder` crate acts on `#[derive(Builder)]` and generates the necessary code at compile time.
 
-The automatically generated setter method for the `special_info` field will look like this:
+This is the generated boilerplate code you didn't need to write. :-)
 
 ```rust
-pub fn special_info<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
-    self.special_info = value.into();
-    self
+#[derive(Clone, Default)]
+struct ChannelBuilder {
+    token: Option<i32>,
+    special_info: Option<i32>,
+}
+
+#[allow(dead_code)]
+impl ChannelBuilder {
+    pub fn token<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
+        let mut new = self;
+        new.token = Some(value.into());
+        new
+    }
+    pub fn special_info<VALUE: Into<i32>>(&mut self, value: VALUE) -> &mut Self {
+        let mut new = self;
+        new.special_info = Some(value.into());
+        new
+    }
+    fn build(&self) -> Result<Channel, String> {
+        Ok(Channel {
+            token: Clone::clone(self.token
+                .as_ref()
+                .ok_or(// builder pattern, go, go, go!...
+                       "token must be initialized")?),
+            special_info: Clone::clone(self.special_info
+                .as_ref()
+                .ok_or("special_info must be initialized")?),
+        })
+    }
 }
 ```
+
+## Get Started
+
+It's as simple as two steps:
+
+1. Add `derive_builder` to your `Cargo.toml` either manually or
+with [cargo-edit](https://github.com/killercup/cargo-edit):
+
+  * `cargo add derive_builder`
+2. Annotate your struct with `#[derive(Builder)]`
 
 ## Usage and Features
 
 * **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
-* **Extensible**: You can still define your own implementation of the struct and define additional methods. Just make sure to name them differently than the fields.
+* **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern="owned")]` or `#[builder(pattern="immutable")]`.
+* **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
+* **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
+* **Visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
-* **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
-* **Builder patterns**: You can opt into other builder patterns by preceding your struct with `#[builder(pattern="owned")]` or `#[builder(pattern="immutable")]`.
-* **Visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 * **Logging**: If anything works unexpectedly you can enable detailed logs by setting this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
 
 For more information and examples please take a look at our [documentation][doc].
+
+This is a work in progress. So expect even more features in the future. :-)
 
 ## Gotchas
 

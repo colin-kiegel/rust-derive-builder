@@ -1,15 +1,19 @@
 //! Derive a builder for a struct
 //!
-//! This crate implements the [builder pattern].
-//! When applied to a struct, it will derive **setter-methods** for all struct fields
+//! This crate implements the [builder pattern] for you.
+//! Just apply `#[derive(Builder)]` to a struct `Foo`, and it will derive an additional
+//! struct `FooBuilder` with **setter**-methods for all fields and a **build**-method
 //! — the way you want it.
 //!
 //! # Quick Start
 //!
-//! ## Generate Setters
+//! Add `derive_builder` as a dependency to you `Cargo.toml`.
+//!
+//! ## What you write
 //!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder)]
 //! struct Lorem {
@@ -19,65 +23,65 @@
 //! # fn main() {}
 //! ```
 //!
-//! `#[derive(Builder)]` will automatically generate a setter method for the `ipsum` field,
-//! looking like this:
+//! ## What you get
 //!
 //! ```rust,ignore
-//! pub fn ipsum<VALUE: Into<String>>(&mut self, value: VALUE) -> &mut Self {
-//!     self.ipsum = value.into();
-//!     self
+//! #[derive(Clone, Default)]
+//! struct LoremBuilder {
+//!     ipsum: Option<String>,
+//! }
+//!
+//! #[allow(dead_code)]
+//! impl LoremBuilder {
+//!     pub fn ipsum<VALUE: Into<String>>(&mut self, value: VALUE) -> &mut Self {
+//!         let mut new = self;
+//!         new.ipsum = Some(value.into());
+//!         new
+//!     }
+//!     fn build(&self) -> Result<Lorem, String> {
+//!         Ok(Lorem {
+//!             ipsum: Clone::clone(self.ipsum
+//!                 .as_ref()
+//!                 .ok_or("ipsum must be initialized")?),
+//!         })
+//!     }
 //! }
 //! ```
 //!
 //! By default all generated setter-methods take and return `&mut self`
-//! (aka _non-conusuming_ builder pattern). Don't worry, you can easily opt into different
-//! patterns and control many other aspects.
+//! (aka _non-conusuming_ builder pattern). Accordingly the build method also takes a
+//! reference by default.
 //!
-//! ## Add a Build Method
+//! You can easily opt into different patterns and control many other aspects.
 //!
-//! Ok, we've got setters. To complete the builder pattern you only have to implement at least
-//! one method which actually builds something based on the struct.
-//!
-//! These custom build methods of yours should also take `&mut self`, if you stick with the
-//! non-consuming pattern.
-//!
-//! This could look like:
-//!
-//! ```rust
-//! #[macro_use] extern crate derive_builder;
-//!
-//! #[derive(Builder, Default)]
-//! struct Lorem {
-//!     pub ipsum: String,
-//!     // ..
-//! }
-//!
-//! fn main() {
-//!     let x = LoremBuilder::default().ipsum("42").build().unwrap();
-//!     println!("{:?}", x.ipsum);
-//! }
-//! ```
+//! The build method returns `Result<T, String>`, where `T` is the struct you started with.
+//! It returns `Err<String>` if you didn't initialize all fields.
 //!
 //! # Builder Patterns
 //!
-//! Let's look again at `let x = Lorem::default().ipsum("42").build()`.
-//! Chaining method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
+//! Let's look again at the example above. You can build structs like this:
+//!
+//! ```rust,ignore
+//! let x: Lorem = LoremBuilder::default().ipsum("42").build()?
+//! ```
+//!
+//! Ok, _chaining_ method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
 //!
 //! So let's make this call conditional
 //!
 //! ```rust,ignore
-//! let mut builder = Lorem::default();
+//! let mut builder = LoremBuilder::default();
 //! if geek {
 //!     builder.ipsum("42");
 //! }
-//! let x = builder.build();
+//! let x: Lorem = builder.build()?;
 //! ```
 //!
 //! Now it comes in handy that our setter methods takes and returns a mutable reference. Otherwise
 //! we would need to write something more clumsy like `builder = builder.ipsum("42")` to reassign
 //! the return value each time we have to call a setter conditionally.
 //!
-//! Setters with mutable references are therefore the recommended choice for the builder
+//! Setters with mutable references are therefore a convenient default for the builder
 //! pattern in Rust.
 //!
 //! But this is a free world and the choice is still yours.
@@ -94,12 +98,13 @@
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
-//! You can precede your struct (or field) with `#[builder(pattern="mutable")]` to make this choice explicit.
+//! You can precede your struct (or field) with `#[builder(pattern="mutable")]`
+//! to make this choice explicit.
 //!
 //! * Setters take and return `&mut self`.
 //! * PRO: Setter calls and final build method can be chained.
 //! * CON: The build method must clone or copy data to create something owned out of a
-//!   mutable reference. Otherwise it can not be used in a chain. **(*)**
+//!   mutable reference. Otherwise it could not be used in a chain. **(*)**
 //!
 //! ## Immutable
 //!
@@ -121,18 +126,14 @@
 //!
 //! # More Features
 //!
-//! We'll pretend that `clone()` is our build method for the following examples, to keep them as
-//! short as possible.
-//!
 //! ## Generic structs
 //!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder, Debug, PartialEq, Default, Clone)]
-//! struct GenLorem<T> where
-//!     T: Clone
-//! {
+//! struct GenLorem<T: Clone> {
 //!     ipsum: String,
 //!     dolor: T,
 //! }
@@ -146,15 +147,18 @@
 //! ## Doc-Comments and Attributes
 //!
 //! `#[derive(Builder)]` copies doc-comments and attributes `#[...]` from your fields
-//! to the according setter-method, if it is one of the following:
+//! to the according builder fields and setter-methods, if it is one of the following:
 //!
 //! * `/// ...`
 //! * `#[doc = ...]`
 //! * `#[cfg(...)]`
 //! * `#[allow(...)]`
 //!
+//! The whitelisting minimizes interference with other custom attributes like Serde/Diesel etc.
+//!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder)]
 //! struct Lorem {
@@ -176,15 +180,18 @@
 //! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
 //! to make this explicit.
 //!
-//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private setters.
+//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
+//! setters.
 //!
 //! ## Setter Prefixes
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[builder(setter_prefix="xyz")` to change the method
-//! name to `xyz_foo` if the field is named `foo`. Note that an underscore is included by default,
-//! since Rust favors snake case here.
+//! You can precede your struct (or field) with e.g. `#[builder(setter_prefix="xyz")` to change
+//! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
+//! by default, since Rust favors snake case here.
+//!
+//! # Troubleshooting
 //!
 //! ## Gotchas
 //!
@@ -198,6 +205,13 @@
 //! If you experience any problems during compilation, you can enable additional debug output
 //! by setting the environment variable `RUST_LOG=derive_builder=trace` before you call `cargo`
 //! or `rustc`. Example: `RUST_LOG=derive_builder=trace cargo test`.
+//!
+//! ## Report Issues and Ideas
+//!
+//! https://github.com/colin-kiegel/rust-derive-builder/issues
+//!
+//! If possible please try to provide the debugging info if you experience unexpected
+//! compilation errors (see above).
 //!
 //! [builder pattern]: https://aturon.github.io/ownership/builders.html
 
