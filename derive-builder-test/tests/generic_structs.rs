@@ -1,38 +1,39 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem<T> {
+struct GenLorem<T>
+    where T: std::clone::Clone
+{
     ipsum: String,
-    pub dolor: T, // generics are a pain, so this field name is fitting
+    pub dolor: T,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem2<T> {
+struct GenLorem2<T>
+    where T: std::clone::Clone
+{
     ipsum: String,
-    pub dolor: T, // generics are a pain, so this field name is fitting
-}
-
-impl<T: Default> GenLorem<T> {
-    pub fn new<V: Into<String>>(value: V) -> Self {
-        GenLorem {
-            ipsum: value.into(),
-            ..Default::default()
-        }
-    }
+    pub dolor: T,
 }
 
 #[test]
-fn contructor_sanity_check() {
-    let x: GenLorem<bool> = GenLorem::new("GenLorem");
-
-    assert_eq!(x, GenLorem { ipsum: "GenLorem".into(), dolor: false, });
+#[should_panic(expected="`ipsum` must be initialized")]
+fn panic_if_uninitialized() {
+    GenLoremBuilder::<String>::default().build().unwrap();
 }
 
 #[test]
-fn setters() {
-    let x = GenLorem::new("GenLorem")
+fn builder() {
+    let x = GenLoremBuilder::default()
+        .ipsum("GenLorem")
         .dolor(true)
-        .clone();
+        .build()
+        .unwrap();
 
-    assert_eq!(x, GenLorem { ipsum: "GenLorem".into(), dolor: true, });
+    assert_eq!(x,
+               GenLorem {
+                   ipsum: "GenLorem".into(),
+                   dolor: true,
+               });
 }

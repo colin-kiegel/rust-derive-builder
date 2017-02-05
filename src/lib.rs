@@ -1,15 +1,19 @@
 //! Derive a builder for a struct
 //!
-//! This crate implements the [builder pattern].
-//! When applied to a struct, it will derive **setter-methods** for all struct fields
+//! This crate implements the [builder pattern] for you.
+//! Just apply `#[derive(Builder)]` to a struct `Foo`, and it will derive an additional
+//! struct `FooBuilder` with **setter**-methods for all fields and a **build**-method
 //! — the way you want it.
 //!
 //! # Quick Start
 //!
-//! ## Generate Setters
+//! Add `derive_builder` as a dependency to you `Cargo.toml`.
+//!
+//! ## What you write
 //!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder)]
 //! struct Lorem {
@@ -19,78 +23,91 @@
 //! # fn main() {}
 //! ```
 //!
-//! `#[derive(Builder)]` will automatically generate a setter method for the `ipsum` field,
-//! looking like this:
+//! ## What you get
 //!
-//! ```rust,ignore
-//! pub fn ipsum<VALUE: Into<String>>(&mut self, value: VALUE) -> &mut Self {
-//!     self.ipsum = value.into();
-//!     self
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! # struct Lorem {
+//! #     ipsum: String,
+//! # }
+//! # fn main() {}
+//!
+//! #[derive(Clone, Default)]
+//! struct LoremBuilder {
+//!     ipsum: Option<String>,
+//! }
+//!
+//! #[allow(dead_code)]
+//! impl LoremBuilder {
+//!     pub fn ipsum<VALUE: Into<String>>(&mut self, value: VALUE) -> &mut Self {
+//!         let mut new = self;
+//!         new.ipsum = Some(value.into());
+//!         new
+//!     }
+//!     fn build(&self) -> Result<Lorem, String> {
+//!         Ok(Lorem {
+//!             ipsum: Clone::clone(self.ipsum
+//!                 .as_ref()
+//!                 .ok_or("ipsum must be initialized")?),
+//!         })
+//!     }
 //! }
 //! ```
 //!
 //! By default all generated setter-methods take and return `&mut self`
-//! (aka _non-conusuming_ builder pattern). Don't worry, you can easily opt into different
-//! patterns and control many other aspects.
+//! (aka _non-conusuming_ builder pattern). Accordingly the build method also takes a
+//! reference by default.
 //!
-//! ## Add a Build Method
+//! You can easily opt into different patterns and control many other aspects.
 //!
-//! Ok, we've got setters. To complete the builder pattern you only have to implement at least
-//! one method which actually builds something based on the struct.
-//!
-//! These custom build methods of yours should also take `&mut self`, if you stick with the
-//! non-consuming pattern.
-//!
-//! This could look like:
-//!
-//! ```rust
-//! #[macro_use] extern crate derive_builder;
-//!
-//! #[derive(Builder, Default)]
-//! struct Lorem {
-//!     ipsum: String,
-//!     // ..
-//! }
-//!
-//! impl Lorem {
-//!     pub fn build(&self) -> String {
-//!         format!("The meaning of life is {}.", self.ipsum)
-//!     }
-//! }
-//!
-//! fn main() {
-//!     let x = Lorem::default().ipsum("42").build();
-//!     println!("{:?}", x);
-//! }
-//! ```
+//! The build method returns `Result<T, String>`, where `T` is the struct you started with.
+//! It returns `Err<String>` if you didn't initialize all fields.
 //!
 //! # Builder Patterns
 //!
-//! Let's look again at `let x = Lorem::default().ipsum("42").build()`.
-//! Chaining method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
+//! Let's look again at the example above. You can build structs like this:
+//!
+//! ```rust
+//! # #[macro_use] extern crate derive_builder;
+//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # fn try_main() -> Result<(), String> {
+//! let x: Lorem = LoremBuilder::default().ipsum("42").build()?;
+//! # Ok(())
+//! # } fn main() { try_main().unwrap(); }
+//! ```
+//!
+//! Ok, _chaining_ method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
 //!
 //! So let's make this call conditional
 //!
-//! ```rust,ignore
-//! let mut builder = Lorem::default();
+//! ```rust
+//! # #[macro_use] extern crate derive_builder;
+//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # fn try_main() -> Result<(), String> {
+//! # let geek = true;
+//! let mut builder = LoremBuilder::default();
 //! if geek {
 //!     builder.ipsum("42");
 //! }
-//! let x = builder.build();
+//! let x: Lorem = builder.build()?;
+//! # Ok(())
+//! # } fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! Now it comes in handy that our setter methods takes and returns a mutable reference. Otherwise
 //! we would need to write something more clumsy like `builder = builder.ipsum("42")` to reassign
 //! the return value each time we have to call a setter conditionally.
 //!
-//! Setters with mutable references are therefore the recommended choice for the builder
+//! Setters with mutable references are therefore a convenient default for the builder
 //! pattern in Rust.
 //!
 //! But this is a free world and the choice is still yours.
 //!
 //! ## Owned, aka Consuming
 //!
-//! Precede your struct (or field) with `#[setter(owned)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern="owned")]` to opt into this pattern.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -100,16 +117,17 @@
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
-//! You can precede your struct (or field) with `#[setter(mutable)]` to make this choice explicit.
+//! You can precede your struct (or field) with `#[builder(pattern="mutable")]`
+//! to make this choice explicit.
 //!
 //! * Setters take and return `&mut self`.
 //! * PRO: Setter calls and final build method can be chained.
 //! * CON: The build method must clone or copy data to create something owned out of a
-//!   mutable reference. Otherwise it can not be used in a chain. **(*)**
+//!   mutable reference. Otherwise it could not be used in a chain. **(*)**
 //!
 //! ## Immutable
 //!
-//! Precede your struct (or field) with `#[setter(immutable)]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern="immutable")]` to opt into this pattern.
 //!
 //! * Setters take and return `&self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -127,22 +145,20 @@
 //!
 //! # More Features
 //!
-//! We'll pretend that `clone()` is our build method for the following examples, to keep them as
-//! short as possible.
-//!
 //! ## Generic structs
 //!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder, Debug, PartialEq, Default, Clone)]
-//! struct GenLorem<T> {
+//! struct GenLorem<T: Clone> {
 //!     ipsum: String,
 //!     dolor: T,
 //! }
 //!
 //! fn main() {
-//!     let x = GenLorem::default().ipsum("sit").dolor(42).clone();
+//!     let x = GenLoremBuilder::default().ipsum("sit").dolor(42).build().unwrap();
 //!     assert_eq!(x, GenLorem { ipsum: "sit".into(), dolor: 42 });
 //! }
 //! ```
@@ -150,15 +166,18 @@
 //! ## Doc-Comments and Attributes
 //!
 //! `#[derive(Builder)]` copies doc-comments and attributes `#[...]` from your fields
-//! to the according setter-method, if it is one of the following:
+//! to the according builder fields and setter-methods, if it is one of the following:
 //!
 //! * `/// ...`
 //! * `#[doc = ...]`
 //! * `#[cfg(...)]`
 //! * `#[allow(...)]`
 //!
+//! The whitelisting minimizes interference with other custom attributes like Serde/Diesel etc.
+//!
 //! ```rust
-//! #[macro_use] extern crate derive_builder;
+//! #[macro_use]
+//! extern crate derive_builder;
 //!
 //! #[derive(Builder)]
 //! struct Lorem {
@@ -177,18 +196,21 @@
 //!
 //! ## Setter Visibility
 //!
-//! Setters are public by default. You can precede your struct (or field) with `#[setter(public)]`
+//! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
 //! to make this explicit.
 //!
-//! Otherwise precede your struct (or field) with `#[setter(private)]` to opt into private setters.
+//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
+//! setters.
 //!
 //! ## Setter Prefixes
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[setter(prefix="xyz")` to change the method
-//! name to `xyz_foo` if the field is named `foo`. Note that an underscore is included by default,
-//! since Rust favors snake case here.
+//! You can precede your struct (or field) with e.g. `#[builder(setter_prefix="xyz")` to change
+//! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
+//! by default, since Rust favors snake case here.
+//!
+//! # Troubleshooting
 //!
 //! ## Gotchas
 //!
@@ -202,6 +224,13 @@
 //! If you experience any problems during compilation, you can enable additional debug output
 //! by setting the environment variable `RUST_LOG=derive_builder=trace` before you call `cargo`
 //! or `rustc`. Example: `RUST_LOG=derive_builder=trace cargo test`.
+//!
+//! ## Report Issues and Ideas
+//!
+//! https://github.com/colin-kiegel/rust-derive-builder/issues
+//!
+//! If possible please try to provide the debugging info if you experience unexpected
+//! compilation errors (see above).
 //!
 //! [builder pattern]: https://aturon.github.io/ownership/builders.html
 
@@ -219,15 +248,17 @@ mod options;
 
 use std::borrow::Cow;
 use proc_macro::TokenStream;
-use quote::ToTokens;
-use options::{Options, OptionsBuilder, FieldMode, SetterPattern};
+use options::{StructOptions, FieldOptions, OptionsBuilder, FieldMode, SetterPattern};
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
+
+type TokenVec = Vec<quote::Tokens>;
+type AttrVec<'a> = Vec<&'a syn::Attribute>;
 
 // beware: static muts are not threadsafe. :-)
 static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
 
 #[doc(hidden)]
-#[proc_macro_derive(Builder, attributes(setter))]
+#[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(input: TokenStream) -> TokenStream {
     if unsafe { !LOGGER_INITIALIZED.compare_and_swap(false, true, Ordering::SeqCst) } {
         env_logger::init().unwrap();
@@ -237,9 +268,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let ast = syn::parse_macro_input(&input).expect("Couldn't parse item");
 
-    let result = builder_for_struct(ast);
+    let result = builder_for_struct(ast).to_string();
 
-    format!("{}", result).parse().expect("Couldn't parse string to tokens")
+    result.parse().expect(&format!("Couldn't parse `{}` to tokens", result))
 }
 
 fn filter_attr(attr: &&syn::Attribute) -> bool {
@@ -270,97 +301,168 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
 }
 
 fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
-    debug!("Deriving Builder for '{}'.", ast.ident);
-    let opts = Options::from(&ast.attrs);
-    if !opts.setter_enabled() {
-        trace!("Setters disabled for '{}'.", ast.ident);
-        return quote!();
-    }
+    debug!("Deriving Builder for `{}`.", ast.ident);
+    let opts = StructOptions::from(&ast);
 
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(ref fields)) => fields,
         _ => panic!("#[derive(Builder)] can only be used with braced structs"),
     };
 
-    let name = &ast.ident;
+    let struct_name = &ast.ident;
+    let builder_name = syn::Ident::from(opts.builder_name());
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-    let funcs = fields.iter().map(|f| {
 
-        trace!("Parsing field {:?}.", f.ident.as_ref().map(|i| i.as_ref()).unwrap_or_default());
+    let mut setter_fns     = TokenVec::with_capacity(fields.len());
+    let mut builder_fields = TokenVec::with_capacity(fields.len());
+    let mut initializers   = TokenVec::with_capacity(fields.len());
+
+    for f in fields {
+        let name = f.ident.as_ref()
+            .expect(&format!("Missing identifier for field `{:?}`.", f))
+            .as_ref();
+        trace!("Parsing field `{}`.", name);
 
         let f_opts = OptionsBuilder::<FieldMode>::default()
             .parse_attributes(&f.attrs)
-            .with_struct_options(&opts);
+            .build(name, &opts);
 
-        debug!("Setter prefix is {:?}", f_opts.setter_prefix());
+        trace!("Filtering field attributes");
+        let attrs: AttrVec = f.attrs.iter()
+            .filter(|a| {
+                let keep = filter_attr(a);
+                match keep {
+                    true => trace!("Keeping field attribute for builder field and setter `{:?}`", a),
+                    false => trace!("Ignoring field attribute for builder field and setter `{:?}`", a)
+                }
+                keep
+            }).collect();
 
-        let mut tokens = quote::Tokens::new();
+        setter_fns.push(derive_setter(f, &f_opts, &attrs));
+        builder_fields.push(derive_builder_field(f, &f_opts, &attrs));
+        initializers.push(derive_initializer(f, &f_opts));
+        // NOTE: Looking forward for computation in interpolation
+        // - https://github.com/dtolnay/quote/issues/10
+        // => `quote!(#{f.vis} ...)
+    }
 
-        if f_opts.setter_enabled() {
-            derive_setter(f, &f_opts).to_tokens(&mut tokens);
-        } else {
-            trace!("Skipping setter.");
+    let builder_vis = opts.builder_visibility();
+    let build_fn = {
+        let ref_self = match *opts.field_defaults().setter_pattern() {
+            SetterPattern::Owned => quote!(self),
+            SetterPattern::Mutable => quote!(&self),
+            SetterPattern::Immutable => quote!(&self),
+        };
+        quote!(
+            #builder_vis fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
+                Ok(#struct_name {
+                    #(#initializers)*
+                })
+            }
+        )
+    };
+
+    // We need to `#[derive(Clone)]` only for the immutable builder pattern
+    quote! {
+        #[derive(Default, Clone)]
+        #builder_vis struct #builder_name #ty_generics #where_clause {
+            #(#builder_fields)*
         }
 
-        tokens
-    });
-
-    quote! {
         #[allow(dead_code)]
-        impl #impl_generics #name #ty_generics #where_clause {
-            #(#funcs)*
+        impl #impl_generics #builder_name #ty_generics #where_clause {
+            #(#setter_fns)*
+
+            #build_fn
         }
     }
 }
 
-fn derive_setter(f: &syn::Field, opts: &Options) -> quote::Tokens {
-    trace!("Deriving setter.");
-    let ty = &f.ty;
-    let pattern = opts.setter_pattern();
-    let vis = opts.setter_visibility();
-    let fieldname = f.ident.as_ref().expect(&format!("Missing identifier for field {:?}.", f));
-    let funcname = if opts.setter_prefix().len() > 0 {
-        Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
+fn derive_builder_field(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
+    -> quote::Tokens
+{
+    if opts.setter_enabled() {
+        trace!("Deriving builder field for `{}``.", opts.field_name());
+        let (vis, ident, ty) = (&f.vis, &f.ident, &f.ty);
+        quote!(#(#attrs)* #vis #ident: Option<#ty>,)
     } else {
-        Cow::Borrowed(fieldname)
-    };
+        trace!("Skipping builder field for `{}`.", opts.field_name());
+        quote!()
+    }
+}
 
-    trace!("Filtering field attributes");
-    let attrs = f.attrs.iter()
-        .filter(|a| {
-            let keep = filter_attr(a);
-            match keep {
-                true => trace!("Keeping field attribute for setter {:?}", a),
-                false => trace!("Ignoring field attribute {:?}", a)
-            }
-            keep
-        });
+fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
+    trace!("Deriving initializer for `{}`.", opts.field_name());
 
-    let setter = match *pattern {
-        SetterPattern::Owned => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
-                    let mut new = self;
-                    new.#fieldname = value.into();
-                    new
-            }),
-        SetterPattern::Mutable => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
-                    let mut new = self;
-                    new.#fieldname = value.into();
-                    new
-            }),
-        SetterPattern::Immutable => quote!(
-                #(#attrs)*
-                #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
-                    let mut new = self.clone();
-                    new.#fieldname = value.into();
-                    new
-            }),
-    };
+    let err_uninitizalied = format!("`{}` must be initialized", opts.field_name());
+    let pattern = opts.setter_pattern();
+    let ident = &f.ident;
 
-    debug!("Setter is {:?}", setter);
+    if opts.setter_enabled() {
+        let initializer = match *pattern {
+            SetterPattern::Owned => quote!(
+                    #ident: self.#ident.ok_or(#err_uninitizalied)?,
+                ),
+            SetterPattern::Mutable |
+            SetterPattern::Immutable => quote!(
+                    #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
+                ),
+        };
 
-    setter
+        debug!("Initializer is `{:?}`", initializer);
+
+        initializer
+    } else {
+        trace!("Fallback to default initializer for `{}`.", opts.field_name());
+        quote!( #ident: default::Default(), )
+    }
+}
+
+fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
+    -> quote::Tokens
+{
+    if opts.setter_enabled() {
+        trace!("Deriving setter for `{}`.", opts.field_name());
+        let ty = &f.ty;
+        let pattern = opts.setter_pattern();
+        let vis = opts.setter_visibility();
+        let fieldname = f.ident.as_ref()
+            .expect(&format!("Missing identifier for field `{:?}`.", f));
+        let funcname = if opts.setter_prefix().len() > 0 {
+            Cow::Owned(syn::Ident::new(format!("{}_{}", opts.setter_prefix(), fieldname)))
+        } else {
+            Cow::Borrowed(fieldname)
+        };
+
+        let setter = match *pattern {
+            SetterPattern::Owned => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
+                        let mut new = self;
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+            SetterPattern::Mutable => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                        let mut new = self;
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+            SetterPattern::Immutable => quote!(
+                    #(#attrs)*
+                    #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
+                        let mut new = Clone::clone(self);
+                        new.#fieldname = Some(value.into());
+                        new
+                }),
+        };
+
+        debug!("Setter is `{:?}`", setter);
+
+        setter
+    } else {
+        trace!("Skipping setter for `{}`.", opts.field_name());
+        quote!()
+    }
 }

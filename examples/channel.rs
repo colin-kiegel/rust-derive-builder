@@ -1,4 +1,5 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 use std::convert::From;
 
@@ -23,11 +24,15 @@ impl From<i32> for Authentication {
 struct Channel {
     id: Uuid,
     token: Authentication,
-    special_info: i32
+    special_info: i32,
 }
 
 fn main() {
-    let mut ch = Channel::default();
-    ch.special_info(42);
+    let ch = ChannelBuilder::default()
+        .special_info(42)
+        .id(0)
+        .token(5494192)
+        .build()
+        .unwrap();
     println!("{:?}", ch);
 }

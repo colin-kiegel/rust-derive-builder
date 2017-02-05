@@ -1,19 +1,25 @@
-#[macro_use] extern crate derive_builder;
+#[macro_use]
+extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[setter(prefix="with")]
+#[builder(setter_prefix="with")]
 struct Lorem {
     ipsum: String,
-    #[setter(prefix="set")]
+    #[builder(setter_prefix="set")]
     pub dolor: Option<String>,
 }
 
 #[test]
 fn prefixed_setters() {
-    let x = Lorem::default()
+    let x = LoremBuilder::default()
         .with_ipsum("ipsum")
         .set_dolor(Some("dolor".into()))
-        .clone();
+        .build()
+        .unwrap();
 
-    assert_eq!(x, Lorem { ipsum: "ipsum".into(), dolor: Some("dolor".into())});
+    assert_eq!(x,
+               Lorem {
+                   ipsum: "ipsum".into(),
+                   dolor: Some("dolor".into()),
+               });
 }

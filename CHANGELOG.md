@@ -4,14 +4,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- different setter pattern, e.g. `#[setter(immutable)]`
-- private setters, e.g. `#[setter(private)]`
+- different setter pattern, e.g. `#[builder(pattern="immutable")]`
+- private setters, e.g. `#[builder(private)]`
 - additional debug info via env_logger, e.g. `RUST_LOG=derive_builder=trace cargo test`
-- prefixes, e.g. `#[setter(prefix="with")]`
+- prefixes, e.g. `#[builder(setter_prefix="with")]`
 - field specific overrides
+- customize builder name, e.g. `#[builder(name="MyBuilder")]`
 
 ### Changed
-- migration to macros 1.1, please refer to the new docs
+- migration to macros 1.1
+- migration to traditional builder pattern
+=> please refer to the new docs
 
 ### Fixed
 - missing lifetime support #21
