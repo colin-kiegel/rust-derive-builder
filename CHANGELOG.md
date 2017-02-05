@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [v0.3.0]
 ### Added
 - different setter pattern, e.g. `#[builder(pattern="immutable")]`
 - private setters, e.g. `#[builder(private)]`
