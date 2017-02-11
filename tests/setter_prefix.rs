@@ -2,10 +2,10 @@
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(setter_prefix="with")]
+#[builder(setter(prefix="with"))]
 struct Lorem {
     ipsum: String,
-    #[builder(setter_prefix="set")]
+    #[builder(setter(prefix="set"))]
     pub dolor: Option<String>,
 }
 
@@ -22,4 +22,9 @@ fn prefixed_setters() {
                    ipsum: "ipsum".into(),
                    dolor: Some("dolor".into()),
                });
+}
+
+#[test]
+fn deprecation_notice() {
+    panic!(r#"TODO: improve the deprecation notice"#);
 }

@@ -87,7 +87,8 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern="owned")]` or `#[builder(pattern="immutable")]`.
 * **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
 * **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
-* **Visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
+* **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
+* **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 * **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
 * **Logging**: If anything works unexpectedly you can enable detailed logs by setting this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.

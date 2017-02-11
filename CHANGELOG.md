@@ -4,8 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
+### Added
+- skip setters, e.g. `#[builder(setter(skip))]`
 
+### Changed
+- deprecated syntax `#[builder(setter_prefix="with")]`,
+  please use `#[builder(setter(prefix="with"))]` instead
+
+### Fixed
 - use full path for result #39
 - support `#[deny(missing_docs)]` #37
 

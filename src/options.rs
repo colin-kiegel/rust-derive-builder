@@ -101,7 +101,7 @@ pub struct StructMode {
 impl OptionsBuilderMode for StructMode {
     fn parse_builder_name(&mut self, name: &syn::Lit) {
         trace!("Parsing builder name `{:?}`", name);
-        let value = parse_lit_as_cooked_string(name);
+        let value = parse_lit_as_cooked_string(name).unwrap();
         self.builder_name = Some(value.clone());
     }
 }
@@ -201,62 +201,67 @@ impl<Mode> OptionsBuilder<Mode> where
     }
 
     fn parse_attribute(&mut self, attr: &syn::Attribute) {
-        trace!("Parsing attribute `{:?}`.", attr);
-        if attr.style != syn::AttrStyle::Outer || attr.is_sugared_doc {
-            trace!("Ignoring attribute (outer or sugared doc).");
+        const BUILDER_ATTRIBUTE_IDENT: &'static str = "builder";
+
+        if attr.value.name() != BUILDER_ATTRIBUTE_IDENT {
+            trace!("Ignoring attribute `{}`.", attr.value.name());
             return
         }
 
-        const BUILDER_ATTRIBUTE_IDENT: &'static str = "builder";
-
-        // e.g. `#[builder]`
-        if let syn::MetaItem::Word(ref ident) = attr.value {
-            if ident == BUILDER_ATTRIBUTE_IDENT {
-                self.setter_enabled(true);
-                return
-            }
+        if attr.style != syn::AttrStyle::Outer || attr.is_sugared_doc {
+            debug!("Ignoring attribute `{:?}` (outer or sugared doc).", attr);
+            return
         }
 
-        // e.g. `#[builder(...)]`
-        if let syn::MetaItem::List(ref ident, ref nested_attrs) = attr.value {
-            if ident == BUILDER_ATTRIBUTE_IDENT {
+        match attr.value {
+            // i.e. `#[builder(...)]`
+            syn::MetaItem::List(ref _ident, ref nested_attrs)
+            => {
                 self.setter_enabled(true);
-                self.parse_setter_options(nested_attrs);
+                self.parse_builder_options(nested_attrs);
                 return
+            },
+            syn::MetaItem::Word(_) |
+            syn::MetaItem::NameValue(_, _) => {
+                error!("Expected MetaItem::List, found `{:?}`", attr.value);
+                panic!("Could not parse builder options.");
             }
         }
-        debug!("Ignoring attribute.");
     }
 
-    fn parse_setter_options(&mut self, nested: &[syn::NestedMetaItem]) {
-        trace!("Parsing setter options.");
+    fn parse_builder_options(&mut self, nested: &[syn::NestedMetaItem]) {
+        trace!("Parsing builder options.");
         for x in nested {
-            if let syn::NestedMetaItem::MetaItem(ref meta_item) = *x {
-                self.parse_setter_options_metaItem(meta_item)
-            } else {
-                panic!("Expected NestedMetaItem::MetaItem, found `{:?}`", x)
+            match *x {
+                syn::NestedMetaItem::MetaItem(ref meta_item) => {
+                    self.parse_builder_options_metaItem(meta_item)
+                },
+                syn::NestedMetaItem::Literal(ref lit) => {
+                    error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
+                    panic!("Could not parse builder option `{:?}`.", lit);
+                }
             }
         }
     }
 
     #[allow(non_snake_case)]
-    fn parse_setter_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
+    fn parse_builder_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
         trace!("Parsing MetaItem `{:?}`", meta_item);
         match *meta_item {
             syn::MetaItem::Word(ref ident) => {
-                self.parse_setter_options_word(ident)
+                self.parse_builder_options_word(ident)
             },
             syn::MetaItem::NameValue(ref ident, ref lit) => {
-                self.parse_setter_options_nameValue(ident, lit)
+                self.parse_builder_options_nameValue(ident, lit)
             },
-            _ => {
-                panic!("Expected MetaItem::Word/NameValue, found `{:?}`", meta_item)
+            syn::MetaItem::List(ref ident, ref nested_attrs) => {
+                self.parse_builder_options_list(ident, nested_attrs)
             }
         }
     }
 
     /// e.g `private` in `#[builder(private)]`
-    fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
+    fn parse_builder_options_word(&mut self, ident: &syn::Ident) {
         trace!("Parsing word `{:?}`", ident);
         match ident.as_ref() {
             "public" => {
@@ -264,6 +269,9 @@ impl<Mode> OptionsBuilder<Mode> where
             },
             "private" => {
                 self.setter_public(false)
+            },
+            "setter" => {
+                self.setter_enabled(true)
             },
             _ => {
                 panic!("Unknown option `{:?}`", ident)
@@ -273,10 +281,14 @@ impl<Mode> OptionsBuilder<Mode> where
 
     /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`
     #[allow(non_snake_case)]
-    fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
+    fn parse_builder_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value `{:?}` = `{:?}`", ident, lit);
         match ident.as_ref() {
             "setter_prefix" => {
+                let val = quote!(#lit);
+                warn!("deprecated syntax `#[builder(setter_prefix={})]`, \
+                    please use `#[builder(setter(prefix={}))]` instead!",
+                    val, val);
                 self.parse_setter_prefix(lit)
             },
             "pattern" => {
@@ -286,20 +298,129 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.mode.parse_builder_name(lit)
             },
             _ => {
-                panic!("Unknown option `{:?}`", ident)
+                panic!("Unknown option `{}`.", ident.as_ref())
+            }
+        }
+    }
+
+    /// e.g `setter(skip)` in `#[builder(setter(skip))]`
+    #[allow(non_snake_case)]
+    fn parse_builder_options_list(
+        &mut self,
+        ident: &syn::Ident,
+        nested: &[syn::NestedMetaItem]
+    ) {
+        trace!("Parsing list `{}({:?})`", ident.as_ref(), nested);
+        match ident.as_ref() {
+            "setter" => {
+                self.parse_setter_options(nested)
+            },
+            _ => {
+                panic!("Unknown option `{}`.", ident.as_ref())
+            }
+        }
+    }
+
+    /// e.g `skip` in `#[builder(setter(skip))]`
+    #[allow(non_snake_case)]
+    fn parse_setter_options(
+        &mut self,
+        nested: &[syn::NestedMetaItem]
+    ) {
+        trace!("Parsing setter options.");
+        for x in nested {
+            match *x {
+                syn::NestedMetaItem::MetaItem(ref meta_item) => {
+                    self.parse_setter_options_metaItem(meta_item);
+                    // setters implicitly enabled
+                    if self.setter_enabled.is_none() {
+                        self.setter_enabled(true);
+                    }
+                },
+                syn::NestedMetaItem::Literal(ref _lit) => {
+                    // setters explicitly enabled
+                    self.setter_enabled(true);
+                }
+            }
+        }
+    }
+
+    #[allow(non_snake_case)]
+    fn parse_setter_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
+        trace!("Setter Options - Parsing MetaItem `{:?}`.", meta_item);
+        match *meta_item {
+            syn::MetaItem::Word(ref ident) => {
+                self.parse_setter_options_word(ident)
+            },
+            syn::MetaItem::NameValue(ref ident, ref lit) => {
+                self.parse_setter_options_nameValue(ident, lit)
+            },
+            syn::MetaItem::List(ref ident, ref nested_attrs) => {
+                self.parse_setter_options_list(ident, nested_attrs)
+            }
+        }
+    }
+
+    /// e.g `private` in `#[builder(setter(private))]`
+    fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
+        trace!("Setter Options - Parsing word `{:?}`", ident);
+        match ident.as_ref() {
+            "public" => {
+                self.setter_public(true)
+            },
+            "private" => {
+                self.setter_public(false)
+            },
+            "skip" => {
+                self.setter_enabled(false)
+            },
+            _ => {
+                panic!("Unknown setter option `{:?}`.", ident)
+            }
+        };
+    }
+
+    /// e.g `prefix="with"` in `#[builder(setter(prefix="with"))]`
+    #[allow(non_snake_case)]
+    fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
+        trace!("Setter Options - Parsing named value `{:?}` = `{:?}`", ident, lit);
+        match ident.as_ref() {
+            "prefix" => {
+                self.parse_setter_prefix(lit)
+            },
+            "skip" => {
+                self.parse_setter_skip(lit)
+            },
+            _ => {
+                panic!("Unknown setter option `{}`.", ident.as_ref())
+            }
+        }
+    }
+
+    /// e.g `setter(skip)` in `#[builder(setter(skip))]`
+    #[allow(non_snake_case)]
+    fn parse_setter_options_list(
+        &mut self,
+        ident: &syn::Ident,
+        nested: &[syn::NestedMetaItem]
+    ) {
+        trace!("Setter Options - Parsing list `{}({:?})`", ident.as_ref(), nested);
+        match ident.as_ref() {
+            _ => {
+                panic!("Unknown option `{}`.", ident.as_ref())
             }
         }
     }
 
     fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
         trace!("Parsing prefix `{:?}`", lit);
-        let value = parse_lit_as_cooked_string(lit);
+        let value = parse_lit_as_cooked_string(lit).unwrap();
         self.setter_prefix = Some(value.clone());
     }
 
     fn parse_setter_pattern(&mut self, lit: &syn::Lit) {
         trace!("Parsing pattern `{:?}`", lit);
-        let value = parse_lit_as_cooked_string(lit);
+        let value = parse_lit_as_cooked_string(lit).unwrap();
         match value.as_ref() {
             "owned" => {
                 self.setter_pattern(SetterPattern::Owned)
@@ -311,19 +432,46 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_pattern(SetterPattern::Immutable)
             },
             _ => {
-                panic!("Unknown option `{:?}`", value)
+                panic!("Unknown pattern value `{}`.", value)
             }
         };
     }
+
+    fn parse_setter_skip(&mut self, skip: &syn::Lit) {
+        trace!("Parsing skip setter `{:?}`", skip);
+        self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
+    }
 }
 
-fn parse_lit_as_cooked_string(lit: &syn::Lit) -> &String {
+fn parse_lit_as_cooked_string(lit: &syn::Lit) -> Result<&String, String> {
     if let syn::Lit::Str(ref value, str_style) = *lit {
         if str_style != syn::StrStyle::Cooked {
-            panic!("Value must be a *standard* string, but found `{:?}`", lit);
+            return Err(format!("Non-standard string found `{:?}`", lit))
         }
-        value
+        Ok(value)
     } else {
-        panic!("Value must be a string, but found `{:?}`", lit);
+        Err(format!("Unable to interpret as string `{:?}`.", lit))
+    }
+}
+
+fn parse_lit_as_bool(lit: &syn::Lit) -> Result<bool, String> {
+    if let syn::Lit::Bool(ref value) = *lit {
+        Ok(*value)
+    } else {
+        parse_lit_as_cooked_string(lit).map_err(|_| {
+            format!("Value must be a bool or string, but found `{:?}`", lit)
+        }).and_then(|value| {
+            match value.as_ref() {
+                "true" => {
+                    Ok(true)
+                },
+                "false" => {
+                    Ok(false)
+                },
+                _ => {
+                    Err(format!("Invalid boolean value `{}`, expected `true` or `false`.", value))
+                }
+            }
+        })
     }
 }
