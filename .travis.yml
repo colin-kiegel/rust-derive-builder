@@ -28,7 +28,6 @@ before_script: |
 script: |
   travis-cargo build &&
   travis-cargo test &&
-  (cd derive-builder-test && travis-cargo test) &&
   travis-cargo doc
 after_success: |
   # upload the documentation from the build with stable (automatically only actually

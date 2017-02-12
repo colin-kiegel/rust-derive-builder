@@ -11,7 +11,8 @@ Requires Rust 1.15 or newer.
 ### Added
 - different setter pattern, e.g. `#[builder(pattern="immutable")]`
 - private setters, e.g. `#[builder(private)]`
-- additional debug info via env_logger, e.g. `RUST_LOG=derive_builder=trace cargo test`
+- additional debug info via env_logger, e.g.
+  `RUST_LOG=derive_builder=trace cargo test`
 - prefixes, e.g. `#[builder(setter_prefix="with")]`
 - field specific overrides
 - customize builder name, e.g. `#[builder(name="MyBuilder")]`

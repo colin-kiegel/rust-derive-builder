@@ -9,7 +9,6 @@ extern crate derive_builder;
 struct Channel {
     token: i32,
     special_info: i32,
-    // .. a whole bunch of other fields ..
 }
 
 fn main() {

@@ -9,7 +9,6 @@ extern crate derive_builder;
 #[derive(Builder)]
 struct Lorem {
     ipsum: String,
-    // ..
 }
 
 fn main() {}
