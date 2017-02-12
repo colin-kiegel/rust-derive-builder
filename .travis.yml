@@ -1,10 +1,10 @@
 sudo: false
 language: rust
 rust:
-- 1.15
-- stable
-- beta
-- nightly
+  - nightly
+  - beta
+  - stable
+  - 1.15
 env:
   global:
   - RUST_BACKTRACE=1
@@ -20,7 +20,6 @@ addons:
     - libcurl4-openssl-dev
     - libelf-dev
     - libdw-dev
-    - binutils-dev
 before_script: |
   # load travis cargo
   # - https://github.com/huonw/travis-cargo
@@ -35,8 +34,3 @@ after_success: |
   # upload the documentation from the build with stable (automatically only actually
   # runs on the master branch, not individual PRs)
   travis-cargo --only stable doc-upload
-
-  # measure code coverage and upload to coveralls.io (the verify
-  # argument mitigates kcov crashes due to malformed debuginfo, at the
-  # cost of some speed <https://github.com/huonw/travis-cargo/issues/12>)
-  travis-cargo coveralls --no-sudo --verify
