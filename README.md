@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
+[![Build status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
 [![Documentation](https://docs.rs/derive_builder/badge.svg)](https://docs.rs/derive_builder)
-[![Latest Version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
-![Downloads](https://img.shields.io/crates/d/derive_builder.svg)
-![Downloads](https://img.shields.io/crates/dv/derive_builder.svg)
+[![Latest version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
+[![All downloads](https://img.shields.io/crates/d/derive_builder.svg)](https://crates.io/crates/derive_builder)
+[![Downloads of latest version](https://img.shields.io/crates/dv/derive_builder.svg)](https://crates.io/crates/derive_builder)
 
 # Builder Pattern Derive
 
