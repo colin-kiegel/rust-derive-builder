@@ -4,7 +4,7 @@ rust:
   - nightly
   - beta
   - stable
-  - "^1.15"
+  - 1.15.0
 env:
   global:
   - RUST_BACKTRACE=1
