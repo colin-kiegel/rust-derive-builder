@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ## [0.3.0] - 2017-02-05
+
+Requires Rust 1.15 or newer.
+
 ### Added
 - different setter pattern, e.g. `#[builder(pattern="immutable")]`
 - private setters, e.g. `#[builder(private)]`
