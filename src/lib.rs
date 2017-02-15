@@ -354,7 +354,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             SetterPattern::Immutable => quote!(&self),
         };
         quote!(
-            #builder_vis fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
+            #builder_vis fn build(#ref_self) -> ::std::result::Result<#struct_name #ty_generics, String> {
                 Ok(#struct_name {
                     #(#initializers)*
                 })
