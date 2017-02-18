@@ -354,7 +354,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             SetterPattern::Immutable => quote!(&self),
         };
         quote!(
-            #builder_vis fn build(#ref_self) -> Result<#struct_name #ty_generics, String> {
+            #builder_vis fn build(#ref_self) -> ::std::result::Result<#struct_name #ty_generics, String> {
                 Ok(#struct_name {
                     #(#initializers)*
                 })
@@ -384,7 +384,7 @@ fn derive_builder_field(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
     if opts.setter_enabled() {
         trace!("Deriving builder field for `{}``.", opts.field_name());
         let (vis, ident, ty) = (&f.vis, &f.ident, &f.ty);
-        quote!(#(#attrs)* #vis #ident: Option<#ty>,)
+        quote!(#(#attrs)* #vis #ident: ::std::option::Option<#ty>,)
     } else {
         trace!("Skipping builder field for `{}`.", opts.field_name());
         quote!()
@@ -405,7 +405,7 @@ fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
                 ),
             SetterPattern::Mutable |
             SetterPattern::Immutable => quote!(
-                    #ident: Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
+                    #ident: ::std::clone::Clone::clone(self.#ident.as_ref().ok_or(#err_uninitizalied)?),
                 ),
         };
 
@@ -437,22 +437,22 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
         let setter = match *pattern {
             SetterPattern::Owned => quote!(
                     #(#attrs)*
-                    #vis fn #funcname<VALUE: Into<#ty>>(self, value: VALUE) -> Self {
+                    #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(self, value: VALUE) -> Self {
                         let mut new = self;
                         new.#fieldname = Some(value.into());
                         new
                 }),
             SetterPattern::Mutable => quote!(
                     #(#attrs)*
-                    #vis fn #funcname<VALUE: Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                    #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
                         let mut new = self;
                         new.#fieldname = Some(value.into());
                         new
                 }),
             SetterPattern::Immutable => quote!(
                     #(#attrs)*
-                    #vis fn #funcname<VALUE: Into<#ty>>(&self, value: VALUE) -> Self {
-                        let mut new = Clone::clone(self);
+                    #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&self, value: VALUE) -> Self {
+                        let mut new = ::std::clone::Clone::clone(self);
                         new.#fieldname = Some(value.into());
                         new
                 }),
