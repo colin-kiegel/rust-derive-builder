@@ -363,25 +363,13 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     };
 
     let builder_struct_doc = format!(
-        "Builder for {s}.\n\
-        \n\
-        # Examples\n\
-        \n\
-        ```\n\
-        let builder = <{b} as Default>::default();\n\
-        // .. call some setters on `builder`\n\
-        let x: Result<{s}, String> = builder.build();\n\
-        ```",
-        s = struct_name,
-        b = builder_name);
+        include_str!("doc_tpl/builder_struct.md"),
+        struct_name = struct_name,
+        builder_name = builder_name);
 
     let build_method_doc = format!(
-        "Builds a new `{s}`.\n\
-        \n\
-        # Errors\n\
-        \n\
-        If some field has not been initialized.",
-        s = struct_name);
+        include_str!("doc_tpl/builder_method.md"),
+        struct_name = struct_name);
 
     // We need to `#[derive(Clone)]` only for the immutable builder pattern
     quote! {
