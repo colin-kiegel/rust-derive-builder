@@ -46,11 +46,11 @@ fn setter_opt_out() {
         .unwrap();
 
     assert_eq!(x,
-        SetterOptOut {
-            setter_present_by_explicit_default: 42,
-            setter_skipped_by_explicit_opt_out: 0,
-            setter_skipped_by_shorthand_opt_out: 0,
-        });
+               SetterOptOut {
+                   setter_present_by_explicit_default: 42,
+                   setter_skipped_by_explicit_opt_out: 0,
+                   setter_skipped_by_shorthand_opt_out: 0,
+               });
 }
 
 #[test]
@@ -62,9 +62,9 @@ fn setter_opt_in() {
         .unwrap();
 
     assert_eq!(x,
-        SetterOptIn {
-            setter_skipped_by_shorthand_default: 0,
-            setter_present_by_explicit_opt_in: 47,
-            setter_present_by_shorthand_opt_in: 11,
-        });
+               SetterOptIn {
+                   setter_skipped_by_shorthand_default: 0,
+                   setter_present_by_explicit_opt_in: 47,
+                   setter_present_by_shorthand_opt_in: 11,
+               });
 }
