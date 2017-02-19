@@ -21,6 +21,8 @@ pub struct StructOptions {
     pub deprecation_notes: DeprecationNotes,
     /// Number of fields on the target struct.
     pub struct_size_hint: usize,
+    /// Whether the generated code should comply with `#![no_std]`.
+    pub no_std: bool,
 }
 
 impl StructOptions {
@@ -49,6 +51,7 @@ impl StructOptions {
             target_ty_generics: Some(ty_generics),
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
+            no_std: self.no_std,
         }
     }
 }

@@ -1,6 +1,8 @@
 use syn;
 use derive_builder_core::BuilderPattern;
 
+#[macro_use]
+mod macros;
 mod field_mode;
 mod field_options;
 mod struct_mode;
@@ -46,6 +48,7 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
+    fn no_std(&mut self, x: bool);
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -59,37 +62,6 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
             default_expression: None,
             setter_into: None,
             mode: mode,
-        }
-    }
-}
-
-macro_rules! impl_setter {
-    (
-        ident: $ident:ident,
-        desc: $desc:expr,
-        map: |$x:ident: $ty:ty| {$( $map:tt )*},
-    ) => {
-        impl_setter!{
-            ident: $ident for $ident,
-            desc: $desc,
-            map: |$x: $ty| {$( $map )*},
-        }
-    };
-    (
-        ident: $setter:ident for $field:ident,
-        desc: $desc:expr,
-        map: |$x:ident: $ty:ty| {$( $map:tt )*},
-    ) => {
-        fn $setter(&mut self, $x: $ty) -> &mut Self {
-            if let Some(ref current) = self.$field {
-                panic!("Failed to set {} to `{:?}` (already defined as `{:?}`) {}.",
-                    $desc,
-                    $x,
-                    current,
-                    self.where_diagnostics());
-            }
-            self.$field = Some({$( $map )*});
-            self
         }
     }
 }
@@ -215,10 +187,13 @@ impl<Mode> OptionsBuilder<Mode> where
             "default" => {
                 self.default_expression(DefaultExpression::Trait)
             },
+            "no_std" => {
+                self.mode.no_std(true)
+            },
             _ => {
                 panic!("Unknown option `{}` {}", ident.as_ref(), self.where_diagnostics())
             }
-        };
+        }
     }
 
     /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`

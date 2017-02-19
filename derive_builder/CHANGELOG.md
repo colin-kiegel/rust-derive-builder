@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - use full path for result #39
 - support `#[deny(missing_docs)]` #37
+- support `#![no_std]` via `#[builder(no_std)]` #41
 
 ## [0.3.0] - 2017-02-05
 

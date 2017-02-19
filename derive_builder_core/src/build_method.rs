@@ -48,6 +48,8 @@ pub struct BuildMethod<'a> {
     pub initializers: Vec<Tokens>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
+    /// Whether the generated code should comply with `#![no_std]`.
+    pub no_std: bool,
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
@@ -63,12 +65,21 @@ impl<'a> ToTokens for BuildMethod<'a> {
             BuilderPattern::Immutable => quote!(&self),
         };
         let doc_comment = &self.doc_comment;
+
+        let (result, string) = if self.no_std {(
+            quote!(::core::result::Result),
+            quote!(::collections::string::String),
+        )} else {(
+            quote!(::std::result::Result),
+            quote!(::std::string::String),
+        )};
+
         if self.enabled {
             trace!("Deriving build method `{}`.", self.ident.as_ref());
             tokens.append(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
-                    -> ::std::result::Result<#target_ty #target_ty_generics, ::std::string::String>
+                    -> #result<#target_ty #target_ty_generics, #string>
                 {
                     Ok(#target_ty {
                         #(#initializers)*
@@ -112,6 +123,7 @@ macro_rules! default_build_method {
             target_ty_generics: None,
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
+            no_std: false,
         }
     }
 }
@@ -122,11 +134,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
+    fn std() {
         let build_method = default_build_method!();
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                Ok(Foo {
+                    foo: self.foo,
+                })
+            }
+        ));
+    }
+
+    #[test]
+    fn no_std() {
+        let mut build_method = default_build_method!();
+        build_method.no_std = true;
+
+        assert_eq!(quote!(#build_method), quote!(
+            pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
