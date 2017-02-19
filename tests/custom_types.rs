@@ -7,6 +7,8 @@ type Clone = ();
 type Into = ();
 type Option = ();
 type Result = ();
+type Some = ();
+type String = ();
 
 #[derive(Builder)]
 struct IgnoreEmptyStruct {}

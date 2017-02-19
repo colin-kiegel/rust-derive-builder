@@ -354,7 +354,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
             SetterPattern::Immutable => quote!(&self),
         };
         quote!(
-            #builder_vis fn build(#ref_self) -> ::std::result::Result<#struct_name #ty_generics, String> {
+            #builder_vis fn build(#ref_self) -> ::std::result::Result<#struct_name #ty_generics, ::std::string::String> {
                 Ok(#struct_name {
                     #(#initializers)*
                 })
@@ -439,21 +439,21 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(self, value: VALUE) -> Self {
                         let mut new = self;
-                        new.#fieldname = Some(value.into());
+                        new.#fieldname = ::std::option::Option::Some(value.into());
                         new
                 }),
             SetterPattern::Mutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
                         let mut new = self;
-                        new.#fieldname = Some(value.into());
+                        new.#fieldname = ::std::option::Option::Some(value.into());
                         new
                 }),
             SetterPattern::Immutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&self, value: VALUE) -> Self {
                         let mut new = ::std::clone::Clone::clone(self);
-                        new.#fieldname = Some(value.into());
+                        new.#fieldname = ::std::option::Option::Some(value.into());
                         new
                 }),
         };

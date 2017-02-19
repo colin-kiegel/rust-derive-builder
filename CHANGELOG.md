@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- use full path for result #39
+
 ## [0.3.0] - 2017-02-05
 
 Requires Rust 1.15 or newer.
