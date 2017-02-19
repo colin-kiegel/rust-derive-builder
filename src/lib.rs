@@ -362,9 +362,19 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         )
     };
 
+    let builder_struct_doc = format!(
+        include_str!("doc_tpl/builder_struct.md"),
+        struct_name = struct_name,
+        builder_name = builder_name);
+
+    let build_method_doc = format!(
+        include_str!("doc_tpl/builder_method.md"),
+        struct_name = struct_name);
+
     // We need to `#[derive(Clone)]` only for the immutable builder pattern
     quote! {
         #[derive(Default, Clone)]
+        #[doc = #builder_struct_doc]
         #builder_vis struct #builder_name #ty_generics #where_clause {
             #(#builder_fields)*
         }
@@ -373,6 +383,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         impl #impl_generics #builder_name #ty_generics #where_clause {
             #(#setter_fns)*
 
+            #[doc = #build_method_doc]
             #build_fn
         }
     }

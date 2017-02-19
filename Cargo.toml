@@ -29,6 +29,8 @@ env_logger = "0.4"
 
 [build-dependencies]
 skeptic = "0.6"
+log = "0.3"
+env_logger = "0.4"
 
 [dev-dependencies]
 skeptic = "0.6"
