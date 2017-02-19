@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - use full path for result #39
-- deny missing docs #37
+- support `#[deny(missing_docs)]` #37
 
 ## [0.3.0] - 2017-02-05
 

@@ -4,6 +4,7 @@
 //! Documentation templates may contain the following placeholders
 //! - {struct_name}
 //! - {builder_name}
+//! - {field_name}
 //!
 //! The build script will generate documentation tests with the help
 //! of `skeptic`.
@@ -14,5 +15,6 @@
 //! let builder_struct_doc = format!(
 //!     include_str!("doc_tpl/builder_struct.md"),
 //!     struct_name = /*..*/,
-//!     builder_name = /*..*/);
+//!     builder_name = /*..*/),
+//!     field_name = /*..*/);
 //! ```

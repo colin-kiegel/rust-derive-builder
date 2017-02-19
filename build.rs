@@ -30,7 +30,8 @@ extern crate derive_builder;
 
 #[derive(Builder)]
 struct Foo {{
-    _bar: bool,
+    #[allow(dead_code)]
+    default: bool,
 }}
 
 fn main() {{
@@ -98,7 +99,8 @@ fn generate_doc_tpl_tests() -> Result<Vec<String>,Box<Error>> {
         let mut tpl = String::new();
         reader.read_to_string(&mut tpl)?;
         let tpl = tpl.replace("{struct_name}", "Foo")
-            .replace("{builder_name}", "FooBuilder");
+            .replace("{builder_name}", "FooBuilder")
+            .replace("{field_name}", "default");
         out.write_all(tpl.as_ref())?;
 
         trace!("{:?}", &[&out_file.to_str().expect("Path must not be empty")]);
