@@ -23,8 +23,3 @@ fn prefixed_setters() {
                    dolor: Some("dolor".into()),
                });
 }
-
-#[test]
-fn deprecation_notice() {
-    panic!(r#"TODO: improve the deprecation notice"#);
-}

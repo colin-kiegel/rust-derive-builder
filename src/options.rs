@@ -1,4 +1,5 @@
 use syn;
+use deprecation_notes::DeprecationNotes;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum SetterPattern {
@@ -35,6 +36,8 @@ pub struct FieldOptions {
     setter_vis: syn::Visibility,
     /// the _original_ field name
     field_name: String,
+    /// we collect all deprecation notices that we want to send to the user (later).
+    deprecation_notes: DeprecationNotes,
 }
 
 impl StructOptions {
@@ -70,6 +73,10 @@ impl FieldOptions {
 
     pub fn field_name(&self) -> &str {
         &self.field_name
+    }
+
+    pub fn deprecation_notes(&self) -> &DeprecationNotes {
+        &self.deprecation_notes
     }
 }
 
@@ -121,6 +128,7 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     setter_pattern: Option<SetterPattern>,
     setter_prefix: Option<String>,
     setter_vis: Option<syn::Visibility>,
+    deprecation_notes: DeprecationNotes,
     mode: Mode,
 }
 
@@ -131,6 +139,7 @@ impl From<OptionsBuilder<StructMode>> for StructOptions {
             setter_pattern: b.setter_pattern.unwrap_or_default(),
             setter_prefix: b.setter_prefix.unwrap_or_default(),
             setter_vis: b.setter_vis.unwrap_or(syn::Visibility::Public),
+            deprecation_notes: b.deprecation_notes,
             field_name: String::from(""),
         };
 
@@ -155,6 +164,7 @@ impl OptionsBuilder<FieldMode> {
             setter_prefix: self.setter_prefix.clone().unwrap_or(x.setter_prefix.clone()),
             setter_vis: self.setter_vis.as_ref().unwrap_or(&x.setter_vis).clone(),
             field_name: name.into(),
+            deprecation_notes: self.deprecation_notes.clone(), // don't inherit this
         }
     }
 }
@@ -186,6 +196,11 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_vis, x);
         }
         self.setter_vis = Some(syn::Visibility::Public);
+        self
+    }
+
+    fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
+        self.deprecation_notes.push(x.into());
         self
     }
 
@@ -286,9 +301,10 @@ impl<Mode> OptionsBuilder<Mode> where
         match ident.as_ref() {
             "setter_prefix" => {
                 let val = quote!(#lit);
-                warn!("deprecated syntax `#[builder(setter_prefix={})]`, \
-                    please use `#[builder(setter(prefix={}))]` instead!",
-                    val, val);
+                self.push_deprecation_note(format!(
+                    "warning: deprecated syntax `#[builder(setter_prefix={})]`, \
+                     please use `#[builder(setter(prefix={}))]` instead!",
+                    val, val));
                 self.parse_setter_prefix(lit)
             },
             "pattern" => {

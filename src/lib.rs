@@ -273,6 +273,7 @@ extern crate log;
 extern crate env_logger;
 
 mod options;
+mod deprecation_notes;
 
 use std::borrow::Cow;
 use proc_macro::TokenStream;
@@ -470,10 +471,13 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             Cow::Borrowed(fieldname)
         };
 
+        let deprecation_notes = opts.deprecation_notes();
+
         let setter = match *pattern {
             SetterPattern::Owned => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(self, value: VALUE) -> Self {
+                        #deprecation_notes
                         let mut new = self;
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
@@ -481,6 +485,7 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             SetterPattern::Mutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                        #deprecation_notes
                         let mut new = self;
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
@@ -488,6 +493,7 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             SetterPattern::Immutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&self, value: VALUE) -> Self {
+                        #deprecation_notes
                         let mut new = ::std::clone::Clone::clone(self);
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
