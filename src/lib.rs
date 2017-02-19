@@ -33,7 +33,7 @@
 //! #     ipsum: String,
 //! # }
 //! # fn main() {}
-//!
+//! #
 //! #[derive(Clone, Default)]
 //! struct LoremBuilder {
 //!     ipsum: Option<String>,
@@ -148,9 +148,9 @@
 //! ## Generic structs
 //!
 //! ```rust
-//! #[macro_use]
-//! extern crate derive_builder;
-//!
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
 //! #[derive(Builder, Debug, PartialEq, Default, Clone)]
 //! struct GenLorem<T: Clone> {
 //!     ipsum: String,
@@ -176,9 +176,9 @@
 //! The whitelisting minimizes interference with other custom attributes like Serde/Diesel etc.
 //!
 //! ```rust
-//! #[macro_use]
-//! extern crate derive_builder;
-//!
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
 //! #[derive(Builder)]
 //! struct Lorem {
 //!     /// `ipsum` may be any `String` (be creative).
