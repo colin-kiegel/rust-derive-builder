@@ -2,10 +2,10 @@
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(setter_prefix="with")]
+#[builder(setter(prefix="with"))]
 struct Lorem {
     ipsum: String,
-    #[builder(setter_prefix="set")]
+    #[builder(setter(prefix="set"))]
     pub dolor: Option<String>,
 }
 

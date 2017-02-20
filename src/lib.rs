@@ -194,6 +194,34 @@
 //! # fn main() {}
 //! ```
 //!
+//! ## Hidden Fields
+//!
+//! You can hide fields by skipping their setters on the builder struct.
+//!
+//! - Opt-out &mdash; skip setters via `#[builder(setter(skip))]` on individual fields.
+//! - Opt-in &mdash; set `#[builder(setter(skip))]` on the whole struct
+//!   and enable individual setters via `#[builder(setter)]`.
+//!
+//! The types of skipped fields must implement `Default`.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder)]
+//! struct SetterOptOut {
+//!     setter_present: u32,
+//!     #[builder(setter(skip))]
+//!     setter_skipped: u32,
+//! }
+//! # fn main() {}
+//! ```
+//!
+//! Alternatively you can use the more verbose form:
+//!
+//! - `#[builder(setter(skip="true"))]`
+//! - `#[builder(setter(skip="false"))]`
+//!
 //! ## Setter Visibility
 //!
 //! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
@@ -206,7 +234,7 @@
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[builder(setter_prefix="xyz")` to change
+//! You can precede your struct (or field) with e.g. `#[builder(setter(prefix="xyz"))` to change
 //! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
 //! by default, since Rust favors snake case here.
 //!
@@ -245,6 +273,7 @@ extern crate log;
 extern crate env_logger;
 
 mod options;
+mod deprecation_notes;
 
 use std::borrow::Cow;
 use proc_macro::TokenStream;
@@ -341,9 +370,6 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         setter_fns.push(derive_setter(f, &f_opts, &attrs));
         builder_fields.push(derive_builder_field(f, &f_opts, &attrs));
         initializers.push(derive_initializer(f, &f_opts));
-        // NOTE: Looking forward for computation in interpolation
-        // - https://github.com/dtolnay/quote/issues/10
-        // => `quote!(#{f.vis} ...)
     }
 
     let builder_vis = opts.builder_visibility();
@@ -425,7 +451,7 @@ fn derive_initializer(f: &syn::Field, opts: &FieldOptions) -> quote::Tokens {
         initializer
     } else {
         trace!("Fallback to default initializer for `{}`.", opts.field_name());
-        quote!( #ident: default::Default(), )
+        quote!( #ident: Default::default(), )
     }
 }
 
@@ -445,10 +471,13 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             Cow::Borrowed(fieldname)
         };
 
+        let deprecation_notes = opts.deprecation_notes();
+
         let setter = match *pattern {
             SetterPattern::Owned => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(self, value: VALUE) -> Self {
+                        #deprecation_notes
                         let mut new = self;
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
@@ -456,6 +485,7 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             SetterPattern::Mutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&mut self, value: VALUE) -> &mut Self {
+                        #deprecation_notes
                         let mut new = self;
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
@@ -463,6 +493,7 @@ fn derive_setter(f: &syn::Field, opts: &FieldOptions, attrs: &AttrVec)
             SetterPattern::Immutable => quote!(
                     #(#attrs)*
                     #vis fn #funcname<VALUE: ::std::convert::Into<#ty>>(&self, value: VALUE) -> Self {
+                        #deprecation_notes
                         let mut new = ::std::clone::Clone::clone(self);
                         new.#fieldname = ::std::option::Option::Some(value.into());
                         new
