@@ -34,6 +34,7 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     /// Takes precedence over `setter_prefix`
     setter_name: Option<String>,
     setter_vis: Option<syn::Visibility>,
+    default_expression: Option<String>,
     mode: Mode,
 }
 
@@ -70,6 +71,15 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_vis, x);
         }
         self.setter_vis = Some(syn::Visibility::Public);
+        self
+    }
+
+    fn default_expression(&mut self, x: String) -> &mut Self {
+        if self.default_expression.is_some() {
+            warn!("Default expression already defined as `{:?}`, new value is `{:?}`.",
+                self.default_expression, x);
+        }
+        self.default_expression = Some(x);
         self
     }
 
@@ -156,6 +166,9 @@ impl<Mode> OptionsBuilder<Mode> where
             "setter" => {
                 self.setter_enabled(true)
             },
+            "default" => {
+                self.default_expression("".to_string())
+            },
             _ => {
                 panic!("Unknown option `{:?}`", ident)
             }
@@ -180,6 +193,9 @@ impl<Mode> OptionsBuilder<Mode> where
             },
             "name" => {
                 self.mode.parse_builder_name(lit)
+            },
+            "default" => {
+                self.parse_default_expression(lit)
             },
             _ => {
                 panic!("Unknown option `{}`.", ident.as_ref())
@@ -298,13 +314,19 @@ impl<Mode> OptionsBuilder<Mode> where
 
     fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
         trace!("Parsing prefix `{:?}`", lit);
-        let value = parse_lit_as_cooked_string(lit).unwrap();
+        let value = parse_lit_as_string(lit).unwrap();
         self.setter_prefix = Some(value.clone());
+    }
+
+    fn parse_default_expression(&mut self, lit: &syn::Lit) {
+        trace!("Parsing default expression `{:?}`", lit);
+        let value = parse_lit_as_string(lit).unwrap();
+        self.default_expression(value.clone());
     }
 
     fn parse_builder_pattern(&mut self, lit: &syn::Lit) {
         trace!("Parsing pattern `{:?}`", lit);
-        let value = parse_lit_as_cooked_string(lit).unwrap();
+        let value = parse_lit_as_string(lit).unwrap();
         match value.as_ref() {
             "owned" => {
                 self.builder_pattern(BuilderPattern::Owned)
@@ -327,11 +349,8 @@ impl<Mode> OptionsBuilder<Mode> where
     }
 }
 
-fn parse_lit_as_cooked_string(lit: &syn::Lit) -> Result<&String, String> {
-    if let syn::Lit::Str(ref value, str_style) = *lit {
-        if str_style != syn::StrStyle::Cooked {
-            return Err(format!("Non-standard string found `{:?}`", lit))
-        }
+fn parse_lit_as_string(lit: &syn::Lit) -> Result<&String, String> {
+    if let syn::Lit::Str(ref value, _str_style) = *lit {
         Ok(value)
     } else {
         Err(format!("Unable to interpret as string `{:?}`.", lit))
@@ -342,7 +361,7 @@ fn parse_lit_as_bool(lit: &syn::Lit) -> Result<bool, String> {
     if let syn::Lit::Bool(ref value) = *lit {
         Ok(*value)
     } else {
-        parse_lit_as_cooked_string(lit).map_err(|_| {
+        parse_lit_as_string(lit).map_err(|_| {
             format!("Value must be a bool or string, but found `{:?}`", lit)
         }).and_then(|value| {
             match value.as_ref() {

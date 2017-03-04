@@ -12,6 +12,8 @@ pub struct FieldOptions {
     pub setter_ident: syn::Ident,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
+    /// e.g. `#[builder(default="42u32")]` (default to None)
+    pub default_expression: Option<String>,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,
     /// The field type.
@@ -36,12 +38,21 @@ impl FieldOptions {
         }
     }
 
+    /// Panics
+    ///
+    /// if `default_expression` can not be parsed as `Block`.
     pub fn to_initializer<'a>(&'a self) -> Initializer<'a> {
         Initializer {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            default_expr: None,
+            explicit_default: self.default_expression.as_ref().map(|s| {
+                if s.is_empty() {
+                    "::std::default::Default::default()"
+                } else {
+                    s
+                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", s))
+            }),
         }
     }
 
