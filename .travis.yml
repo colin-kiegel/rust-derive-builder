@@ -1,21 +1,23 @@
 sudo: false
 language: rust
 rust:
-  - nightly
   - beta
   - stable
   - 1.15.0
 matrix:
   include:
     - rust: nightly
-      env: JOB=style_check
+      env: JOB=build CARGO_FEATURES="dev_nightly"
+    - rust: nightly
+      env: JOB=style_check CARGO_FEATURES="dev_nightly"
   allow_failures:
-    - env: JOB=style_check
+    - env: JOB=style_check CARGO_FEATURES="dev_nightly"
   fast_finish: true
 env:
   matrix:
     - JOB=build
   global:
+  - CARGO_FEATURES=""
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder
@@ -37,8 +39,8 @@ before_script: |
 script: |
   case $JOB in
     build)
-      travis-cargo build &&
-      travis-cargo test -- --all --no-fail-fast &&
+      travis-cargo build -- --features "$CARGO_FEATURES" &&
+      travis-cargo test -- --all --no-fail-fast --features "$CARGO_FEATURES" &&
       travis-cargo doc
       ;;
     style_check)
@@ -52,4 +54,4 @@ script: |
 after_success: |
   # upload the documentation from the build with stable (automatically only actually
   # runs on the master branch, not individual PRs)
-  travis-cargo --only stable doc-upload
+  travis-cargo --only stable doc-upload -- --features "$CARGO_FEATURES"

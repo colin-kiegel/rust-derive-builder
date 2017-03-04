@@ -7,7 +7,9 @@ pub use internal::Foo as Bar;
 pub use internal::FooBuilder as BarBuilder;
 mod internal {
     #[derive(Builder)]
-    pub struct Foo { pub a: i32 }
+    pub struct Foo {
+        pub a: i32,
+    }
 }
 
 #[test]

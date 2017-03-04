@@ -40,10 +40,8 @@ impl SetterOptIn {
 
 #[test]
 fn setter_opt_out() {
-    let x: SetterOptOut = SetterOptOutBuilder::default()
-        .setter_present_by_explicit_default(42u32)
-        .build()
-        .unwrap();
+    let x: SetterOptOut =
+        SetterOptOutBuilder::default().setter_present_by_explicit_default(42u32).build().unwrap();
 
     assert_eq!(x,
                SetterOptOut {
