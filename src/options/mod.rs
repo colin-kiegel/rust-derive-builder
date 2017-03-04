@@ -1,172 +1,46 @@
 use syn;
-use deprecation_notes::DeprecationNotes;
+use derive_builder_core::BuilderPattern;
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum SetterPattern {
-    Owned,
-    Mutable,
-    Immutable
+mod field_mode;
+mod field_options;
+mod struct_mode;
+mod struct_options;
+
+pub use self::field_mode::FieldMode;
+pub use self::field_options::FieldOptions;
+pub use self::struct_mode::StructMode;
+pub use self::struct_options::StructOptions;
+
+/// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the ast.
+pub fn struct_options_from(ast: &syn::MacroInput) -> (StructOptions, OptionsBuilder<FieldMode>) {
+    OptionsBuilder::<StructMode>::parse(ast).into()
 }
 
-impl Default for SetterPattern {
-    fn default() -> SetterPattern {
-        SetterPattern::Mutable
-    }
+///  Get the `FieldOptions` for a field with respect to some custom default values.
+pub fn field_options_from(f: syn::Field,
+                          defaults: &OptionsBuilder<FieldMode>)
+                          -> FieldOptions {
+    OptionsBuilder::<FieldMode>::parse(f).with_defaults(defaults).into()
 }
 
-#[derive(Debug, Clone)]
-pub struct StructOptions {
-    /// defaults to format!("{}Builder", struct_name)
-    builder_name: String,
-    /// defaults to struct_vis
-    builder_vis: syn::Visibility,
-    /// see below
-    field_defaults: FieldOptions,
-}
-
-#[derive(Debug, Clone)]
-pub struct FieldOptions {
-    /// currently hard-wired to true
-    setter_enabled: bool,
-    /// e.g. `#[builder(pattern="owned")]` (defaults to mutable)
-    setter_pattern: SetterPattern,
-    /// e.g. `#[builder(setter_prefix="with")]` (defaults to None)
-    setter_prefix: String,
-    /// e.g. `#[builder(private)]` (defaults to public)
-    setter_vis: syn::Visibility,
-    /// the _original_ field name
-    field_name: String,
-    /// we collect all deprecation notices that we want to send to the user (later).
-    deprecation_notes: DeprecationNotes,
-}
-
-impl StructOptions {
-    pub fn field_defaults(&self) -> &FieldOptions {
-        &self.field_defaults
-    }
-
-    pub fn builder_visibility(&self) -> &syn::Visibility {
-        &self.builder_vis
-    }
-
-    pub fn builder_name(&self) -> &str {
-        &self.builder_name
-    }
-}
-
-impl FieldOptions {
-    pub fn setter_enabled(&self) -> bool {
-        self.setter_enabled
-    }
-
-    pub fn setter_pattern(&self) -> &SetterPattern {
-        &self.setter_pattern
-    }
-
-    pub fn setter_visibility(&self) -> &syn::Visibility {
-        &self.setter_vis
-    }
-
-    pub fn setter_prefix(&self) -> &str {
-        &self.setter_prefix
-    }
-
-    pub fn field_name(&self) -> &str {
-        &self.field_name
-    }
-
-    pub fn deprecation_notes(&self) -> &DeprecationNotes {
-        &self.deprecation_notes
-    }
-}
-
-impl<'a> From<&'a syn::MacroInput> for StructOptions {
-    fn from(ast: &'a syn::MacroInput) -> Self {
-        trace!("Parsing struct attributes.");
-        let mut builder = OptionsBuilder::<StructMode>::default();
-        builder.parse_attributes(&ast.attrs);
-
-        builder.mode.struct_name = ast.ident.as_ref().to_string();
-        builder.mode.struct_vis = Some(ast.vis.clone());
-
-        builder.into()
-    }
-}
-
-pub trait OptionsBuilderMode {
-    fn parse_builder_name(&mut self, lit: &syn::Lit);
-}
-
-#[derive(Default)]
-pub struct StructMode {
-    builder_name: Option<String>,
-    builder_vis: Option<syn::Visibility>,
-    struct_name: String,
-    struct_vis: Option<syn::Visibility>,
-}
-
-impl OptionsBuilderMode for StructMode {
-    fn parse_builder_name(&mut self, name: &syn::Lit) {
-        trace!("Parsing builder name `{:?}`", name);
-        let value = parse_lit_as_cooked_string(name).unwrap();
-        self.builder_name = Some(value.clone());
-    }
-}
-
-#[derive(Default)]
-pub struct FieldMode;
-
-impl OptionsBuilderMode for FieldMode {
-    fn parse_builder_name(&mut self, _name: &syn::Lit) {
-        panic!("Builder name can only be set on the stuct level")
-    }
-}
-
-#[derive(Default, Debug)]
+/// Build `StructOptions` and `FieldOptions`.
+///
+/// The difference between `StructOptions` and `FieldOptions` is expressed via a different `Mode`.
+#[derive(Default, Debug, Clone)]
 pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
+    builder_pattern: Option<BuilderPattern>,
     setter_enabled: Option<bool>,
-    setter_pattern: Option<SetterPattern>,
     setter_prefix: Option<String>,
+    /// Takes precedence over `setter_prefix`
+    setter_name: Option<String>,
     setter_vis: Option<syn::Visibility>,
-    deprecation_notes: DeprecationNotes,
     mode: Mode,
 }
 
-impl From<OptionsBuilder<StructMode>> for StructOptions {
-    fn from(b: OptionsBuilder<StructMode>) -> StructOptions {
-        let field_defaults = FieldOptions {
-            setter_enabled: b.setter_enabled.unwrap_or(true),
-            setter_pattern: b.setter_pattern.unwrap_or_default(),
-            setter_prefix: b.setter_prefix.unwrap_or_default(),
-            setter_vis: b.setter_vis.unwrap_or(syn::Visibility::Public),
-            deprecation_notes: b.deprecation_notes,
-            field_name: String::from(""),
-        };
-
-        StructOptions {
-            field_defaults: field_defaults,
-            builder_name: b.mode.builder_name.unwrap_or(format!("{}Builder", b.mode.struct_name)),
-            builder_vis: b.mode.builder_vis.unwrap_or(
-                b.mode.struct_vis.expect("Struct visibility must be initialized")
-            )
-        }
-    }
-}
-
-impl OptionsBuilder<FieldMode> {
-    pub fn build<'a, T>(&self, name: T, struct_opts: &'a StructOptions) -> FieldOptions where
-        T: Into<String>
-    {
-        let x = struct_opts.field_defaults();
-        FieldOptions {
-            setter_enabled: self.setter_enabled.unwrap_or(x.setter_enabled),
-            setter_pattern: self.setter_pattern.clone().unwrap_or(x.setter_pattern.clone()),
-            setter_prefix: self.setter_prefix.clone().unwrap_or(x.setter_prefix.clone()),
-            setter_vis: self.setter_vis.as_ref().unwrap_or(&x.setter_vis).clone(),
-            field_name: name.into(),
-            deprecation_notes: self.deprecation_notes.clone(), // don't inherit this
-        }
-    }
+/// Certain attributes need to be handled differently for `StructOptions` and `FieldOptions`.
+pub trait OptionsBuilderMode {
+    fn parse_builder_name(&mut self, lit: &syn::Lit);
+    fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
 }
 
 impl<Mode> OptionsBuilder<Mode> where
@@ -181,12 +55,12 @@ impl<Mode> OptionsBuilder<Mode> where
         self
     }
 
-    fn setter_pattern(&mut self, x: SetterPattern) -> &mut Self {
-        if self.setter_pattern.is_some() {
+    fn builder_pattern(&mut self, x: BuilderPattern) -> &mut Self {
+        if self.builder_pattern.is_some() {
             warn!("Setter pattern already defined as `{:?}`, new value is `{:?}`.",
-                self.setter_pattern, x);
+                self.builder_pattern, x);
         }
-        self.setter_pattern = Some(x);
+        self.builder_pattern = Some(x);
         self
     }
 
@@ -196,11 +70,6 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_vis, x);
         }
         self.setter_vis = Some(syn::Visibility::Public);
-        self
-    }
-
-    fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
-        self.deprecation_notes.push(x.into());
         self
     }
 
@@ -301,14 +170,14 @@ impl<Mode> OptionsBuilder<Mode> where
         match ident.as_ref() {
             "setter_prefix" => {
                 let val = quote!(#lit);
-                self.push_deprecation_note(format!(
+                self.mode.push_deprecation_note(format!(
                     "warning: deprecated syntax `#[builder(setter_prefix={})]`, \
                      please use `#[builder(setter(prefix={}))]` instead!",
                     val, val));
                 self.parse_setter_prefix(lit)
             },
             "pattern" => {
-                self.parse_setter_pattern(lit)
+                self.parse_builder_pattern(lit)
             },
             "name" => {
                 self.mode.parse_builder_name(lit)
@@ -434,18 +303,18 @@ impl<Mode> OptionsBuilder<Mode> where
         self.setter_prefix = Some(value.clone());
     }
 
-    fn parse_setter_pattern(&mut self, lit: &syn::Lit) {
+    fn parse_builder_pattern(&mut self, lit: &syn::Lit) {
         trace!("Parsing pattern `{:?}`", lit);
         let value = parse_lit_as_cooked_string(lit).unwrap();
         match value.as_ref() {
             "owned" => {
-                self.setter_pattern(SetterPattern::Owned)
+                self.builder_pattern(BuilderPattern::Owned)
             },
             "mutable" => {
-                self.setter_pattern(SetterPattern::Mutable)
+                self.builder_pattern(BuilderPattern::Mutable)
             },
             "immutable" => {
-                self.setter_pattern(SetterPattern::Immutable)
+                self.builder_pattern(BuilderPattern::Immutable)
             },
             _ => {
                 panic!("Unknown pattern value `{}`.", value)

@@ -19,8 +19,4 @@ struct Lorem {
     LinuxOnly: (),
 }
 
-#[test]
-fn annotations() {
-    // this is currently just a compile-test (may switch to token comparisons here)
-    // https://github.com/colin-kiegel/rust-derive-builder/issues/19
-}
+fn main() { }

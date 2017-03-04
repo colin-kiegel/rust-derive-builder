@@ -1,5 +1,5 @@
 [workspace]
-members = ["derive_builder_test"]
+members = ["derive_builder_core", "derive_builder_test"]
 
 [package]
 name = "derive_builder"
@@ -24,11 +24,16 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 [lib]
 proc-macro = true
 
+[features]
+dev_nightly = ["compiletest_rs"]
+
 [dependencies]
 syn = "0.11"
 quote = "0.3"
 log = "0.3"
 env_logger = "0.4"
+derive_builder_core = { version = "0.1", path = "derive_builder_core" }
+compiletest_rs = { version = "0.2", optional = true }
 
 [build-dependencies]
 skeptic = "0.7"
