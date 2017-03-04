@@ -26,7 +26,7 @@ before_script: |
   pip install 'travis-cargo<0.2' --user &&
   export PATH=$LOCAL/bin:$PATH
 script: |
-  travis-cargo build -- --all &&
+  travis-cargo build &&
   travis-cargo test -- --all &&
   travis-cargo doc
 after_success: |
