@@ -26,8 +26,10 @@ before_script: |
   pip install 'travis-cargo<0.2' --user &&
   export PATH=$LOCAL/bin:$PATH
 script: |
-  # doc-upload only happens on the master branch, not PRs
   travis-cargo build &&
   travis-cargo test &&
-  travis-cargo doc &&
+  travis-cargo doc
+after_success: |
+  # upload the documentation from the build with stable (automatically only actually
+  # runs on the master branch, not individual PRs)
   travis-cargo --only stable doc-upload
