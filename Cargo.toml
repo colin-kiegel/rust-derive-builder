@@ -20,6 +20,8 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [lib]
 proc-macro = true
+name = "derive_builder" # workaround for travis-cargo doc-upload
+                        # https://github.com/huonw/travis-cargo/issues/69
 
 [dependencies]
 syn = "0.11"
