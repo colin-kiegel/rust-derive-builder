@@ -6,7 +6,7 @@
 //! - {builder_name}
 //! - {field_name}
 //!
-//! The build script will generate documentation tests with the help
+//! The `build.rs` script will generate documentation tests with the help
 //! of `skeptic`.
 //!
 //! Templates are used like this:

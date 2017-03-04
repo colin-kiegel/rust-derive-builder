@@ -1,0 +1,12 @@
+[package]
+name = "derive-builder-test"
+version = "0.1.0"
+authors = ["Colin Kiegel <kiegel@gmx.de>"]
+
+license = "MIT/Apache-2.0"
+
+[dependencies]
+derive_builder = { path = ".." }
+
+[lib]
+path = "src/lib.rs"

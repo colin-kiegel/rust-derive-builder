@@ -1,3 +1,6 @@
+[workspace]
+members = ["derive-builder-test"]
+
 [package]
 name = "derive_builder"
 version = "0.3.0"

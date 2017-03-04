@@ -246,6 +246,8 @@
 //!   names.
 //! - When defining a generic struct, you cannot use `VALUE` as a generic
 //!   parameter as this is what all setters are using.
+//! - When re-exporting the underlying struct under a different name, the
+//!   auto-generated documentation will not match.
 //!
 //! ## Debugging Info
 //!
@@ -390,8 +392,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
     let builder_struct_doc = format!(
         include_str!("doc_tpl/builder_struct.md"),
-        struct_name = struct_name,
-        builder_name = builder_name);
+        struct_name = struct_name);
 
     let build_method_doc = format!(
         include_str!("doc_tpl/builder_method.md"),
