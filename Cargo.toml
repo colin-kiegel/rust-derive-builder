@@ -1,5 +1,5 @@
 [workspace]
-members = ["derive-builder-test"]
+members = ["derive_builder_test"]
 
 [package]
 name = "derive_builder"

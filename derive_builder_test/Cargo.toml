@@ -1,5 +1,5 @@
 [package]
-name = "derive-builder-test"
+name = "derive_builder_test"
 version = "0.1.0"
 authors = ["Colin Kiegel <kiegel@gmx.de>"]
 
