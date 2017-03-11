@@ -16,8 +16,8 @@ matrix:
 env:
   matrix:
     - JOB=build
-    - CARGO_FEATURES=""
   global:
+  - CARGO_FEATURES=""
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder
@@ -39,7 +39,7 @@ before_script: |
 script: |
   case $JOB in
     build)
-      travis-cargo build -- "$CARGO_FEATURES" &&
+      travis-cargo build -- --features "$CARGO_FEATURES" &&
       travis-cargo test -- --all --no-fail-fast --features "$CARGO_FEATURES" &&
       travis-cargo doc
       ;;
