@@ -1,4 +1,4 @@
-//! Some people may have #![deny(missing_docs)] in their crate.
+//! Some people may have `#![deny(missing_docs)]` in their crate.
 //!
 //! NOTE: This can only be tested in examples, but not integration tests.
 #![deny(missing_docs)]

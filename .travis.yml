@@ -5,7 +5,16 @@ rust:
   - beta
   - stable
   - 1.15.0
+matrix:
+  include:
+    - rust: nightly
+      env: JOB=style_check
+  allow_failures:
+    - env: JOB=style_check
+  fast_finish: true
 env:
+  matrix:
+    - JOB=build
   global:
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
@@ -26,9 +35,20 @@ before_script: |
   pip install 'travis-cargo<0.2' --user &&
   export PATH=$LOCAL/bin:$PATH
 script: |
-  travis-cargo build &&
-  travis-cargo test -- --all &&
-  travis-cargo doc
+  case $JOB in
+    build)
+      travis-cargo build &&
+      travis-cargo test -- --all --no-fail-fast &&
+      travis-cargo doc
+      ;;
+    style_check)
+      cargo install clippy --debug --force || exit
+      cargo clippy -- -Dclippy
+      ;;
+    *)
+      exit 1
+      ;;
+  esac
 after_success: |
   # upload the documentation from the build with stable (automatically only actually
   # runs on the master branch, not individual PRs)
