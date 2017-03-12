@@ -5,7 +5,7 @@ use syn;
 ///
 /// Can be expanded at every place that accepts item definitions (e.g. function bodys).
 ///
-/// # Example
+/// # Examples
 ///
 /// Will expand to something like the following (depending on settings):
 ///

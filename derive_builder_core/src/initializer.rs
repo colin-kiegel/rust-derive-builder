@@ -6,7 +6,7 @@ use BuilderPattern;
 ///
 /// Lives in the body of `BuildMethod`.
 ///
-/// # Example
+/// # Examples
 ///
 /// Will expand to something like the following (depending on settings):
 ///

@@ -2,7 +2,7 @@ use syn;
 
 /// Doc-comment, implementing `quote::ToTokens`.
 ///
-/// # Example
+/// # Examples
 ///
 /// Will expand to something like the following (depending on inner value):
 ///
