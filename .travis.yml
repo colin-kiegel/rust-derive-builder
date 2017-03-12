@@ -7,11 +7,11 @@ rust:
 matrix:
   include:
     - rust: nightly
-      env: JOB=build CARGO_FEATURES="dev_nightly"
+      env: JOB=build CARGO_FEATURES=dev_nightly
     - rust: nightly
-      env: JOB=style_check CARGO_FEATURES="dev_nightly"
+      env: JOB=style_check CARGO_FEATURES=dev_nightly
   allow_failures:
-    - env: JOB=style_check CARGO_FEATURES="dev_nightly"
+    - env: JOB=style_check CARGO_FEATURES=dev_nightly
   fast_finish: true
 env:
   matrix:
@@ -21,7 +21,6 @@ env:
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder
-  - LOCAL="~/.local"
   # encrypted github token for doc+coveralls upload
   - secure: "oGshXdNEX+SK3O6cwGsMN9TGjfAtXXDFxBa5Ti38m8cNR2DdYikV5BMgsPQdWj8K58m2H3hiU3jWGI1d3W94ELlKXRcAJg39x10TPAHd+L89zSk48JorZejgKVARJuW3qDAO/xbi+bc0/Q1sgq9h7zBxAWfD7PJ3Lu/k20SRmoghDC+ufHr6bElkAZM388WD1q8eZgITBQWXDBYy8id85TxxagK0Xq/ZjDhCNwcz9A9rO8QrX886nAr8liL54M+XZ35+wwiw+5s3Vz5Oa/sKnVg33VKIjDwOs3YZP4+egFFEtEVVlvAm+NmzWIYzOi8VJbNmV00c3qhSRkEwCOGR41m4Nl/bmhMu6iL9epvqdaouElkg74dV6qqeYq/jGOJrklHuUmyPvXbTYukpNt6a9nqDu8IPrLkQOjpKnKQtmazdOyajiqwUiv6/GXb6tarSzMzsXqM+l/wWplFZkwaDvWR9m5OgilohpFYdhrbJNUd1zffgfwvYFBNVXnkRScwrVBpVfAz420w2s/YfONfl/DtrHt1U/O+gDQ92AGc6foOqCJoqup6uasWkgRbPMGm5hl6n7JALGYjNB60BLi7okItITosoprknXUfLoPzrpnMRi9ScEjEXUBliKxBXnPyMKAZur39PfKGeIasOPwQIPo9xhpWTsOUcuux9l4eihX0="
 addons:
@@ -35,23 +34,43 @@ before_script: |
   # load travis cargo
   # - https://github.com/huonw/travis-cargo
   pip install 'travis-cargo<0.2' --user &&
-  export PATH=$LOCAL/bin:$PATH
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+  # share build artifacts:
+  export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
+  if [ "$JOB" = "style_check" ]; then
+    which cargo-clippy || cargo install clippy --debug || exit
+    which cargo-fmt || cargo install rustfmt --debug || exit
+  fi
 script: |
-  case $JOB in
+  case "$JOB" in
     build)
-      travis-cargo build -- --features "$CARGO_FEATURES" &&
-      travis-cargo test -- --all --no-fail-fast --features "$CARGO_FEATURES" &&
-      travis-cargo doc
+      # We have to consider the following limitations of cargo in rustc 1.15:
+      # - no support for virtual worskpaces, instead we have to cd into a crate.
+      # - cargo build/doc does not support `--all`, luckily the
+      #   `derive_builder_test` crate will implicitly build/doc the
+      #   `derive_builder` and `derive_builder_core` crates too.
+      commands=(
+        "cd derive_builder_test && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd derive_builder_test && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
+        "cd derive_builder_test && travis-cargo doc"
+      )
       ;;
     style_check)
-      cargo install clippy --debug --force || exit
-      cargo clippy -- -Dclippy
+      commands=(
+        "cd derive_builder_core && cargo clippy -- -Dclippy"
+        "cd derive_builder      && cargo clippy -- -Dclippy"
+        "cd derive_builder_test && cargo clippy -- -Dclippy"
+        "cd derive_builder_core && cargo fmt -- --write-mode diff"
+        "cd derive_builder      && cargo fmt -- --write-mode diff"
+        "cd derive_builder_test && cargo fmt -- --write-mode diff"
+      )
       ;;
     *)
       exit 1
       ;;
   esac
+  ./.travis-run-all.sh "${commands[@]}"
 after_success: |
-  # upload the documentation from the build with stable (automatically only actually
+  # upload the documentation from the build with stable (automatically only
   # runs on the master branch, not individual PRs)
   travis-cargo --only stable doc-upload -- --features "$CARGO_FEATURES"
