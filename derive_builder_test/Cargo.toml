@@ -12,5 +12,5 @@ path = "src/lib.rs"
 dev_nightly = ["compiletest_rs"]
 
 [dependencies]
-derive_builder = { path = ".." }
+derive_builder = { path = "../derive_builder" }
 compiletest_rs = { version = "0.2", optional = true }
