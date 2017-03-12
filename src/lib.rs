@@ -284,18 +284,17 @@ extern crate derive_builder_core;
 mod options;
 
 use proc_macro::TokenStream;
-use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
+use std::sync::{Once, ONCE_INIT};
 use options::{struct_options_from, field_options_from};
 
-// Beware: static muts are not threadsafe. :-)
-static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
+static INIT_LOGGER: Once = ONCE_INIT;
 
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(input: TokenStream) -> TokenStream {
-    if unsafe { !LOGGER_INITIALIZED.compare_and_swap(false, true, Ordering::SeqCst) } {
+    INIT_LOGGER.call_once(|| {
         env_logger::init().unwrap();
-    }
+    });
 
     let input = input.to_string();
 

@@ -14,10 +14,10 @@ impl OptionsBuilder<FieldMode> {
     pub fn parse(f: syn::Field) -> Self {
         let mut builder = Self::default();
 
-        {
-            let ident = f.ident.as_ref().expect(&format!("Missing identifier for field of type `{:?}`.", f.ty));
-            trace!("Parsing field `{}`.", ident);
-        }
+        trace!("Parsing field `{}`.", {
+            f.ident.as_ref()
+                .expect(&format!("Missing identifier for field of type `{:?}`.", f.ty))
+        });
 
         builder.parse_attributes(&f.attrs);
         builder.mode.field_ident = f.ident;
@@ -28,10 +28,7 @@ impl OptionsBuilder<FieldMode> {
             .iter()
             .filter(|a| {
                 let keep = filter_attr(a);
-                match keep {
-                    true => trace!("Keeping attribute `{:?}`", a),
-                    false => trace!("Ignoring attribute `{:?}`", a)
-                }
+                trace!("{} attribute `{:?}`", if keep { "Keeping" } else { "Ignoring" }, a);
                 keep
             })
             .map(|x| x.clone())
@@ -45,18 +42,28 @@ impl OptionsBuilder<FieldMode> {
         let mut deprecation_notes = self.mode.deprecation_notes;
         deprecation_notes.extend(&defaults.mode.deprecation_notes);
 
+        macro_rules! f {
+            ($field:ident) => {
+                self.$field.or_else(|| defaults.$field.clone())
+            };
+            (mode $field:ident) => {
+                self.mode.$field.or_else(|| defaults.mode.$field.clone())
+            };
+        }
+
         let mode = FieldMode {
-            field_ident: self.mode.field_ident.or_else(|| defaults.mode.field_ident.clone()),
-            field_type: self.mode.field_type.or_else(|| defaults.mode.field_type.clone()),
-            setter_attrs: self.mode.setter_attrs.or_else(|| defaults.mode.setter_attrs.clone()),
+            field_ident: f!(mode field_ident),
+            field_type: f!(mode field_type),
+            setter_attrs: f!(mode setter_attrs),
             deprecation_notes: deprecation_notes,
         };
+
         OptionsBuilder::<FieldMode> {
-            setter_enabled: self.setter_enabled.or_else(|| defaults.setter_enabled),
-            builder_pattern: self.builder_pattern.or_else(|| defaults.builder_pattern),
-            setter_name: self.setter_name.or_else(|| defaults.setter_name.clone()),
-            setter_prefix: self.setter_prefix.or_else(|| defaults.setter_prefix.clone()),
-            setter_vis: self.setter_vis.or_else(|| defaults.setter_vis.clone()),
+            setter_enabled: f!(setter_enabled),
+            builder_pattern: f!(builder_pattern),
+            setter_name: f!(setter_name),
+            setter_prefix: f!(setter_prefix),
+            setter_vis: f!(setter_vis),
             mode: mode,
         }
     }
