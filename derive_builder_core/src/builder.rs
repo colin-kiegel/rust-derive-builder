@@ -102,16 +102,19 @@ impl<'a> Builder<'a> {
         self
     }
 
+    /// Add a field to the builder
     pub fn push_field(&mut self, f: BuilderField) -> &mut Self {
         self.fields.push(quote!(#f));
         self
     }
 
+    /// Add a setter function to the builder
     pub fn push_setter_fn(&mut self, f: Setter) -> &mut Self {
         self.functions.push(quote!(#f));
         self
     }
 
+    /// Add final build function to the builder
     pub fn push_build_fn(&mut self, f: BuildMethod) -> &mut Self {
         self.functions.push(quote!(#f));
         self
