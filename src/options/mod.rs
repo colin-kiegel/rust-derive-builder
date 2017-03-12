@@ -11,7 +11,7 @@ pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
 
-/// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the ast.
+/// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.
 pub fn struct_options_from(ast: &syn::MacroInput) -> (StructOptions, OptionsBuilder<FieldMode>) {
     OptionsBuilder::<StructMode>::parse(ast).into()
 }
@@ -99,8 +99,7 @@ impl<Mode> OptionsBuilder<Mode> where
 
         match attr.value {
             // i.e. `#[builder(...)]`
-            syn::MetaItem::List(ref _ident, ref nested_attrs)
-            => {
+            syn::MetaItem::List(ref _ident, ref nested_attrs) => {
                 self.setter_enabled(true);
                 self.parse_builder_options(nested_attrs);
                 return

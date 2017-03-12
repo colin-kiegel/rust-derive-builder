@@ -6,7 +6,7 @@ use doc_comment::doc_comment_from;
 
 /// Initializer for the struct fields in the build method, implementing `quote::ToTokens`.
 ///
-/// # Example
+/// # Examples
 ///
 /// Will expand to something like the following (depending on settings):
 ///

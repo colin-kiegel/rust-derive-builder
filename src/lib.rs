@@ -57,7 +57,7 @@
 //! ```
 //!
 //! By default all generated setter-methods take and return `&mut self`
-//! (aka _non-conusuming_ builder pattern). Accordingly the build method also takes a
+//! (aka _non-conusuming_ builder pattern). Accordingly, the build method also takes a
 //! reference by default.
 //!
 //! You can easily opt into different patterns and control many other aspects.
@@ -96,14 +96,14 @@
 //! # } fn main() { try_main().unwrap(); }
 //! ```
 //!
-//! Now it comes in handy that our setter methods takes and returns a mutable reference. Otherwise
+//! Now it comes in handy that our setter methods take and return mutable references. Otherwise
 //! we would need to write something more clumsy like `builder = builder.ipsum("42")` to reassign
 //! the return value each time we have to call a setter conditionally.
 //!
 //! Setters with mutable references are therefore a convenient default for the builder
 //! pattern in Rust.
 //!
-//! But this is a free world and the choice is still yours.
+//! But this is a free world and the choice is still yours!
 //!
 //! ## Owned, aka Consuming
 //!
@@ -163,9 +163,9 @@
 //! }
 //! ```
 //!
-//! ## Doc-Comments and Attributes
+//! ## Documentation Comments and Attributes
 //!
-//! `#[derive(Builder)]` copies doc-comments and attributes `#[...]` from your fields
+//! `#[derive(Builder)]` copies doc comments and attributes (`#[...]`) from your fields
 //! to the according builder fields and setter-methods, if it is one of the following:
 //!
 //! * `/// ...`
@@ -173,7 +173,8 @@
 //! * `#[cfg(...)]`
 //! * `#[allow(...)]`
 //!
-//! The whitelisting minimizes interference with other custom attributes like Serde/Diesel etc.
+//! The whitelisting minimizes interference with other custom attributes like
+//! those used by Serde, Diesel, or others.
 //!
 //! ```rust
 //! # #[macro_use]
@@ -217,7 +218,7 @@
 //! # fn main() {}
 //! ```
 //!
-//! Alternatively you can use the more verbose form:
+//! Alternatively, you can use the more verbose form:
 //!
 //! - `#[builder(setter(skip="true"))]`
 //! - `#[builder(setter(skip="false"))]`
@@ -256,11 +257,11 @@
 //!
 //! If you experience any problems during compilation, you can enable additional debug output
 //! by setting the environment variable `RUST_LOG=derive_builder=trace` before you call `cargo`
-//! or `rustc`. Example: `RUST_LOG=derive_builder=trace cargo test`.
+//! or `rustc`. Example: `env RUST_LOG=derive_builder=trace cargo test`.
 //!
 //! ## Report Issues and Ideas
 //!
-//! https://github.com/colin-kiegel/rust-derive-builder/issues
+//! [Open an issue on GitHub](https://github.com/colin-kiegel/rust-derive-builder/issues)
 //!
 //! If possible please try to provide the debugging info if you experience unexpected
 //! compilation errors (see above).
@@ -286,7 +287,7 @@ use proc_macro::TokenStream;
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 use options::{struct_options_from, field_options_from};
 
-// beware: static muts are not threadsafe. :-)
+// Beware: static muts are not threadsafe. :-)
 static mut LOGGER_INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT; // false
 
 #[doc(hidden)]
@@ -312,7 +313,7 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
     let fields = match ast.body {
         syn::Body::Struct(syn::VariantData::Struct(fields)) => fields,
-        _ => panic!("#[derive(Builder)] can only be used with braced structs"),
+        _ => panic!("`#[derive(Builder)]` can only be used with braced structs"),
     };
 
     let mut builder = opts.to_builder();
