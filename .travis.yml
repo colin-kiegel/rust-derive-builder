@@ -41,13 +41,13 @@ before_script: |
 script: |
   case $JOB in
     build)
-      # cargo build does not support `--all` in rustc 1.15,
-      # but `-p derive_builder_test` will implicitly build `derive_builder`
+      # cargo build and cargo doc do not support `--all` in rustc 1.15,
+      # but `-p derive_builder_test` will implicitly build/doc `derive_builder`
       # and `derive_builder_core` too.
       (cd $TRAVIS_BUILD_DIR/derive_builder &&
       travis-cargo build -- -p derive_builder_test --features "$CARGO_FEATURES" &&
       travis-cargo test -- --all --no-fail-fast --features "$CARGO_FEATURES" &&
-      travis-cargo doc -- --all)
+      travis-cargo doc -- -p derive_builder_test)
       ;;
     style_check)
       cargo install clippy --debug --force || exit
