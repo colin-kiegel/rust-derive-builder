@@ -35,23 +35,33 @@ before_script: |
   # load travis cargo
   # - https://github.com/huonw/travis-cargo
   pip install 'travis-cargo<0.2' --user &&
-  export PATH=$LOCAL/bin:$PATH
+  export PATH="$LOCAL/bin:$PATH"
+  # share build artifacts:
+  export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
 script: |
   case $JOB in
     build)
-      travis-cargo build -- --features "$CARGO_FEATURES" &&
+      # cargo build does not support `--all` in rustc 1.15,
+      # but `-p derive_builder_test` will implicitly build `derive_builder`
+      # and `derive_builder_core` too.
+      travis-cargo build -- -p derive_builder_test --features "$CARGO_FEATURES" &&
       travis-cargo test -- --all --no-fail-fast --features "$CARGO_FEATURES" &&
-      travis-cargo doc
+      travis-cargo doc -- --all
       ;;
     style_check)
       cargo install clippy --debug --force || exit
-      cargo clippy -- -Dclippy
+      for $crate in derive_builder derive_builder_core derive_builder_test; do
+        cd $TRAVIS_BUILD_DIR/$crate
+        cargo clippy -- -Dclippy
+        cargo fmt -- --write-mode diff
+      done
+      cd $TRAVIS_BUILD_DIR
       ;;
     *)
       exit 1
       ;;
   esac
 after_success: |
-  # upload the documentation from the build with stable (automatically only actually
+  # upload the documentation from the build with stable (automatically only
   # runs on the master branch, not individual PRs)
   travis-cargo --only stable doc-upload -- --features "$CARGO_FEATURES"
