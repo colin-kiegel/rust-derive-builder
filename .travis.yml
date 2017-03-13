@@ -34,12 +34,12 @@ before_script: |
   # load travis cargo
   # - https://github.com/huonw/travis-cargo
   pip install 'travis-cargo<0.2' --user &&
-  export PATH="~/.local/bin:~/.cargo/bin:$PATH"
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
   # share build artifacts:
   export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
   if [ "$JOB" = "style_check" ]; then
-    cargo install clippy --debug --force || exit
-    cargo install rustfmt --debug --force || exit
+    which cargo-clippy || cargo install clippy --debug || exit
+    which cargo-fmt || cargo install rustfmt --debug || exit
   fi
 script: |
   case "$JOB" in
@@ -53,6 +53,7 @@ script: |
       travis-cargo doc -- -p derive_builder_test)
       ;;
     style_check)
+      echo $PATH
       for crate in derive_builder derive_builder_core derive_builder_test; do
         (cd $TRAVIS_BUILD_DIR/$crate &&
         cargo clippy -- -Dclippy &&
