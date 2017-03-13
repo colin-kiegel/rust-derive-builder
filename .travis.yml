@@ -42,10 +42,6 @@ before_script: |
     which cargo-fmt || cargo install rustfmt --debug || exit
   fi
 script: |
-  ##############################################################################
-  # populate `${commands[@]}` according to `$JOB`.
-  ##############################################################################
-
   case "$JOB" in
     build)
       # We have to consider the following limitations of cargo in rustc 1.15:
@@ -73,31 +69,7 @@ script: |
       exit 1
       ;;
   esac
-
-  ##############################################################################
-  # just run all `${commands[@]}` and exit.
-  ##############################################################################
-
-  exit=0; # store `$?` https://github.com/travis-ci/travis-ci/issues/3771
-  FMT_OK='\033[1;32m' # bold green
-  FMT_ERR='\033[1;31m' # bold red
-  FMT_INFO='\033[1;33m' # bold yellow
-  FMT_RESET='\033[0m' # reset
-
-  for cmd in "${commands[@]}"; do
-    echo -e "\n${FMT_INFO}Running \`${cmd}\`${FMT_RESET}"
-
-    (echo $(pwd) && eval $cmd && ls); ret_code=$?
-
-    if [ $ret_code -eq 0 ]; then
-      color="$FMT_OK"
-    else
-      color="$FMT_ERR"
-      exit=$ret_code
-    fi
-    echo -e "${color}The command \`${cmd}\` exited with ${ret_code}.${FMT_RESET}"
-  done
-  (exit $exit)
+  ./.travis-run-all.sh "${commands[@]}"
 after_success: |
   # upload the documentation from the build with stable (automatically only
   # runs on the master branch, not individual PRs)
