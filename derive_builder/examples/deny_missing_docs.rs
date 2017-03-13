@@ -14,9 +14,6 @@ pub struct Letter {
 }
 
 fn main() {
-    let x = LetterBuilder::default()
-        .message("Hello World!")
-        .build()
-        .unwrap();
+    let x = LetterBuilder::default().message("Hello World!").build().unwrap();
     println!("{}", x.message);
 }

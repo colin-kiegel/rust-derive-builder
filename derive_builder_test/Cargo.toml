@@ -5,8 +5,12 @@ authors = ["Colin Kiegel <kiegel@gmx.de>"]
 
 license = "MIT/Apache-2.0"
 
-[dependencies]
-derive_builder = { path = ".." }
-
 [lib]
 path = "src/lib.rs"
+
+[features]
+dev_nightly = ["compiletest_rs"]
+
+[dependencies]
+derive_builder = { path = "../derive_builder" }
+compiletest_rs = { version = "0.2", optional = true }

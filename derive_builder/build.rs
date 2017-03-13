@@ -44,7 +44,7 @@ fn main() {{
 "###;
 
 use std::error::Error;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::env;
 use std::fs::{File, DirBuilder};
 use std::ffi::OsStr;
@@ -53,7 +53,7 @@ use std::io::{Write, Read};
 const DOC_TPL_DIR: &'static str = "src/doc_tpl/";
 const DOC_TPL_OUT_DIR: &'static str = "doc_tpl/";
 
-fn generate_doc_tpl_tests() -> Result<Vec<String>,Box<Error>> {
+fn generate_doc_tpl_tests() -> Result<Vec<String>, Box<Error>> {
     trace!("Generating doc template tests");
     let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
     let mut tpl_dir = root_dir;
@@ -66,8 +66,7 @@ fn generate_doc_tpl_tests() -> Result<Vec<String>,Box<Error>> {
         DirBuilder::new().create(&out_dir)?;
     }
 
-    let docs = tpl_dir.read_dir()
-        .expect(&format!("Could not open {}", tpl_dir.display()));
+    let docs = tpl_dir.read_dir().expect(&format!("Could not open {}", tpl_dir.display()));
 
     let mut files = Vec::<String>::new();
 
@@ -75,12 +74,10 @@ fn generate_doc_tpl_tests() -> Result<Vec<String>,Box<Error>> {
         let path: PathBuf = doc?.path();
 
         let filename = match path.file_name() {
-            Some(filename) if path.extension() == Some(&OsStr::new("md")) => {
-                filename
-            },
+            Some(filename) if path.extension() == Some(&OsStr::new("md")) => filename,
             _ => {
                 trace!("Skipping dir entry {:?}", path.display());
-                continue
+                continue;
             }
         };
 
@@ -103,7 +100,8 @@ fn generate_doc_tpl_tests() -> Result<Vec<String>,Box<Error>> {
             .replace("{field_name}", "default");
         out.write_all(tpl.as_ref())?;
 
-        trace!("{:?}", &[&out_file.to_str().expect("Path must not be empty")]);
+        trace!("{:?}",
+               &[&out_file.to_str().expect("Path must not be empty")]);
 
         files.push(out_file.to_str().expect("Path must not be empty").to_string());
     }
