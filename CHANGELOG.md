@@ -1,1 +1,1 @@
-cargo_builder/CHANGELOG.md
+derive_builder/CHANGELOG.md
