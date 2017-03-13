@@ -21,7 +21,6 @@ env:
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder
-  - LOCAL="~/.local"
   # encrypted github token for doc+coveralls upload
   - secure: "oGshXdNEX+SK3O6cwGsMN9TGjfAtXXDFxBa5Ti38m8cNR2DdYikV5BMgsPQdWj8K58m2H3hiU3jWGI1d3W94ELlKXRcAJg39x10TPAHd+L89zSk48JorZejgKVARJuW3qDAO/xbi+bc0/Q1sgq9h7zBxAWfD7PJ3Lu/k20SRmoghDC+ufHr6bElkAZM388WD1q8eZgITBQWXDBYy8id85TxxagK0Xq/ZjDhCNwcz9A9rO8QrX886nAr8liL54M+XZ35+wwiw+5s3Vz5Oa/sKnVg33VKIjDwOs3YZP4+egFFEtEVVlvAm+NmzWIYzOi8VJbNmV00c3qhSRkEwCOGR41m4Nl/bmhMu6iL9epvqdaouElkg74dV6qqeYq/jGOJrklHuUmyPvXbTYukpNt6a9nqDu8IPrLkQOjpKnKQtmazdOyajiqwUiv6/GXb6tarSzMzsXqM+l/wWplFZkwaDvWR9m5OgilohpFYdhrbJNUd1zffgfwvYFBNVXnkRScwrVBpVfAz420w2s/YfONfl/DtrHt1U/O+gDQ92AGc6foOqCJoqup6uasWkgRbPMGm5hl6n7JALGYjNB60BLi7okItITosoprknXUfLoPzrpnMRi9ScEjEXUBliKxBXnPyMKAZur39PfKGeIasOPwQIPo9xhpWTsOUcuux9l4eihX0="
 addons:
@@ -35,7 +34,7 @@ before_script: |
   # load travis cargo
   # - https://github.com/huonw/travis-cargo
   pip install 'travis-cargo<0.2' --user &&
-  export PATH="$LOCAL/bin:$PATH"
+  export PATH="~/.local/bin:~/.cargo/bin:$PATH"
   # share build artifacts:
   export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
   if [ "$JOB" = "style_check" ]; then
