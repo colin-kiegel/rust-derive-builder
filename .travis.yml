@@ -38,8 +38,12 @@ before_script: |
   export PATH="$LOCAL/bin:$PATH"
   # share build artifacts:
   export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
+  if [ "$JOB" = "style_check" ]
+    cargo install clippy --debug --force || exit
+    cargo install rustfmt --debug --force || exit
+  fi
 script: |
-  case $JOB in
+  case "$JOB" in
     build)
       # cargo build and cargo doc do not support `--all` in rustc 1.15,
       # but `-p derive_builder_test` will implicitly build/doc `derive_builder`
@@ -50,7 +54,6 @@ script: |
       travis-cargo doc -- -p derive_builder_test)
       ;;
     style_check)
-      cargo install clippy --debug --force || exit
       for crate in derive_builder derive_builder_core derive_builder_test; do
         (cd $TRAVIS_BUILD_DIR/$crate &&
         cargo clippy -- -Dclippy &&
