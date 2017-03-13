@@ -38,7 +38,7 @@ before_script: |
   export PATH="$LOCAL/bin:$PATH"
   # share build artifacts:
   export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
-  if [ "$JOB" = "style_check" ]
+  if [ "$JOB" = "style_check" ]; then
     cargo install clippy --debug --force || exit
     cargo install rustfmt --debug --force || exit
   fi
