@@ -11,7 +11,7 @@ matrix:
     - rust: nightly
       env: JOB=style_check CARGO_FEATURES=dev_nightly
   allow_failures:
-    - env: JOB=style_check
+    - env: JOB=style_check CARGO_FEATURES=dev_nightly
   fast_finish: true
 env:
   matrix:
@@ -50,8 +50,8 @@ script: |
       #   `derive_builder_test` crate will implicitly build/doc the
       #   `derive_builder` and `derive_builder_core` crates too.
       commands=(
-        "cd derive_builder_test && travis-cargo build -- --features  \"$CARGO_FEATURES\""
-        "cd derive_builder_test && travis-cargo test -- --all --no-fail-fast  --features \"$CARGO_FEATURES\""
+        "cd derive_builder_test && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd derive_builder_test && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
         "cd derive_builder_test && travis-cargo doc"
       )
       ;;
