@@ -270,7 +270,7 @@
 //! [`derive_builder_core`]: https://crates.io/crates/derive_builder_core
 
 #![crate_type = "proc-macro"]
-#![deny(warnings)]
+#![cfg_attr(feature = "deny_warnings", deny(warnings))]
 
 extern crate proc_macro;
 extern crate syn;

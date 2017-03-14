@@ -21,7 +21,8 @@
 //! [`derive_builder`]: https://!crates.io/crates/derive_builder
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
-#![deny(warnings, missing_docs)]
+#![warn(missing_docs)]
+#![cfg_attr(feature = "deny_warnings", deny(warnings))]
 
 extern crate proc_macro;
 extern crate syn;

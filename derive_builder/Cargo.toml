@@ -23,6 +23,7 @@ proc-macro = true
 
 [features]
 dev_nightly = ["compiletest_rs"]
+deny_warnings = []
 
 [dependencies]
 syn = "0.11"

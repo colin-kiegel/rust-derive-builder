@@ -7,7 +7,7 @@ rust:
 matrix:
   include:
     - rust: nightly
-      env: JOB=build CARGO_FEATURES=dev_nightly
+      env: JOB=build CARGO_FEATURES="dev_nightly deny_warnings"
     - rust: nightly
       env: JOB=style_check CARGO_FEATURES=dev_nightly
   allow_failures:
