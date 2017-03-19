@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "deny_warnings", deny(warnings))]
+
 #[macro_use]
 extern crate derive_builder;
 

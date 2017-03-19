@@ -10,6 +10,7 @@ path = "src/lib.rs"
 
 [features]
 dev_nightly = ["compiletest_rs"]
+deny_warnings = []
 
 [dependencies]
 derive_builder = { path = "../derive_builder" }
