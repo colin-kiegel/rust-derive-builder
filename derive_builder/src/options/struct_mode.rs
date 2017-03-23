@@ -1,5 +1,5 @@
 use syn;
-use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_cooked_string, FieldMode, StructOptions};
+use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
 use derive_builder_core::DeprecationNotes;
 
 #[derive(Default, Clone)]
@@ -30,7 +30,7 @@ impl OptionsBuilder<StructMode> {
 impl OptionsBuilderMode for StructMode {
     fn parse_builder_name(&mut self, name: &syn::Lit) {
         trace!("Parsing builder name `{:?}`", name);
-        let value = parse_lit_as_cooked_string(name).unwrap();
+        let value = parse_lit_as_string(name).unwrap();
         self.builder_name = Some(value.clone());
     }
 
@@ -48,6 +48,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_name: None,
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
+            default_expression: b.default_expression,
             mode: FieldMode::default(),
         };
 

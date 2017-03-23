@@ -63,7 +63,8 @@
 //! You can easily opt into different patterns and control many other aspects.
 //!
 //! The build method returns `Result<T, String>`, where `T` is the struct you started with.
-//! It returns `Err<String>` if you didn't initialize all fields.
+//! It returns `Err` if you didn't initialize all fields and no default values were
+//! provided.
 //!
 //! # Builder Patterns
 //!
@@ -145,7 +146,131 @@
 //!
 //! # More Features
 //!
-//! ## Generic structs
+//! ## Hidden Fields
+//!
+//! You can hide fields by skipping their setters on the builder struct.
+//!
+//! - Opt-out — skip setters via `#[builder(setter(skip))]` on individual fields.
+//! - Opt-in — set `#[builder(setter(skip))]` on the whole struct
+//!   and enable individual setters via `#[builder(setter)]`.
+//!
+//! The types of skipped fields must implement `Default`.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder)]
+//! struct SetterOptOut {
+//!     setter_present: u32,
+//!     #[builder(setter(skip))]
+//!     setter_skipped: u32,
+//! }
+//! # fn main() {}
+//! ```
+//!
+//! Alternatively, you can use the more verbose form:
+//!
+//! - `#[builder(setter(skip="true"))]`
+//! - `#[builder(setter(skip="false"))]`
+//!
+//! ## Setter Visibility
+//!
+//! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
+//! to make this explicit.
+//!
+//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
+//! setters.
+//!
+//! ## Setter Prefixes
+//!
+//! Setter methods are named after their corresponding field by default.
+//!
+//! You can precede your struct (or field) with e.g. `#[builder(setter(prefix="xyz"))` to change
+//! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
+//! by default, since Rust favors snake case here.
+//!
+//! ## Default Values
+//!
+//! You can define default values for each field via annotation by `#[builder(default="...")]`,
+//! where `...` stands for any Rust expression and must be string-escaped, e.g.
+//!
+//! * `#[builder(default="42")]`
+//! * `#[builder(default)]` delegates to the [`Default`] trait of the base type.
+//!
+//! The expression will be evaluated with each call to `build`.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Lorem {
+//!     #[builder(default="42")]
+//!     pub ipsum: u32,
+//! }
+//!
+//! fn main() {
+//!     // If we don't set the field `ipsum`,
+//!     let x = LoremBuilder::default().build().unwrap();
+//!
+//!     // .. the custom default will be used for `ipsum`:
+//!     assert_eq!(x, Lorem {
+//!         ipsum: 42,
+//!     });
+//! }
+//! ```
+//!
+//! ### Tips
+//!
+//! * The `#[builder(default)]` annotation can be used on the struct level, too. Overrides are
+//!   still possible.
+//! * Delegate to a private helper method on `FooBuilder` for anything fancy. This way
+//!   you will get _much better error diagnostics_ from the rust compiler and it will be _much
+//!   more readable_ for other human beings. :-)
+//!
+//! [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! # #[derive(Builder, PartialEq, Debug)]
+//! struct Lorem {
+//!     ipsum: String,
+//!     // Custom defaults can delegate to helper methods
+//!     // and pass errors to the enclosing `build()` method via `?`.
+//!     #[builder(default="self.default_dolor()?")]
+//!     dolor: String,
+//! }
+//!
+//! impl LoremBuilder {
+//!     // Private helper method with access to the builder struct.
+//!     fn default_dolor(&self) -> Result<String, String> {
+//!         match self.ipsum {
+//!             Some(ref x) if x.chars().count() > 3 => Ok(format!("dolor {}", x)),
+//!             _ => Err("ipsum must at least 3 chars to build dolor".to_string()),
+//!         }
+//!     }
+//! }
+//!
+//! # fn main() {
+//! #     let x = LoremBuilder::default()
+//! #         .ipsum("ipsum")
+//! #         .build()
+//! #         .unwrap();
+//! #
+//! #     assert_eq!(x, Lorem {
+//! #         ipsum: "ipsum".to_string(),
+//! #         dolor: "dolor ipsum".to_string(),
+//! #     });
+//! # }
+//! ```
+//!
+//! You can even reference other fields, but you have to remember that the builder struct
+//! will wrap every type in an Option ([as illustrated earlier](#what-you-get)).
+//!
+//! ## Generic Structs
 //!
 //! ```rust
 //! # #[macro_use]
@@ -194,50 +319,6 @@
 //! }
 //! # fn main() {}
 //! ```
-//!
-//! ## Hidden Fields
-//!
-//! You can hide fields by skipping their setters on the builder struct.
-//!
-//! - Opt-out &mdash; skip setters via `#[builder(setter(skip))]` on individual fields.
-//! - Opt-in &mdash; set `#[builder(setter(skip))]` on the whole struct
-//!   and enable individual setters via `#[builder(setter)]`.
-//!
-//! The types of skipped fields must implement `Default`.
-//!
-//! ```rust
-//! # #[macro_use]
-//! # extern crate derive_builder;
-//! #
-//! #[derive(Builder)]
-//! struct SetterOptOut {
-//!     setter_present: u32,
-//!     #[builder(setter(skip))]
-//!     setter_skipped: u32,
-//! }
-//! # fn main() {}
-//! ```
-//!
-//! Alternatively, you can use the more verbose form:
-//!
-//! - `#[builder(setter(skip="true"))]`
-//! - `#[builder(setter(skip="false"))]`
-//!
-//! ## Setter Visibility
-//!
-//! Setters are public by default. You can precede your struct (or field) with `#[builder(public)]`
-//! to make this explicit.
-//!
-//! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
-//! setters.
-//!
-//! ## Setter Prefixes
-//!
-//! Setter methods are named after their corresponding field by default.
-//!
-//! You can precede your struct (or field) with e.g. `#[builder(setter(prefix="xyz"))` to change
-//! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
-//! by default, since Rust favors snake case here.
 //!
 //! # Troubleshooting
 //!
@@ -315,8 +396,8 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         _ => panic!("`#[derive(Builder)]` can only be used with braced structs"),
     };
 
-    let mut builder = opts.to_builder();
-    let mut build_fn = opts.to_build_method();
+    let mut builder = opts.as_builder();
+    let mut build_fn = opts.as_build_method();
 
     builder.doc_comment(format!(include_str!("doc_tpl/builder_struct.md"),
                                 struct_name = ast.ident.as_ref()));
@@ -326,9 +407,9 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     for f in fields {
         let f_opts = field_options_from(f, &field_defaults);
 
-        builder.push_field(f_opts.to_builder_field());
-        builder.push_setter_fn(f_opts.to_setter());
-        build_fn.push_initializer(f_opts.to_initializer());
+        builder.push_field(f_opts.as_builder_field());
+        builder.push_setter_fn(f_opts.as_setter());
+        build_fn.push_initializer(f_opts.as_initializer());
     }
 
     builder.push_build_fn(build_fn);

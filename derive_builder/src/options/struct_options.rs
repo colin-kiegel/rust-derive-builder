@@ -24,7 +24,8 @@ pub struct StructOptions {
 }
 
 impl StructOptions {
-    pub fn to_builder<'a>(&'a self) -> Builder<'a> {
+    /// Returns a `Builder` according to the options.
+    pub fn as_builder<'a>(&'a self) -> Builder<'a> {
         Builder {
             enabled: true,
             ident: &self.builder_ident,
@@ -36,8 +37,8 @@ impl StructOptions {
             deprecation_notes: DeprecationNotes::default(),
         }
     }
-
-    pub fn to_build_method<'a>(&'a self) -> BuildMethod<'a> {
+    /// Returns a `BuildMethod` according to the options.
+    pub fn as_build_method<'a>(&'a self) -> BuildMethod<'a> {
         let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
         BuildMethod {
             enabled: true,

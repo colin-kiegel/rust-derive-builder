@@ -64,6 +64,7 @@ impl OptionsBuilder<FieldMode> {
             setter_name: f!(setter_name),
             setter_prefix: f!(setter_prefix),
             setter_vis: f!(setter_vis),
+            default_expression: f!(default_expression),
             mode: mode,
         }
     }
@@ -108,6 +109,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             field_ident: field_ident,
             field_type: field_type,
             deprecation_notes: b.mode.deprecation_notes.clone(),
+            default_expression: b.default_expression.clone(),
             attrs: b.mode.setter_attrs.clone().unwrap_or_default(),
         }
     }

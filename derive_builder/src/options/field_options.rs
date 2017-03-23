@@ -12,6 +12,8 @@ pub struct FieldOptions {
     pub setter_ident: syn::Ident,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
+    /// e.g. `#[builder(default="42u32")]` (default to None)
+    pub default_expression: Option<DefaultExpression>,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,
     /// The field type.
@@ -22,8 +24,16 @@ pub struct FieldOptions {
     pub attrs: Vec<syn::Attribute>
 }
 
+/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
+#[derive(Debug, Clone)]
+pub enum DefaultExpression {
+    Explicit(String),
+    Trait,
+}
+
 impl FieldOptions {
-    pub fn to_setter<'a>(&'a self) -> Setter<'a> {
+    /// Returns a `Setter` according to the options.
+    pub fn as_setter<'a>(&'a self) -> Setter<'a> {
         Setter {
             enabled: self.setter_enabled,
             visibility: &self.setter_visibility,
@@ -36,16 +46,32 @@ impl FieldOptions {
         }
     }
 
-    pub fn to_initializer<'a>(&'a self) -> Initializer<'a> {
+    /// Returns an `Initializer` according to the options.
+    ///
+    /// # Panics
+    ///
+    /// if `default_expression` can not be parsed as `Block`.
+    pub fn as_initializer<'a>(&'a self) -> Initializer<'a> {
         Initializer {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            default_expr: None,
+            explicit_default: self.default_expression.as_ref().map(|x| {
+                match *x {
+                    DefaultExpression::Explicit(ref s) => {
+                        if s.is_empty() {
+                            panic!(r#"Empty default expressions `default=""` are not supported."#);
+                        }
+                        s
+                    },
+                    DefaultExpression::Trait => "::std::default::Default::default()",
+                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", x))
+            }),
         }
     }
 
-    pub fn to_builder_field<'a>(&'a self) -> BuilderField<'a> {
+    /// Returns a `BuilderField` according to the options.
+    pub fn as_builder_field<'a>(&'a self) -> BuilderField<'a> {
         BuilderField {
             field_ident: &self.field_ident,
             field_type: &self.field_type,

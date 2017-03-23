@@ -38,6 +38,7 @@ mod doc_comment;
 mod initializer;
 mod setter;
 mod options;
+mod block;
 
 pub use build_method::BuildMethod;
 pub use builder_field::BuilderField;
@@ -47,3 +48,4 @@ pub use initializer::Initializer;
 pub use setter::Setter;
 pub use doc_comment::doc_comment_from;
 pub use options::BuilderPattern;
+pub use block::Block;
