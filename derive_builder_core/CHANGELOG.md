@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- support generic references in structs #55
+
 ## 0.1.1 - 2017-04-08
 - struct default
 
