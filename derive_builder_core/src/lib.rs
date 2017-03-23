@@ -48,4 +48,4 @@ pub use initializer::Initializer;
 pub use setter::Setter;
 pub use doc_comment::doc_comment_from;
 pub use options::BuilderPattern;
-pub use block::{WrappedBlock, SandboxedBlock, Block};
+pub use block::Block;
