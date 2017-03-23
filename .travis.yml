@@ -7,11 +7,11 @@ rust:
 matrix:
   include:
     - rust: nightly
-      env: JOB=build CARGO_FEATURES=dev_nightly
+      env: JOB=build CARGO_FEATURES=compiletests
     - rust: nightly
-      env: JOB=style_check CARGO_FEATURES=dev_nightly
+      env: JOB=style_check
   allow_failures:
-    - env: JOB=style_check CARGO_FEATURES=dev_nightly
+    - env: JOB=style_check
   fast_finish: true
 env:
   matrix:
@@ -36,7 +36,7 @@ before_script: |
   pip install 'travis-cargo<0.2' --user &&
   export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
   # share build artifacts:
-  export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR"
+  export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR/target"
   if [ "$JOB" = "style_check" ]; then
     which cargo-clippy || cargo install clippy --debug || exit
     which cargo-fmt || cargo install rustfmt --debug || exit
