@@ -5,7 +5,7 @@ mod field_level {
     #[derive(Debug, PartialEq, Default, Builder, Clone)]
     struct Lorem {
         required: String,
-        #[builder(default="")]
+        #[builder(default)]
         explicit_default: String,
         #[builder(default="\"foo\".to_string()")]
         escaped_default: String,

@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 fn run_mode(mode: &'static str) {
     let base_dir = env!("CARGO_MANIFEST_DIR");
-    
+
     let test_dir = PathBuf::from(format!("{}/tests/{}", base_dir, mode));
 
     if !test_dir.is_dir() {
@@ -41,4 +41,5 @@ fn run_mode(mode: &'static str) {
 #[test]
 fn compile_test() {
     run_mode("run-pass");
+    run_mode("compile-fail");
 }

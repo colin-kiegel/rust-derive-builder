@@ -10,6 +10,7 @@ pub use self::field_mode::FieldMode;
 pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
+use self::field_options::DefaultExpression;
 
 /// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.
 pub fn struct_options_from(ast: &syn::MacroInput) -> (StructOptions, OptionsBuilder<FieldMode>) {
@@ -34,7 +35,7 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
     /// Takes precedence over `setter_prefix`
     setter_name: Option<String>,
     setter_vis: Option<syn::Visibility>,
-    default_expression: Option<String>,
+    default_expression: Option<DefaultExpression>,
     mode: Mode,
 }
 
@@ -74,7 +75,7 @@ impl<Mode> OptionsBuilder<Mode> where
         self
     }
 
-    fn default_expression(&mut self, x: String) -> &mut Self {
+    fn default_expression(&mut self, x: DefaultExpression) -> &mut Self {
         if self.default_expression.is_some() {
             warn!("Default expression already defined as `{:?}`, new value is `{:?}`.",
                 self.default_expression, x);
@@ -167,7 +168,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(true)
             },
             "default" => {
-                self.default_expression("".to_string())
+                self.default_expression(DefaultExpression::Trait)
             },
             _ => {
                 panic!("Unknown option `{:?}`", ident)
@@ -321,7 +322,7 @@ impl<Mode> OptionsBuilder<Mode> where
     fn parse_default_expression(&mut self, lit: &syn::Lit) {
         trace!("Parsing default expression `{:?}`", lit);
         let value = parse_lit_as_string(lit).unwrap();
-        self.default_expression(value.clone());
+        self.default_expression(DefaultExpression::Explicit(value.clone()));
     }
 
     fn parse_builder_pattern(&mut self, lit: &syn::Lit) {

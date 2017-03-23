@@ -13,7 +13,7 @@ pub struct FieldOptions {
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
     /// e.g. `#[builder(default="42u32")]` (default to None)
-    pub default_expression: Option<String>,
+    pub default_expression: Option<DefaultExpression>,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,
     /// The field type.
@@ -22,6 +22,13 @@ pub struct FieldOptions {
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
     pub attrs: Vec<syn::Attribute>
+}
+
+/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
+#[derive(Debug, Clone)]
+pub enum DefaultExpression {
+    Explicit(String),
+    Trait,
 }
 
 impl FieldOptions {
@@ -46,12 +53,16 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            explicit_default: self.default_expression.as_ref().map(|s| {
-                if s.is_empty() {
-                    "::std::default::Default::default()"
-                } else {
-                    s
-                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", s))
+            explicit_default: self.default_expression.as_ref().map(|x| {
+                match *x {
+                    DefaultExpression::Explicit(ref s) => {
+                        if s.is_empty() {
+                            panic!(r#"Empty default expressions `default=""` are not supported."#);
+                        }
+                        s
+                    },
+                    DefaultExpression::Trait => "::std::default::Default::default()",
+                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", x))
             }),
         }
     }
