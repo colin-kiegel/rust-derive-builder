@@ -63,7 +63,7 @@
 //! You can easily opt into different patterns and control many other aspects.
 //!
 //! The build method returns `Result<T, String>`, where `T` is the struct you started with.
-//! It returns `Err<String>` if you didn't initialize all fields and no default values were
+//! It returns `Err` if you didn't initialize all fields and no default values were
 //! provided.
 //!
 //! # Builder Patterns
@@ -221,7 +221,7 @@
 //! }
 //! ```
 //!
-//! **Tips**:
+//! ### Tips
 //!
 //! * The `#[builder(default)]` annotation can be used on the struct level, too. Overrides are
 //!   still possible.
@@ -396,8 +396,8 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
         _ => panic!("`#[derive(Builder)]` can only be used with braced structs"),
     };
 
-    let mut builder = opts.to_builder();
-    let mut build_fn = opts.to_build_method();
+    let mut builder = opts.as_builder();
+    let mut build_fn = opts.as_build_method();
 
     builder.doc_comment(format!(include_str!("doc_tpl/builder_struct.md"),
                                 struct_name = ast.ident.as_ref()));
@@ -407,9 +407,9 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     for f in fields {
         let f_opts = field_options_from(f, &field_defaults);
 
-        builder.push_field(f_opts.to_builder_field());
-        builder.push_setter_fn(f_opts.to_setter());
-        build_fn.push_initializer(f_opts.to_initializer());
+        builder.push_field(f_opts.as_builder_field());
+        builder.push_setter_fn(f_opts.as_setter());
+        build_fn.push_initializer(f_opts.as_initializer());
     }
 
     builder.push_build_fn(build_fn);
