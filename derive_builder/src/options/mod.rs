@@ -156,7 +156,7 @@ impl<Mode> OptionsBuilder<Mode> where
 
     /// e.g `private` in `#[builder(private)]`
     fn parse_builder_options_word(&mut self, ident: &syn::Ident) {
-        trace!("Parsing word `{:?}`", ident);
+        trace!("Parsing word `{}`", ident.as_ref());
         match ident.as_ref() {
             "public" => {
                 self.setter_public(true)
@@ -171,7 +171,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.default_expression(DefaultExpression::Trait)
             },
             _ => {
-                panic!("Unknown option `{:?}`", ident)
+                panic!("Unknown option `{}`", ident.as_ref())
             }
         };
     }
@@ -179,7 +179,7 @@ impl<Mode> OptionsBuilder<Mode> where
     /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`
     #[allow(non_snake_case)]
     fn parse_builder_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
-        trace!("Parsing named value `{:?}` = `{:?}`", ident, lit);
+        trace!("Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);
         match ident.as_ref() {
             "setter_prefix" => {
                 let val = quote!(#lit);
@@ -264,7 +264,7 @@ impl<Mode> OptionsBuilder<Mode> where
 
     /// e.g `private` in `#[builder(setter(private))]`
     fn parse_setter_options_word(&mut self, ident: &syn::Ident) {
-        trace!("Setter Options - Parsing word `{:?}`", ident);
+        trace!("Setter Options - Parsing word `{}`", ident.as_ref());
         match ident.as_ref() {
             "public" => {
                 self.setter_public(true)
@@ -276,7 +276,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(false)
             },
             _ => {
-                panic!("Unknown setter option `{:?}`.", ident)
+                panic!("Unknown setter option `{}`.", ident.as_ref())
             }
         };
     }
@@ -284,7 +284,7 @@ impl<Mode> OptionsBuilder<Mode> where
     /// e.g `prefix="with"` in `#[builder(setter(prefix="with"))]`
     #[allow(non_snake_case)]
     fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
-        trace!("Setter Options - Parsing named value `{:?}` = `{:?}`", ident, lit);
+        trace!("Setter Options - Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);
         match ident.as_ref() {
             "prefix" => {
                 self.parse_setter_prefix(lit)
