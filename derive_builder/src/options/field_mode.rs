@@ -76,6 +76,7 @@ impl OptionsBuilder<FieldMode> {
             setter_prefix: f!(setter_prefix),
             setter_vis: f!(setter_vis),
             default_expression: f!(default_expression),
+            setter_into: f!(setter_into),
             mode: mode,
         }
     }
@@ -122,6 +123,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             setter_visibility: b.setter_vis.clone().unwrap_or(syn::Visibility::Public),
             field_ident: field_ident,
             field_type: field_type,
+            setter_into: b.setter_into.unwrap_or(false),
             deprecation_notes: b.mode.deprecation_notes.clone(),
             default_expression: b.default_expression.clone(),
             attrs: b.mode.setter_attrs.clone().unwrap_or_default(),

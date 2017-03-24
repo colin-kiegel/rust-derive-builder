@@ -36,6 +36,7 @@ pub struct OptionsBuilder<Mode> {
     setter_name: Option<String>,
     setter_vis: Option<syn::Visibility>,
     default_expression: Option<DefaultExpression>,
+    setter_into: Option<bool>,
     mode: Mode,
 }
 
@@ -56,6 +57,7 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
             setter_name: None,
             setter_vis: None,
             default_expression: None,
+            setter_into: None,
             mode: mode,
         }
     }
@@ -111,6 +113,12 @@ impl<Mode> OptionsBuilder<Mode> where
         ident: setter_public for setter_vis,
         desc: "setter visibility",
         map: |x: bool| { if x { syn::Visibility::Public } else { syn::Visibility::Inherited } },
+    }
+
+    impl_setter!{
+        ident: setter_into,
+        desc: "setter type conversion",
+        map: |x: bool| { x },
     }
 
     impl_setter!{
@@ -314,6 +322,9 @@ impl<Mode> OptionsBuilder<Mode> where
             "skip" => {
                 self.setter_enabled(false)
             },
+            "into" => {
+                self.setter_into(true)
+            }
             _ => {
                 panic!("Unknown setter option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }

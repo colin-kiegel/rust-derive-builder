@@ -30,7 +30,7 @@ mod field_level {
     #[test]
     fn custom_default() {
         let x = LoremBuilder::default()
-            .required("ipsum")
+            .required("ipsum".to_string())
             .build()
             .unwrap();
 
@@ -46,10 +46,10 @@ mod field_level {
     #[test]
     fn builder() {
         let x = LoremBuilder::default()
-            .required("ipsum")
-            .explicit_default("lorem")
-            .escaped_default("dolor")
-            .raw_default("sit")
+            .required("ipsum".to_string())
+            .explicit_default("lorem".to_string())
+            .escaped_default("dolor".to_string())
+            .raw_default("sit".to_string())
             .build()
             .unwrap();
 
@@ -93,10 +93,10 @@ mod struct_level {
     #[test]
     fn builder() {
         let x = LoremBuilder::default()
-            .implicit_default("ipsum")
-            .explicit_default("lorem")
-            .escaped_default("dolor")
-            .raw_default("sit")
+            .implicit_default("ipsum".to_string())
+            .explicit_default("lorem".to_string())
+            .escaped_default("dolor".to_string())
+            .raw_default("sit".to_string())
             .build()
             .unwrap();
 

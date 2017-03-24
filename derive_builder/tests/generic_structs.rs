@@ -5,7 +5,7 @@ extern crate derive_builder;
 struct GenLorem<T>
     where T: std::clone::Clone
 {
-    ipsum: String,
+    ipsum: &'static str,
     pub dolor: T,
 }
 
@@ -13,7 +13,7 @@ struct GenLorem<T>
 struct GenLorem2<T>
     where T: std::clone::Clone
 {
-    ipsum: String,
+    ipsum: &'static str,
     pub dolor: T,
 }
 

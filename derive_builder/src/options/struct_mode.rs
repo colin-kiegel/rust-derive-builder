@@ -60,6 +60,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_name: None,
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
+            setter_into: b.setter_into,
             default_expression: b.default_expression,
             mode: FieldMode::default(),
         };

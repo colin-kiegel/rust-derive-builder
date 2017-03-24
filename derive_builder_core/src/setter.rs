@@ -21,9 +21,9 @@ use DeprecationNotes;
 /// #     setter.pattern = BuilderPattern::Mutable;
 /// #
 /// #     assert_eq!(quote!(#setter), quote!(
-/// pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+/// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
-///     new.foo = ::std::option::Option::Some(value.into());
+///     new.foo = ::std::option::Option::Some(value);
 ///     new
 /// }
 /// #     ));
@@ -47,6 +47,8 @@ pub struct Setter<'a> {
     ///
     /// The corresonding builder field will be `Option<field_type>`.
     pub field_type: &'a syn::Ty,
+    /// Make the setter generic over `Into<T>`, where `T` is the field type.
+    pub generic_into: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
 }
@@ -85,14 +87,28 @@ impl<'a> ToTokens for Setter<'a> {
                 }
             };
 
+            let ty_params: Tokens;
+            let param_ty: Tokens;
+            let into_value: Tokens;
+
+            if self.generic_into {
+                ty_params = quote!(<VALUE: ::std::convert::Into<#ty>>);
+                param_ty = quote!(VALUE);
+                into_value = quote!(value.into());
+            } else {
+                ty_params = quote!();
+                param_ty = quote!(#ty);
+                into_value = quote!(value);
+            }
+
             tokens.append(quote!(
                 #(#attrs)*
-                #vis fn #ident<VALUE: ::std::convert::Into<#ty>>(#self_param, value: VALUE)
+                #vis fn #ident #ty_params (#self_param, value: #param_ty)
                     -> #return_ty
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = ::std::option::Option::Some(value.into());
+                    new.#field_ident = ::std::option::Option::Some(#into_value);
                     new
             }));
         } else {
@@ -115,6 +131,7 @@ macro_rules! default_setter {
             ident: &syn::Ident::new("foo"),
             field_ident: &syn::Ident::new("foo"),
             field_type: &syn::parse_type("Foo").unwrap(),
+            generic_into: false,
             deprecation_notes: &Default::default(),
         };
     }
@@ -131,9 +148,9 @@ mod tests {
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(quote!(#setter), quote!(
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&self, value: VALUE) -> Self {
+            pub fn foo(&self, value: Foo) -> Self {
                 let mut new = ::std::clone::Clone::clone(self);
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::std::option::Option::Some(value);
                 new
             }
         ));
@@ -145,9 +162,9 @@ mod tests {
         setter.pattern = BuilderPattern::Mutable;
 
         assert_eq!(quote!(#setter), quote!(
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::std::option::Option::Some(value);
                 new
             }
         ));
@@ -159,9 +176,9 @@ mod tests {
         setter.pattern = BuilderPattern::Owned;
 
         assert_eq!(quote!(#setter), quote!(
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(self, value: VALUE) -> Self {
+            pub fn foo(self, value: Foo) -> Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::std::option::Option::Some(value);
                 new
             }
         ));
@@ -175,7 +192,21 @@ mod tests {
         setter.visibility = &vis;
 
         assert_eq!(quote!(#setter), quote!(
-            fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            fn foo(&mut self, value: Foo) -> &mut Self {
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(value);
+                new
+            }
+        ));
+    }
+
+    #[test]
+    fn generic() {
+        let mut setter = default_setter!();
+        setter.generic_into = true;
+
+        assert_eq!(quote!(#setter), quote!(
+            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value.into());
                 new
@@ -193,6 +224,7 @@ mod tests {
 
         let mut setter = default_setter!();
         setter.attrs = attrs.as_slice();
+        setter.generic_into = true;
         setter.deprecation_notes = &deprecated;
 
         assert_eq!(quote!(#setter), quote!(
