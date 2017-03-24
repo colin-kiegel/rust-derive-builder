@@ -27,8 +27,8 @@ pub fn field_options_from(f: syn::Field,
 /// Build `StructOptions` and `FieldOptions`.
 ///
 /// The difference between `StructOptions` and `FieldOptions` is expressed via a different `Mode`.
-#[derive(Default, Debug, Clone)]
-pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
+#[derive(Debug, Clone)]
+pub struct OptionsBuilder<Mode> {
     builder_pattern: Option<BuilderPattern>,
     setter_enabled: Option<bool>,
     setter_prefix: Option<String>,
@@ -43,6 +43,20 @@ pub struct OptionsBuilder<Mode: OptionsBuilderMode> {
 pub trait OptionsBuilderMode {
     fn parse_builder_name(&mut self, lit: &syn::Lit);
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
+}
+
+impl<Mode> From<Mode> for OptionsBuilder<Mode> {
+    fn from(mode: Mode) -> OptionsBuilder<Mode> {
+        OptionsBuilder {
+            builder_pattern: None,
+            setter_enabled: None,
+            setter_prefix: None,
+            setter_name: None,
+            setter_vis: None,
+            default_expression: None,
+            mode: mode,
+        }
+    }
 }
 
 impl<Mode> OptionsBuilder<Mode> where

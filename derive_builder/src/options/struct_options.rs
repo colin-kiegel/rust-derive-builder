@@ -20,7 +20,7 @@ pub struct StructOptions {
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
     /// Number of fields on the target struct.
-    pub struct_len: usize,
+    pub struct_size_hint: usize,
 }
 
 impl StructOptions {
@@ -31,8 +31,8 @@ impl StructOptions {
             ident: &self.builder_ident,
             generics: Some(&self.generics),
             visibility: &self.builder_visibility,
-            fields: Vec::with_capacity(self.struct_len),
-            functions: Vec::with_capacity(self.struct_len),
+            fields: Vec::with_capacity(self.struct_size_hint),
+            functions: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
         }
@@ -47,7 +47,7 @@ impl StructOptions {
             pattern: self.builder_pattern,
             target_ty: &self.build_target_ident,
             target_ty_generics: Some(ty_generics),
-            initializers: Vec::with_capacity(self.struct_len),
+            initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
         }
     }

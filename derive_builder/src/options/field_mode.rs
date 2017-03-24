@@ -2,26 +2,38 @@ use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, FieldOptions};
 use derive_builder_core::DeprecationNotes;
 
-#[derive(Default, Clone)]
+#[derive(Clone, Debug)]
 pub struct FieldMode {
-    field_ident: Option<syn::Ident>,
-    field_type: Option<syn::Ty>,
+    field_ident: syn::Ident,
+    field_type: syn::Ty,
     setter_attrs: Option<Vec<syn::Attribute>>,
     deprecation_notes: DeprecationNotes,
 }
 
+impl Default for FieldMode {
+    fn default() -> FieldMode {
+        FieldMode {
+           field_ident: syn::Ident::new(""),
+           field_type: syn::Ty::Never,
+           setter_attrs: None,
+           deprecation_notes: Default::default(),
+       }
+    }
+}
+
 impl OptionsBuilder<FieldMode> {
     pub fn parse(f: syn::Field) -> Self {
-        let mut builder = Self::default();
+        let ident = f.ident.expect(&format!("Missing identifier for field of type `{:?}`.", f.ty));
+        trace!("Parsing field `{}`.", ident.as_ref());
 
-        trace!("Parsing field `{}`.", {
-            f.ident.as_ref()
-                .expect(&format!("Missing identifier for field of type `{:?}`.", f.ty))
+        let mut builder = Self::from(FieldMode {
+            field_ident: ident,
+            field_type: f.ty,
+            setter_attrs: None,
+            deprecation_notes: Default::default(),
         });
 
         builder.parse_attributes(&f.attrs);
-        builder.mode.field_ident = f.ident;
-        builder.mode.field_type = Some(f.ty);
 
         trace!("Filtering attributes for builder field and setter.");
         builder.mode.setter_attrs = Some(f.attrs
@@ -42,19 +54,17 @@ impl OptionsBuilder<FieldMode> {
         let mut deprecation_notes = self.mode.deprecation_notes;
         deprecation_notes.extend(&defaults.mode.deprecation_notes);
 
+        /// move a nested field out of `self`, if it `Some(_)` or else clone it from `defaults`
         macro_rules! f {
-            ($field:ident) => {
-                self.$field.or_else(|| defaults.$field.clone())
-            };
-            (mode $field:ident) => {
-                self.mode.$field.or_else(|| defaults.mode.$field.clone())
+            ($($field:ident).*) => {
+                self.$($field).*.or_else(|| defaults.$($field).*.clone())
             };
         }
 
         let mode = FieldMode {
-            field_ident: f!(mode field_ident),
-            field_type: f!(mode field_type),
-            setter_attrs: f!(mode setter_attrs),
+            field_ident: self.mode.field_ident,
+            field_type: self.mode.field_type,
+            setter_attrs: f!(mode.setter_attrs),
             deprecation_notes: deprecation_notes,
         };
 
@@ -84,17 +94,14 @@ impl OptionsBuilderMode for FieldMode {
 
 impl From<OptionsBuilder<FieldMode>> for FieldOptions {
     fn from(b: OptionsBuilder<FieldMode>) -> FieldOptions {
-        let field_ident = b.mode.field_ident
-            .clone()
-            .expect("Setter name must be set.");
-        let field_type = b.mode.field_type
-            .clone()
-            .expect(&format!("Setter type must be set for field `{}`.", field_ident));
+        let field_ident = b.mode.field_ident;
+        let field_type = b.mode.field_type;
+        let setter_prefix = b.setter_prefix;
         let setter_ident = b.setter_name
             .as_ref()
             .map(|name| syn::Ident::new(name.as_str()))
             .unwrap_or_else(|| {
-                match b.setter_prefix {
+                match setter_prefix {
                     Some(ref prefix) if !prefix.is_empty() => {
                         syn::Ident::new(format!("{}_{}", prefix, field_ident))
                     },
