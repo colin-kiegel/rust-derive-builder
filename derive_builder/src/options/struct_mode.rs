@@ -2,7 +2,7 @@ use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
 use derive_builder_core::DeprecationNotes;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct StructMode {
     build_target_name: String,
     build_target_generics: syn::Generics,
@@ -17,6 +17,7 @@ impl OptionsBuilder<StructMode> {
     pub fn parse(ast: &syn::MacroInput) -> Self {
         trace!("Parsing struct `{}`.", ast.ident.as_ref());
 
+        // Note: Set `build_target_name` _before_ parsing attributes, for better diagnostics!
         let mut builder = Self::from(StructMode {
             build_target_name: ast.ident.as_ref().to_string(),
             build_target_generics: ast.generics.clone(),
@@ -43,6 +44,11 @@ impl OptionsBuilderMode for StructMode {
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
         self.deprecation_notes.push(x.into());
         self
+    }
+
+    /// Provide a diagnostic _where_-clause for panics.
+    fn where_diagnostics(&self) -> String {
+        format!("on struct `{}`", self.build_target_name)
     }
 }
 

@@ -20,6 +20,8 @@ struct SetterOptIn {
     setter_present_by_explicit_opt_in: u32,
     #[builder(setter)]
     setter_present_by_shorthand_opt_in: u32,
+    #[builder(setter(prefix="set"))]
+    setter_present_by_shorthand_opt_in_2: u32,
 }
 
 // compile test
@@ -56,6 +58,7 @@ fn setter_opt_in() {
     let x: SetterOptIn = SetterOptInBuilder::default()
         .setter_present_by_explicit_opt_in(47u32)
         .setter_present_by_shorthand_opt_in(11u32)
+        .set_setter_present_by_shorthand_opt_in_2(815u32)
         .build()
         .unwrap();
 
@@ -64,5 +67,6 @@ fn setter_opt_in() {
                    setter_skipped_by_shorthand_default: 0,
                    setter_present_by_explicit_opt_in: 47,
                    setter_present_by_shorthand_opt_in: 11,
+                   setter_present_by_shorthand_opt_in_2: 815,
                });
 }

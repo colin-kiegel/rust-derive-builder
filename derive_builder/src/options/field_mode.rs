@@ -26,6 +26,7 @@ impl OptionsBuilder<FieldMode> {
         let ident = f.ident.expect(&format!("Missing identifier for field of type `{:?}`.", f.ty));
         trace!("Parsing field `{}`.", ident.as_ref());
 
+        // Note: Set `field_ident` _before_ parsing attributes, for better diagnostics!
         let mut builder = Self::from(FieldMode {
             field_ident: ident,
             field_type: f.ty,
@@ -83,12 +84,18 @@ impl OptionsBuilder<FieldMode> {
 
 impl OptionsBuilderMode for FieldMode {
     fn parse_builder_name(&mut self, _name: &syn::Lit) {
-        panic!("Builder name can only be set on the stuct level")
+        panic!("Builder name can only be set on the stuct level (but found {}).",
+               self.where_diagnostics())
     }
 
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
         self.deprecation_notes.push(x.into());
         self
+    }
+
+    /// Provide a diagnostic _where_-clause for panics.
+    fn where_diagnostics(&self) -> String {
+        format!("on field `{}`", self.field_ident.as_ref())
     }
 }
 

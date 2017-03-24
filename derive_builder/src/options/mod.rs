@@ -40,9 +40,11 @@ pub struct OptionsBuilder<Mode> {
 }
 
 /// Certain attributes need to be handled differently for `StructOptions` and `FieldOptions`.
-pub trait OptionsBuilderMode {
+pub trait OptionsBuilderMode: ::std::fmt::Debug {
     fn parse_builder_name(&mut self, lit: &syn::Lit);
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
+    /// Provide a diagnostic _where_-clause for panics.
+    fn where_diagnostics(&self) -> String;
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -59,43 +61,62 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
     }
 }
 
+macro_rules! impl_setter {
+    (
+        ident: $ident:ident,
+        desc: $desc:expr,
+        map: |$x:ident: $ty:ty| {$( $map:tt )*},
+    ) => {
+        impl_setter!{
+            ident: $ident for $ident,
+            desc: $desc,
+            map: |$x: $ty| {$( $map )*},
+        }
+    };
+    (
+        ident: $setter:ident for $field:ident,
+        desc: $desc:expr,
+        map: |$x:ident: $ty:ty| {$( $map:tt )*},
+    ) => {
+        fn $setter(&mut self, $x: $ty) -> &mut Self {
+            if let Some(ref current) = self.$field {
+                panic!("Failed to set {} to `{:?}` (already defined as `{:?}`) {}.",
+                    $desc,
+                    $x,
+                    current,
+                    self.where_diagnostics());
+            }
+            self.$field = Some({$( $map )*});
+            self
+        }
+    }
+}
+
 impl<Mode> OptionsBuilder<Mode> where
     Mode: OptionsBuilderMode
 {
-    fn setter_enabled(&mut self, x: bool) -> &mut Self {
-        if self.setter_enabled.is_some() {
-            warn!("Setter enabled already defined as `{:?}`, new value is `{:?}`.",
-                self.setter_enabled, x);
-        }
-        self.setter_enabled = Some(x);
-        self
+    impl_setter!{
+        ident: setter_enabled,
+        desc: "setter activation",
+        map: |x: bool| { x },
     }
 
-    fn builder_pattern(&mut self, x: BuilderPattern) -> &mut Self {
-        if self.builder_pattern.is_some() {
-            warn!("Setter pattern already defined as `{:?}`, new value is `{:?}`.",
-                self.builder_pattern, x);
-        }
-        self.builder_pattern = Some(x);
-        self
+    impl_setter!{
+        ident: builder_pattern,
+        desc: "builder pattern",
+        map: |x: BuilderPattern| { x },
     }
 
-    fn setter_public(&mut self, x: bool) -> &mut Self {
-        if self.setter_vis.is_some() {
-            warn!("Setter visibility already defined as `{:?}`, new value is `{:?}`.",
-                self.setter_vis, x);
-        }
-        self.setter_vis = Some(syn::Visibility::Public);
-        self
+    impl_setter!{
+        ident: setter_public for setter_vis,
+        desc: "setter visibility",
+        map: |x: bool| { if x { syn::Visibility::Public } else { syn::Visibility::Inherited } },
     }
 
-    fn default_expression(&mut self, x: DefaultExpression) -> &mut Self {
-        if self.default_expression.is_some() {
-            warn!("Default expression already defined as `{:?}`, new value is `{:?}`.",
-                self.default_expression, x);
-        }
-        self.default_expression = Some(x);
-        self
+    impl_setter!{
+        ident: default_expression,
+        desc: "default expression",
+        map: |x: DefaultExpression| { x },
     }
 
     pub fn parse_attributes<'a, T>(&mut self, attributes: T) -> &mut Self where
@@ -125,14 +146,13 @@ impl<Mode> OptionsBuilder<Mode> where
         match attr.value {
             // i.e. `#[builder(...)]`
             syn::MetaItem::List(ref _ident, ref nested_attrs) => {
-                self.setter_enabled(true);
                 self.parse_builder_options(nested_attrs);
                 return
             },
             syn::MetaItem::Word(_) |
             syn::MetaItem::NameValue(_, _) => {
                 error!("Expected MetaItem::List, found `{:?}`", attr.value);
-                panic!("Could not parse builder options.");
+                panic!("Could not parse builder options {}.", self.where_diagnostics());
             }
         }
     }
@@ -146,7 +166,9 @@ impl<Mode> OptionsBuilder<Mode> where
                 },
                 syn::NestedMetaItem::Literal(ref lit) => {
                     error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
-                    panic!("Could not parse builder option `{:?}`.", lit);
+                    panic!("Could not parse builder option `{:?}` {}.",
+                           lit,
+                           self.where_diagnostics());
                 }
             }
         }
@@ -179,13 +201,14 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_public(false)
             },
             "setter" => {
+                // setter implicitly enabled
                 self.setter_enabled(true)
             },
             "default" => {
                 self.default_expression(DefaultExpression::Trait)
             },
             _ => {
-                panic!("Unknown option `{}`", ident.as_ref())
+                panic!("Unknown option `{}` {}", ident.as_ref(), self.where_diagnostics())
             }
         };
     }
@@ -213,7 +236,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.parse_default_expression(lit)
             },
             _ => {
-                panic!("Unknown option `{}`.", ident.as_ref())
+                panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
         }
     }
@@ -228,10 +251,14 @@ impl<Mode> OptionsBuilder<Mode> where
         trace!("Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             "setter" => {
-                self.parse_setter_options(nested)
+                self.parse_setter_options(nested);
+                // setter implicitly enabled
+                if self.setter_enabled.is_none() {
+                    self.setter_enabled(true);
+                }
             },
             _ => {
-                panic!("Unknown option `{}`.", ident.as_ref())
+                panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
         }
     }
@@ -247,14 +274,12 @@ impl<Mode> OptionsBuilder<Mode> where
             match *x {
                 syn::NestedMetaItem::MetaItem(ref meta_item) => {
                     self.parse_setter_options_metaItem(meta_item);
-                    // setters implicitly enabled
-                    if self.setter_enabled.is_none() {
-                        self.setter_enabled(true);
-                    }
                 },
-                syn::NestedMetaItem::Literal(ref _lit) => {
-                    // setters explicitly enabled
-                    self.setter_enabled(true);
+                syn::NestedMetaItem::Literal(ref lit) => {
+                    error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
+                    panic!("Could not parse builder option `{:?}` {}.",
+                           lit,
+                           self.where_diagnostics());
                 }
             }
         }
@@ -290,7 +315,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(false)
             },
             _ => {
-                panic!("Unknown setter option `{}`.", ident.as_ref())
+                panic!("Unknown setter option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
         };
     }
@@ -307,7 +332,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.parse_setter_skip(lit)
             },
             _ => {
-                panic!("Unknown setter option `{}`.", ident.as_ref())
+                panic!("Unknown setter option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
         }
     }
@@ -322,7 +347,7 @@ impl<Mode> OptionsBuilder<Mode> where
         trace!("Setter Options - Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             _ => {
-                panic!("Unknown option `{}`.", ident.as_ref())
+                panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
         }
     }
@@ -353,7 +378,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.builder_pattern(BuilderPattern::Immutable)
             },
             _ => {
-                panic!("Unknown pattern value `{}`.", value)
+                panic!("Unknown pattern value `{}` {}.", value, self.where_diagnostics())
             }
         };
     }
@@ -361,6 +386,13 @@ impl<Mode> OptionsBuilder<Mode> where
     fn parse_setter_skip(&mut self, skip: &syn::Lit) {
         trace!("Parsing skip setter `{:?}`", skip);
         self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
+    }
+
+    /// Provide a diagnostic _where_-clause for panics.
+    ///
+    /// Delegete to the `OptionsBuilderMode`.
+    fn where_diagnostics(&self) -> String {
+        self.mode.where_diagnostics()
     }
 }
 
