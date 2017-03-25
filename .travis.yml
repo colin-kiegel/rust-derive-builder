@@ -7,7 +7,7 @@ rust:
 matrix:
   include:
     - rust: nightly
-      env: JOB=build CARGO_FEATURES=compiletests
+      env: JOB=build CARGO_FEATURES="compiletests logging"
     - rust: nightly
       env: JOB=style_check
   allow_failures:

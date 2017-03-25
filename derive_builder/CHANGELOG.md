@@ -13,6 +13,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   please use `#[builder(setter(prefix="with"))]` instead
 - setter conversions are now off by default, you can opt-into via
   `#[builder(setter(into))]`
+- logging is behind a feature flag. To activate it, please add
+  `features = ["logging"]` to the dependency in `Cargo.toml`. Then you can use
+  it like: `RUST_LOG=derive_builder=trace cargo test`.
 
 ### Fixed
 - use full path for result #39
