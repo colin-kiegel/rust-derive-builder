@@ -6,28 +6,28 @@ macro_rules! log_enabled {
     ($( $x:tt )*) => { false }
 }
 
-// delegate to format and throw away the result to avoid `unused variable` lints.
+// delegate to format_args and throw away the result to avoid `unused variable` lints.
 // The compiler should be able to optimize this away.
 macro_rules! debug {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
 
 macro_rules! error {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
 
 macro_rules! info {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
 
 macro_rules! log {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
 
 macro_rules! trace {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
 
 macro_rules! warn {
-    ($( $x:tt )*) => { format!($( $x )*); }
+    ($( $x:tt )*) => { format_args!($( $x )*); }
 }
