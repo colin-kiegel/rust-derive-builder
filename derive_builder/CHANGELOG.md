@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - skip setters, e.g. `#[builder(setter(skip))]`
-- custom defaults, e.g. `#[builder(default="42")]`
+- default values, e.g. `#[builder(default="42")]` or just `#[builder(default)]`
 
 ### Changed
 - deprecated syntax `#[builder(setter_prefix="with")]`,
