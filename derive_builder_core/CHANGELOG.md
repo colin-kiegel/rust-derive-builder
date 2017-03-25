@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased - YYYY-MM-DD
+## 0.1 - 2017-03-25
 ### Added
 - helper crate `derive_builder_core`:
   Allow `derive_builder` to use its own code generation technique.
