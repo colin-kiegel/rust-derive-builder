@@ -27,9 +27,13 @@ extern crate proc_macro;
 extern crate syn;
 #[macro_use]
 extern crate quote;
+#[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
 
+#[cfg(not(feature = "logging"))]
+#[macro_use]
+mod log_disabled;
 mod build_method;
 mod builder_field;
 mod builder;

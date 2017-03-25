@@ -362,9 +362,13 @@
 //!
 //! ## Debugging Info
 //!
-//! If you experience any problems during compilation, you can enable additional debug output
-//! by setting the environment variable `RUST_LOG=derive_builder=trace` before you call `cargo`
-//! or `rustc`. Example: `env RUST_LOG=derive_builder=trace cargo test`.
+//! If you experience any problems during compilation, you can enable additional debug output in
+//! two steps:
+//!
+//! 1. Add `features = ["logging"]` to the `derive_builder` dependency in `Cargo.toml`.
+//! 2. Set this environment variable before calling cargo or rustc `RUST_LOG=derive_builder=trace`.
+//!
+//! Example: `env RUST_LOG=derive_builder=trace cargo test`.
 //!
 //! ## Report Issues and Ideas
 //!
@@ -383,22 +387,30 @@ extern crate proc_macro;
 extern crate syn;
 #[macro_use]
 extern crate quote;
+#[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
+#[cfg(feature = "logging")]
 extern crate env_logger;
 extern crate derive_builder_core;
 
+#[cfg(not(feature = "logging"))]
+#[macro_use]
+mod log_disabled;
 mod options;
 
 use proc_macro::TokenStream;
+#[cfg(feature = "logging")]
 use std::sync::{Once, ONCE_INIT};
 use options::{struct_options_from, field_options_from};
 
+#[cfg(feature = "logging")]
 static INIT_LOGGER: Once = ONCE_INIT;
 
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(input: TokenStream) -> TokenStream {
+    #[cfg(feature = "logging")]
     INIT_LOGGER.call_once(|| {
         env_logger::init().unwrap();
     });
