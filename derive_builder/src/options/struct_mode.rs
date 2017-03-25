@@ -11,6 +11,7 @@ pub struct StructMode {
     builder_vis: Option<syn::Visibility>,
     deprecation_notes: DeprecationNotes,
     struct_size_hint: usize,
+    no_std: Option<bool>,
 }
 
 impl OptionsBuilder<StructMode> {
@@ -26,6 +27,7 @@ impl OptionsBuilder<StructMode> {
             builder_vis: None,
             deprecation_notes: Default::default(),
             struct_size_hint: 0,
+            no_std: None,
         });
 
         builder.parse_attributes(&ast.attrs);
@@ -34,11 +36,19 @@ impl OptionsBuilder<StructMode> {
     }
 }
 
+impl StructMode {
+    impl_setter!{
+        ident: builder_name,
+        desc: "builder name",
+        map: |x: String| { x },
+    }
+}
+
 impl OptionsBuilderMode for StructMode {
     fn parse_builder_name(&mut self, name: &syn::Lit) {
         trace!("Parsing builder name `{:?}`", name);
         let value = parse_lit_as_string(name).unwrap();
-        self.builder_name = Some(value.clone());
+        self.builder_name(value.clone());
     }
 
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
@@ -49,6 +59,12 @@ impl OptionsBuilderMode for StructMode {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String {
         format!("on struct `{}`", self.build_target_name)
+    }
+
+    impl_setter!{
+        ident: no_std,
+        desc: "no_std support",
+        map: |x: bool| { x },
     }
 }
 
@@ -77,6 +93,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
+            no_std: m.no_std.unwrap_or(false),
         };
 
         (struct_options, field_defaults)

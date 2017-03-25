@@ -98,6 +98,11 @@ impl OptionsBuilderMode for FieldMode {
     fn where_diagnostics(&self) -> String {
         format!("on field `{}`", self.field_ident.as_ref())
     }
+
+    fn no_std(&mut self, _x: bool) {
+        panic!("Support for `#![no_std]` can only be set on the stuct level (but found {}).",
+               self.where_diagnostics())
+    }
 }
 
 impl From<OptionsBuilder<FieldMode>> for FieldOptions {
