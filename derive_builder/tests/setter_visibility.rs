@@ -3,7 +3,7 @@ extern crate derive_builder;
 
 pub mod foo {
     #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    #[builder(private)]
+    #[builder(private, setter(into))]
     pub struct Lorem {
         pub private: String,
         #[builder(public)]
@@ -11,7 +11,7 @@ pub mod foo {
     }
 
     #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    #[builder(public)]
+    #[builder(public, setter(into))]
     pub struct Ipsum {
         #[builder(private)]
         pub private: String,

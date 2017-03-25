@@ -8,6 +8,7 @@ extern crate derive_builder;
 
 /// Traditional form of communication.
 #[derive(Debug, Builder)]
+#[builder(setter(into))]
 pub struct Letter {
     /// Be creative.
     pub message: String,

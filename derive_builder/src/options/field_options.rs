@@ -18,6 +18,8 @@ pub struct FieldOptions {
     pub field_ident: syn::Ident,
     /// The field type.
     pub field_type: syn::Ty,
+    /// Make the setter generic over `Into<_>`.
+    pub setter_into: bool,
     /// Emit deprecation notes to the user,
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
@@ -42,6 +44,7 @@ impl FieldOptions {
             ident: &self.setter_ident,
             field_ident: &self.field_ident,
             field_type: &self.field_type,
+            generic_into: self.setter_into,
             deprecation_notes: &self.deprecation_notes,
         }
     }

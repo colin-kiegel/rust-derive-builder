@@ -17,7 +17,7 @@
 //!
 //! #[derive(Builder)]
 //! struct Lorem {
-//!     ipsum: String,
+//!     ipsum: u32,
 //!     // ..
 //! }
 //! # fn main() {}
@@ -30,22 +30,23 @@
 //! # extern crate derive_builder;
 //! #
 //! # struct Lorem {
-//! #     ipsum: String,
+//! #     ipsum: u32,
 //! # }
 //! # fn main() {}
 //! #
 //! #[derive(Clone, Default)]
 //! struct LoremBuilder {
-//!     ipsum: Option<String>,
+//!     ipsum: Option<u32>,
 //! }
 //!
 //! #[allow(dead_code)]
 //! impl LoremBuilder {
-//!     pub fn ipsum<VALUE: Into<String>>(&mut self, value: VALUE) -> &mut Self {
+//!     pub fn ipsum(&mut self, value: u32) -> &mut Self {
 //!         let mut new = self;
-//!         new.ipsum = Some(value.into());
+//!         new.ipsum = Some(value);
 //!         new
 //!     }
+//!
 //!     fn build(&self) -> Result<Lorem, String> {
 //!         Ok(Lorem {
 //!             ipsum: Clone::clone(self.ipsum
@@ -68,29 +69,29 @@
 //!
 //! # Builder Patterns
 //!
-//! Let's look again at the example above. You can build structs like this:
+//! Let's look again at the example above. You can now build structs like this:
 //!
 //! ```rust
 //! # #[macro_use] extern crate derive_builder;
-//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
-//! let x: Lorem = LoremBuilder::default().ipsum("42").build()?;
+//! let x: Lorem = LoremBuilder::default().ipsum(42).build()?;
 //! # Ok(())
 //! # } fn main() { try_main().unwrap(); }
 //! ```
 //!
-//! Ok, _chaining_ method calls is nice, but what if `ipsum("42")` should only happen if `geek = true`?
+//! Ok, _chaining_ method calls is nice, but what if `ipsum(42)` should only happen if `geek = true`?
 //!
 //! So let's make this call conditional
 //!
 //! ```rust
 //! # #[macro_use] extern crate derive_builder;
-//! # #[derive(Builder)] struct Lorem { ipsum: String }
+//! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
 //! # let geek = true;
 //! let mut builder = LoremBuilder::default();
 //! if geek {
-//!     builder.ipsum("42");
+//!     builder.ipsum(42);
 //! }
 //! let x: Lorem = builder.build()?;
 //! # Ok(())
@@ -98,7 +99,7 @@
 //! ```
 //!
 //! Now it comes in handy that our setter methods take and return mutable references. Otherwise
-//! we would need to write something more clumsy like `builder = builder.ipsum("42")` to reassign
+//! we would need to write something more clumsy like `builder = builder.ipsum(42)` to reassign
 //! the return value each time we have to call a setter conditionally.
 //!
 //! Setters with mutable references are therefore a convenient default for the builder
@@ -113,7 +114,7 @@
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
 //! * CON: If you don't chain your calls, you have to create a reference to each return value,
-//!   e.g. `builder = builder.ipsum("42")`.
+//!   e.g. `builder = builder.ipsum(42)`.
 //!
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
@@ -133,7 +134,7 @@
 //! * Setters take and return `&self`.
 //! * PRO: Setter calls and final build method can be chained.
 //! * CON: If you don't chain your calls, you have to create a reference to each return value,
-//!   e.g. `builder = builder.ipsum("42")`.
+//!   e.g. `builder = builder.ipsum(42)`.
 //! * CON: The build method _and each setter_ must clone or copy data to create something owned
 //!   out of a reference. **(*)**
 //!
@@ -189,6 +190,31 @@
 //! You can precede your struct (or field) with e.g. `#[builder(setter(prefix="xyz"))` to change
 //! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
 //! by default, since Rust favors snake case here.
+//!
+//! ## Generic Setters
+//!
+//! You can make each setter generic over the `Into`-trait. It's as simple as adding
+//! `#[builder(setter(into))]` to either a field or the whole struct.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Lorem {
+//!     #[builder(setter(into))]
+//!     pub ipsum: String,
+//! }
+//!
+//! fn main() {
+//!     // `"foo"` will be converted into a `String` automatically.
+//!     let x = LoremBuilder::default().ipsum("foo").build().unwrap();
+//!
+//!     assert_eq!(x, Lorem {
+//!         ipsum: "foo".to_string(),
+//!     });
+//! }
+//! ```
 //!
 //! ## Default Values
 //!
@@ -256,7 +282,7 @@
 //!
 //! # fn main() {
 //! #     let x = LoremBuilder::default()
-//! #         .ipsum("ipsum")
+//! #         .ipsum("ipsum".to_string())
 //! #         .build()
 //! #         .unwrap();
 //! #
@@ -278,7 +304,7 @@
 //! #
 //! #[derive(Builder, Debug, PartialEq, Default, Clone)]
 //! struct GenLorem<T: Clone> {
-//!     ipsum: String,
+//!     ipsum: &'static str,
 //!     dolor: T,
 //! }
 //!
@@ -326,8 +352,8 @@
 //!
 //! - Tuple structs and unit structs are not supported as they have no field
 //!   names.
-//! - When defining a generic struct, you cannot use `VALUE` as a generic
-//!   parameter as this is what all setters are using.
+//! - Generic setters introduce a type parameter `VALUE: Into<_>`. Therefore you can't use
+//!  `VALUE` as a type parameter on a generic struct in combination with generic setters.
 //! - When re-exporting the underlying struct under a different name, the
 //!   auto-generated documentation will not match.
 //! - If derive_builder depends on your crate, and vice versa, then a cyclic

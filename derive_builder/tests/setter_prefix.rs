@@ -4,22 +4,22 @@ extern crate derive_builder;
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(setter(prefix="with"))]
 struct Lorem {
-    ipsum: String,
+    ipsum: &'static str,
     #[builder(setter(prefix="set"))]
-    pub dolor: Option<String>,
+    pub dolor: &'static str,
 }
 
 #[test]
 fn prefixed_setters() {
     let x = LoremBuilder::default()
         .with_ipsum("ipsum")
-        .set_dolor(Some("dolor".into()))
+        .set_dolor("dolor")
         .build()
         .unwrap();
 
     assert_eq!(x,
                Lorem {
-                   ipsum: "ipsum".into(),
-                   dolor: Some("dolor".into()),
+                   ipsum: "ipsum",
+                   dolor: "dolor",
                });
 }

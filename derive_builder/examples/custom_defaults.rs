@@ -35,7 +35,7 @@ impl LoremBuilder {
 
 fn main() {
     let x = LoremBuilder::default()
-        .ipsum("ipsum")
+        .ipsum("ipsum".to_string())
         .build()
         .unwrap();
 

@@ -4,8 +4,8 @@ extern crate derive_builder;
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(name="MyBuilder")]
 struct Lorem {
-    ipsum: String,
-    pub dolor: Option<String>,
+    ipsum: &'static str,
+    pub dolor: Option<&'static str>,
     pub sit: i32,
     amet: bool,
 }
@@ -20,7 +20,7 @@ fn panic_if_uninitialized() {
 fn builder() {
     let x: Lorem = MyBuilder::default()
         .ipsum("lorem")
-        .dolor(Some("dolor".into()))
+        .dolor(Some("dolor"))
         .sit(42)
         .amet(true)
         .build()
@@ -28,8 +28,8 @@ fn builder() {
 
     assert_eq!(x,
                Lorem {
-                   ipsum: "lorem".into(),
-                   dolor: Some("dolor".into()),
+                   ipsum: "lorem",
+                   dolor: Some("dolor"),
                    sit: 42,
                    amet: true,
                });

@@ -11,6 +11,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - deprecated syntax `#[builder(setter_prefix="with")]`,
   please use `#[builder(setter(prefix="with"))]` instead
+- setter conversions are now off by default, you can opt-into via
+  `#[builder(setter(into))]`
 
 ### Fixed
 - use full path for result #39

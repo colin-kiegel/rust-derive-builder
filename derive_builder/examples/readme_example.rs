@@ -6,6 +6,7 @@
 extern crate derive_builder;
 
 #[derive(Default, Builder, Debug)]
+#[builder(setter(into))]
 struct Channel {
     token: i32,
     special_info: i32,

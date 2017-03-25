@@ -8,7 +8,7 @@ extern crate derive_builder;
 #[allow(dead_code)]
 #[derive(Builder)]
 struct Lorem {
-    ipsum: String,
+    ipsum: u32,
 }
 
 fn main() {}

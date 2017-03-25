@@ -21,6 +21,7 @@ impl From<i32> for Authentication {
 }
 
 #[derive(Debug, Default, Builder)]
+#[builder(setter(into))]
 struct Channel {
     id: Uuid,
     token: Authentication,

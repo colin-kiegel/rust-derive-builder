@@ -17,6 +17,7 @@
 extern crate derive_builder;
 
 #[derive(Default, Builder, Debug)]
+#[builder(setter(into))]
 struct Channel {
     token: i32,
     special_info: i32,
@@ -89,8 +90,8 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
 * **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
 * **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
-* **Setter type conversions**: Setter methods are generic over the input types – you can supply every argument that implements the [`Into`][into] trait for the field type.
-* **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, because this is already reserved for the setter-methods.
+* **Setter type conversions**: With ``#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
+* **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
 * **Logging**: If anything works unexpectedly you can enable detailed logs by setting this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
 
 For more information and examples please take a look at our [documentation][doc].
