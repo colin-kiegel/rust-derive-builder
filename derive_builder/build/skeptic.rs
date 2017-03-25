@@ -8,7 +8,7 @@ extern crate skeptic;
 #[cfg(not(feature = "logging"))]
 #[macro_use]
 mod log_disabled {
-    include!("src/log_disabled.rs");
+    include!("../src/log_disabled.rs");
 }
 
 fn main() {
