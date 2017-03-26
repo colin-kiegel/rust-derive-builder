@@ -203,10 +203,11 @@ impl<Mode> OptionsBuilder<Mode> where
         match ident.as_ref() {
             "setter_prefix" => {
                 let val = quote!(#lit);
+                let where_diagnostics = self.where_diagnostics();
                 self.mode.push_deprecation_note(format!(
                     "warning: deprecated syntax `#[builder(setter_prefix={})]`, \
-                     please use `#[builder(setter(prefix={}))]` instead!",
-                    val, val));
+                     please use `#[builder(setter(prefix={}))]` instead {}.",
+                    val, val, where_diagnostics));
                 self.parse_setter_prefix(lit)
             },
             "pattern" => {
