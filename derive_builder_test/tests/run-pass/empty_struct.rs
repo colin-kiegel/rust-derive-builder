@@ -5,7 +5,4 @@ extern crate derive_builder;
 #[derive(Builder)]
 struct IgnoreEmptyStruct {}
 
-#[test]
-fn empty_struct() {
-    // this is just a compile-test - no run time checks required.
-}
+fn main() { }

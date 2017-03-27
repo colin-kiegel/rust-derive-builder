@@ -38,3 +38,4 @@ env_logger = { version = "0.4", optional = true }
 
 [dev-dependencies]
 skeptic = "0.7"
+pretty_assertions = "0.1"
