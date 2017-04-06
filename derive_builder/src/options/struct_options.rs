@@ -54,7 +54,7 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
-            use_default: self.use_default,
+            use_default: cfg!(feature = "use-impl-default") && self.use_default,
         }
     }
 }

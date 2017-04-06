@@ -69,8 +69,13 @@ impl FieldOptions {
                         }
                         s.parse()
                     },
-                    DefaultExpression::Trait => "::std::default::Default::default()".parse(),
-                    DefaultExpression::Struct => format!("__default.{}", self.field_ident).parse(),
+                    // Use the struct level default only if the feature is enabled.
+                    DefaultExpression::Struct if cfg!(feature = "use-impl-default") => format!("__default.{}", self.field_ident).parse(),
+                    
+                    // ... otherwise, fall back to the old style of generating defaults 
+                    // based on the field's type.
+                    DefaultExpression::Trait 
+                    | DefaultExpression::Struct => "::std::default::Default::default()".parse(),
                 }.expect(&format!("Couldn't parse default expression `{:?}`", x))
             }),
         }
