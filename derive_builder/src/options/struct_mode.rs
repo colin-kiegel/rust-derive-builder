@@ -1,5 +1,6 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
+use options::field_options::DefaultExpression;
 use derive_builder_core::DeprecationNotes;
 
 #[derive(Debug, Clone)]
@@ -70,6 +71,15 @@ impl OptionsBuilderMode for StructMode {
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
     fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+        let mut use_struct_default = false;
+        let field_default = match b.default_expression {
+            Some(DefaultExpression::Trait) => {
+                use_struct_default = true;
+                Some(DefaultExpression::Struct)
+            }
+            e => e
+        };
+        
         let field_defaults = OptionsBuilder::<FieldMode> {
             setter_enabled: b.setter_enabled,
             builder_pattern: b.builder_pattern,
@@ -77,7 +87,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
-            default_expression: b.default_expression,
+            default_expression: field_default,
             mode: FieldMode::default(),
         };
 
@@ -94,6 +104,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
             no_std: m.no_std.unwrap_or(false),
+            use_default: use_struct_default,
         };
 
         (struct_options, field_defaults)

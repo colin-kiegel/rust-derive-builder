@@ -50,6 +50,8 @@ pub struct BuildMethod<'a> {
     pub doc_comment: Option<syn::Attribute>,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
+    /// Whether the generated method should use `Default::default()`.
+    pub use_default: bool,
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
@@ -65,6 +67,11 @@ impl<'a> ToTokens for BuildMethod<'a> {
             BuilderPattern::Immutable => quote!(&self),
         };
         let doc_comment = &self.doc_comment;
+        let default = if self.use_default { 
+            quote!(let __default : #target_ty = ::std::default::Default::default();)
+        } else {
+            quote!()
+        };
 
         let (result, string) = if self.no_std {(
             quote!(::core::result::Result),
@@ -81,6 +88,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 #vis fn #ident(#self_param)
                     -> #result<#target_ty #target_ty_generics, #string>
                 {
+                    #default
                     Ok(#target_ty {
                         #(#initializers)*
                     })
@@ -124,6 +132,7 @@ macro_rules! default_build_method {
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
             no_std: false,
+            use_default: false,
         }
     }
 }

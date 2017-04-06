@@ -108,3 +108,37 @@ mod struct_level {
         });
     }
 }
+
+mod struct_impl {
+    #[derive(Debug, Clone, PartialEq, Eq, Builder)]
+    #[builder(default)]
+    struct Ipsum {
+        not_type_default: Option<u16>,
+        also_custom: bool,
+        is_type_default: String,
+    }
+    
+    impl Default for Ipsum {
+        fn default() -> Self {
+            Ipsum {
+                not_type_default: Some(20),
+                also_custom: true,
+                is_type_default: Default::default(),
+            }
+        }
+    }
+    
+    #[test]
+    fn defaults_are_equal() {
+        assert_eq!(Ok(Ipsum::default()), IpsumBuilder::default().build());
+    }
+    
+    #[test]
+    fn overrides_work() {
+        let ipsum = IpsumBuilder::default()
+            .not_type_default(None)
+            .build()
+            .expect("Struct-level default makes all fields optional");
+        assert_eq!(None, ipsum.not_type_default);
+    }
+}

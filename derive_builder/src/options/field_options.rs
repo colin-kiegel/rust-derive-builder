@@ -26,11 +26,13 @@ pub struct FieldOptions {
     pub attrs: Vec<syn::Attribute>
 }
 
-/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
+/// A `DefaultExpression` can be an explicit value, refer to the canonical trait, 
+/// or get its value from the struct's `Default` implementation.
 #[derive(Debug, Clone)]
 pub enum DefaultExpression {
     Explicit(String),
     Trait,
+    Struct,
 }
 
 impl FieldOptions {
@@ -65,10 +67,11 @@ impl FieldOptions {
                         if s.is_empty() {
                             panic!(r#"Empty default expressions `default=""` are not supported."#);
                         }
-                        s
+                        s.parse()
                     },
-                    DefaultExpression::Trait => "::std::default::Default::default()",
-                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", x))
+                    DefaultExpression::Trait => "::std::default::Default::default()".parse(),
+                    DefaultExpression::Struct => format!("__default.{}", self.field_ident).parse(),
+                }.expect(&format!("Couldn't parse default expression `{:?}`", x))
             }),
         }
     }

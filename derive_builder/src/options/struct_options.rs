@@ -23,6 +23,8 @@ pub struct StructOptions {
     pub struct_size_hint: usize,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
+    /// Whether or not to use the struct's `Default` impl for missing fields.
+    pub use_default: bool,
 }
 
 impl StructOptions {
@@ -52,6 +54,7 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
+            use_default: self.use_default,
         }
     }
 }
