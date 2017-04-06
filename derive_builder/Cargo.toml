@@ -23,7 +23,7 @@ proc-macro = true
 
 [features]
 logging = [ "log", "env_logger", "derive_builder_core/logging" ]
-use-impl-default = []
+struct_default = []
 
 [dependencies]
 syn = "0.11"

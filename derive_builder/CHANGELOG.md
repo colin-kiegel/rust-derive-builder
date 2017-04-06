@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.4.1] - 2017-04-07
+
+### Changed
+- changed behavior of `#[builder(default)]` at the struct level; it now calls 
+  `Default::default()` unless an explicit value is provided. This change is 
+  gated behind the `struct_default` flag, which will be enabled by default in
+  0.5.0.
+
 ## [0.4.0] - 2017-03-25
 
 ### Added

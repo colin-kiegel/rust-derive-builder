@@ -185,6 +185,14 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(true)
             },
             "default" => {
+                if !cfg!(feature = "struct_default") {
+                    self.mode.push_deprecation_note(format!(
+                        "warning: the meaning of `#[builder(default)]` on the struct level will change in the \
+                         next version (see https://github.com/colin-kiegel/rust-derive-builder/issues/61 for \
+                         more details). To squelch this message and adopt the new behavior now, compile \
+                         `derive_builder` with `--features \"struct_default\"`."));
+                }
+                
                 self.default_expression(DefaultExpression::Trait)
             },
             "no_std" => {

@@ -92,6 +92,7 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 * **Setter type conversions**: With ``#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
+* **`Default` support**: Structs which implement or derive `std::default::Default` will use those values in the absence of overrides.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate collections` to your crate. The latter requires the _nightly_ toolchain.
 * **Logging**: If anything works unexpectedly you can enable detailed logs in two steps. First, add `features = ["logging"]` to the `derive_builder` dependency in `Cargo.toml`. Second, set this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
 

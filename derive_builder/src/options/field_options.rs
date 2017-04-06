@@ -70,7 +70,7 @@ impl FieldOptions {
                         s.parse()
                     },
                     // Use the struct level default only if the feature is enabled.
-                    DefaultExpression::Struct if cfg!(feature = "use-impl-default") => format!("__default.{}", self.field_ident).parse(),
+                    DefaultExpression::Struct if cfg!(feature = "struct_default") => format!("__default.{}", self.field_ident).parse(),
                     
                     // ... otherwise, fall back to the old style of generating defaults 
                     // based on the field's type.
