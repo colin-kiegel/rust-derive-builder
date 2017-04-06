@@ -129,6 +129,7 @@ mod struct_impl {
     }
     
     #[test]
+    #[cfg(feature = "struct_default")]
     fn defaults_are_equal() {
         assert_eq!(Ok(Ipsum::default()), IpsumBuilder::default().build());
     }
