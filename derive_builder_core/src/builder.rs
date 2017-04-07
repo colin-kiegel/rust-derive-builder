@@ -72,7 +72,7 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_fields = &self.fields;
             let functions = &self.functions;
             let builder_doc_comment = &self.doc_comment;
-            let deprecation_notes = &self.deprecation_notes.clone().for_struct();
+            let deprecation_notes = &self.deprecation_notes.as_struct_notes();
 
             debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}", ty_generics, where_clause, impl_generics);
 

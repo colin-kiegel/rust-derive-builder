@@ -62,18 +62,19 @@ impl DeprecationNotes {
         }
     }
     
-    /// Converts this deprecation note set into one that can annotate a struct.
-    pub fn for_struct(self) -> StructDeprecationNotes {
-        StructDeprecationNotes(self.0)
+    /// Create a view of these deprecation notes that can annotate a struct.
+    pub fn as_struct_notes<'a>(&'a self) -> StructDeprecationNotes<'a> {
+        StructDeprecationNotes(&self.0)
     }
 }
 
+/// A view of `DeprecationNotes` that annotates a struct when converted to tokens.
 #[derive(Debug, Default)]
-pub struct StructDeprecationNotes(Vec<String>);
+pub struct StructDeprecationNotes<'a>(&'a [String]);
 
-impl ToTokens for StructDeprecationNotes {
+impl<'a> ToTokens for StructDeprecationNotes<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
-        for note in &self.0 {
+        for note in self.0 {
             tokens.append(quote!(
                 #[deprecated(note=#note)]
             ));
