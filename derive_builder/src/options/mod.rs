@@ -186,11 +186,12 @@ impl<Mode> OptionsBuilder<Mode> where
             },
             "default" => {
                 if !cfg!(feature = "struct_default") {
+                    let where_info = self.where_diagnostics();
                     self.mode.push_deprecation_note(format!(
                         "warning: the meaning of `#[builder(default)]` on the struct level will change in the \
                          next version (see https://github.com/colin-kiegel/rust-derive-builder/issues/61 for \
                          more details). To squelch this message and adopt the new behavior now, compile \
-                         `derive_builder` with `--features \"struct_default\"`."));
+                         `derive_builder` with `--features \"struct_default\" on {}`.", where_info));                    
                 }
                 
                 self.default_expression(DefaultExpression::Trait)

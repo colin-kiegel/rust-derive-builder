@@ -38,7 +38,7 @@ impl StructOptions {
             fields: Vec::with_capacity(self.struct_size_hint),
             functions: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
-            deprecation_notes: DeprecationNotes::default(),
+            deprecation_notes: self.deprecation_notes.clone(),
         }
     }
     /// Returns a `BuildMethod` according to the options.

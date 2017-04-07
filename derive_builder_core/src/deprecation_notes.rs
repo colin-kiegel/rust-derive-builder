@@ -61,6 +61,24 @@ impl DeprecationNotes {
             self.0.push(x.to_owned())
         }
     }
+    
+    /// Converts this deprecation note set into one that can annotate a struct.
+    pub fn for_struct(self) -> StructDeprecationNotes {
+        StructDeprecationNotes(self.0)
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct StructDeprecationNotes(Vec<String>);
+
+impl ToTokens for StructDeprecationNotes {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        for note in &self.0 {
+            tokens.append(quote!(
+                #[deprecated(note=#note)]
+            ));
+        }
+    }
 }
 
 #[test]
