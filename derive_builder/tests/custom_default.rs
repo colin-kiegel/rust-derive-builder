@@ -145,3 +145,39 @@ mod struct_impl {
         assert_eq!(None, ipsum.not_type_default);
     }
 }
+
+mod struct_explicit {
+    fn helper() -> Dolor {
+        Dolor {
+            not_type_default: Some(20)
+        }
+    }
+    
+    #[derive(Debug, PartialEq, Builder)]
+    #[builder(default = "helper")]
+    struct Dolor {
+        not_type_default: Option<u16>
+    }
+    
+    #[test]
+    fn defaults_are_equal() {
+        assert_eq!(Ok(helper()), DolorBuilder::default().build());
+    }
+}
+
+mod local_foolishness {
+#[derive(Debug, PartialEq, Builder)]
+struct Dolor {
+    
+    #[builder(default)]
+    msg: String,
+    
+    #[builder(default = "{println!(\"Hi!\"); Some(\"woot\".to_string())}")]
+    z_failure: Option<String>
+}
+    
+    #[test]
+    fn check() {
+        assert_eq!(Some("woot".to_string()), DolorBuilder::default().build().unwrap().z_failure);
+    }
+}

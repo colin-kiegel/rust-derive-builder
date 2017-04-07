@@ -6,9 +6,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - changed behavior of `#[builder(default)]` at the struct level; it now calls 
-  `Default::default()` unless an explicit value is provided. This change is 
+  `Default::default()` unless a path to a function is provided. This change is 
   gated behind the `struct_default` flag, which will be enabled by default in
   0.5.0.
+- changed behavior of `#[builder(default="...")]` at the struct level; it now
+  calls the function with the specified path during `build()`, rather than becoming
+  the default value placed into each field. This change is gated behind the
+  `struct_default` flag, which will be enabled by default in 0.5.0.
 
 ## [0.4.0] - 2017-03-25
 

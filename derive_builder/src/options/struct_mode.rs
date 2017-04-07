@@ -71,13 +71,13 @@ impl OptionsBuilderMode for StructMode {
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
     fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
-        let mut use_struct_default = false;
         let field_default = match b.default_expression {
-            Some(DefaultExpression::Trait) => {
-                use_struct_default = true;
+            Some(DefaultExpression::Trait) 
+            | Some(DefaultExpression::Struct)
+            | Some(DefaultExpression::Explicit(_)) => {
                 Some(DefaultExpression::Struct)
-            }
-            e => e
+            },
+            None => None
         };
         
         let field_defaults = OptionsBuilder::<FieldMode> {
@@ -104,7 +104,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
             no_std: m.no_std.unwrap_or(false),
-            use_default: use_struct_default,
+            struct_default: b.default_expression,
         };
 
         (struct_options, field_defaults)
