@@ -13,7 +13,7 @@ license = "MIT/Apache-2.0"
 categories = ["development-tools", "rust-patterns"]
 keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "README.md"
-build = "build.rs"
+build = "build/mod.rs"
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
@@ -24,6 +24,7 @@ proc-macro = true
 [features]
 logging = [ "log", "env_logger", "derive_builder_core/logging" ]
 struct_default = []
+skeptic_tests = ["skeptic"]
 
 [dependencies]
 syn = "0.11"
@@ -31,11 +32,12 @@ quote = "0.3"
 log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
 derive_builder_core = { version = "0.1", path = "../derive_builder_core" }
+skeptic = { version = "0.8", optional = true }
 
 [build-dependencies]
-skeptic = "0.7"
+skeptic = { version = "0.8", optional = true }
 log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
 
 [dev-dependencies]
-skeptic = "0.7"
+pretty_assertions = "0.1"

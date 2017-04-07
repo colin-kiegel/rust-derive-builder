@@ -13,5 +13,5 @@ compiletests = ["compiletest_rs"]
 logging = [ "derive_builder/logging" ]
 
 [dependencies]
-derive_builder = { path = "../derive_builder" }
+derive_builder = { path = "../derive_builder", features = ["skeptic_tests"] }
 compiletest_rs = { version = "0.2", optional = true }

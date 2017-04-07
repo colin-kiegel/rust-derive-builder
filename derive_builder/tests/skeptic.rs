@@ -1,19 +1,13 @@
-// DISABLED ////////////////////////////////////////////////////////////////////////
-// summary: this combination causes trouble
+#![cfg(feature = "skeptic_tests")]
+
+// NOTE this combination may cause
+//      `error[E0464]: multiple matching crates for `derive_builder`
+//
 // - rust-skeptic
 // - cargo check
 // - cargo test
 // - on a proc_macro crate
 //
-// => I decided to disable these tests for now,
-//    because I use both cargo check and test regularly.
-#[ignore]
-#[test]
-fn expand_skeptic_tests() {
-    panic!("weird bugs `error[E0464]: multiple matching crates for `derive_builder`, \
-    see e.g. https://github.com/brson/rust-skeptic/issues/18.")
+// => see https://github.com/brson/rust-skeptic/issues/18
 
-}
-////////////////////////////////////////////////////////////////////////////////////
-
-// include!(concat!(env!("OUT_DIR"), "/skeptic-tests.rs"));
+include!(concat!(env!("OUT_DIR"), "/skeptic-tests.rs"));

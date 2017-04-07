@@ -1,4 +1,6 @@
 #[macro_use]
+extern crate pretty_assertions;
+#[macro_use]
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
