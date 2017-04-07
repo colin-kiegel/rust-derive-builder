@@ -1,7 +1,7 @@
 use syn;
 use derive_builder_core::{Block, DeprecationNotes, BuilderPattern, Builder, BuildMethod};
 
-use options::field_options::DefaultExpression;
+use options::DefaultExpression;
 
 /// These struct options define how the builder is generated.
 #[derive(Debug, Clone)]

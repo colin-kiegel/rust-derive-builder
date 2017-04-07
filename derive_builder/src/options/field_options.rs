@@ -1,6 +1,8 @@
 use syn;
 use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField};
 
+use options::DefaultExpression;
+
 /// These field options define how the builder interacts with the field.
 #[derive(Debug, Clone)]
 pub struct FieldOptions {
@@ -24,15 +26,6 @@ pub struct FieldOptions {
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
     pub attrs: Vec<syn::Attribute>
-}
-
-/// A `DefaultExpression` can be an explicit value, refer to the canonical trait, 
-/// or get its value from the struct's `Default` implementation.
-#[derive(Debug, Clone)]
-pub enum DefaultExpression {
-    Explicit(String),
-    Trait,
-    Struct,
 }
 
 impl FieldOptions {

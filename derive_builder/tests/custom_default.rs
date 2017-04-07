@@ -111,6 +111,7 @@ mod struct_level {
     }
 }
 
+#[cfg(feature = "struct_default")]
 mod struct_impl {
     #[derive(Debug, Clone, PartialEq, Eq, Builder)]
     #[builder(default)]
@@ -131,7 +132,6 @@ mod struct_impl {
     }
     
     #[test]
-    #[cfg(feature = "struct_default")]
     fn defaults_are_equal() {
         assert_eq!(Ok(Ipsum::default()), IpsumBuilder::default().build());
     }
@@ -146,6 +146,7 @@ mod struct_impl {
     }
 }
 
+#[cfg(feature = "struct_default")]
 mod struct_explicit {
     fn helper() -> Dolor {
         Dolor {
@@ -172,12 +173,14 @@ struct Dolor {
     #[builder(default)]
     msg: String,
     
+    /// This will print "Hi!" if z_failure is not explicitly initialized.
     #[builder(default = "{println!(\"Hi!\"); Some(\"woot\".to_string())}")]
     z_failure: Option<String>
 }
     
     #[test]
-    fn check() {
+    #[cfg(feature = "struct_default")]
+    fn defaults() {
         assert_eq!(Some("woot".to_string()), DolorBuilder::default().build().unwrap().z_failure);
     }
 }

@@ -1,6 +1,5 @@
 use syn;
-use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
-use options::field_options::DefaultExpression;
+use options::{DefaultExpression, OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
 use derive_builder_core::DeprecationNotes;
 
 #[derive(Debug, Clone)]

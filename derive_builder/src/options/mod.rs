@@ -12,7 +12,15 @@ pub use self::field_mode::FieldMode;
 pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
-use self::field_options::DefaultExpression;
+
+/// A `DefaultExpression` can be an explicit value, refer to the canonical trait, 
+/// or get its value from the struct's `Default` implementation.
+#[derive(Debug, Clone)]
+pub enum DefaultExpression {
+    Explicit(String),
+    Trait,
+    Struct,
+}
 
 /// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.
 pub fn struct_options_from(ast: &syn::MacroInput) -> (StructOptions, OptionsBuilder<FieldMode>) {
