@@ -12,7 +12,13 @@ pub use self::field_mode::FieldMode;
 pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
-use self::field_options::DefaultExpression;
+
+/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
+#[derive(Debug, Clone)]
+pub enum DefaultExpression {
+    Explicit(String),
+    Trait,
+}
 
 /// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.
 pub fn struct_options_from(ast: &syn::MacroInput) -> (StructOptions, OptionsBuilder<FieldMode>) {
@@ -49,6 +55,7 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
     fn no_std(&mut self, x: bool);
+    fn struct_mode(&self) -> bool;
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -185,6 +192,15 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(true)
             },
             "default" => {
+                if !cfg!(feature = "struct_default") && self.mode.struct_mode() {
+                    let where_info = self.where_diagnostics();
+                    self.mode.push_deprecation_note(format!(
+                        "the meaning of `#[builder(default)]` on the struct level (found {}) will change in the \
+                         next version (see https://github.com/colin-kiegel/rust-derive-builder/issues/61 for \
+                         more details). To squelch this message and adopt the new behavior now, compile \
+                         `derive_builder` with `--features \"struct_default\"`.", where_info));
+                }
+
                 self.default_expression(DefaultExpression::Trait)
             },
             "no_std" => {

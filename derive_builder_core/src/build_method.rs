@@ -1,8 +1,10 @@
 use quote::{Tokens, ToTokens};
 use syn;
+use Block;
 use BuilderPattern;
 use Initializer;
 use doc_comment::doc_comment_from;
+use DEFAULT_STRUCT_NAME;
 
 /// Initializer for the struct fields in the build method, implementing `quote::ToTokens`.
 ///
@@ -50,6 +52,10 @@ pub struct BuildMethod<'a> {
     pub doc_comment: Option<syn::Attribute>,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
+    /// Default value for the whole struct.
+    ///
+    /// This will be in scope for all initializers as `__default`.
+    pub default_struct: Option<Block>,
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
@@ -65,6 +71,12 @@ impl<'a> ToTokens for BuildMethod<'a> {
             BuilderPattern::Immutable => quote!(&self),
         };
         let doc_comment = &self.doc_comment;
+        let default_struct = self.default_struct
+            .as_ref()
+            .map(|default_expr| {
+                let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+                quote!(let #ident: #target_ty = #default_expr;)
+            });
 
         let (result, string) = if self.no_std {(
             quote!(::core::result::Result),
@@ -81,6 +93,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 #vis fn #ident(#self_param)
                     -> #result<#target_ty #target_ty_generics, #string>
                 {
+                    #default_struct
                     Ok(#target_ty {
                         #(#initializers)*
                     })
@@ -124,6 +137,7 @@ macro_rules! default_build_method {
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
             no_std: false,
+            default_struct: None,
         }
     }
 }
@@ -153,6 +167,21 @@ mod tests {
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {
+                Ok(Foo {
+                    foo: self.foo,
+                })
+            }
+        ));
+    }
+
+    #[test]
+    fn default_struct() {
+        let mut build_method = default_build_method!();
+        build_method.default_struct = Some("Default::default()".parse().unwrap());
+
+        assert_eq!(quote!(#build_method), quote!(
+            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                let __default: Foo = {Default::default()};
                 Ok(Foo {
                     foo: self.foo,
                 })

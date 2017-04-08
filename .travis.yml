@@ -1,12 +1,14 @@
 sudo: false
 language: rust
-cache: cargo
+# cache: cargo # blocked by https://github.com/brson/rust-skeptic/issues/18
 rust:
   - beta
   - stable
   - 1.15.0
 matrix:
   include:
+    - rust: 1.15.0
+      env: JOB=build CARGO_FEATURES="struct_default"
     - rust: nightly
       env: JOB=build CARGO_FEATURES="compiletests logging"
     - rust: nightly

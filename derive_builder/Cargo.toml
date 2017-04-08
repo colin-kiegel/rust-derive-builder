@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>"]
@@ -22,7 +22,8 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 proc-macro = true
 
 [features]
-logging = ["log", "env_logger", "derive_builder_core/logging"]
+logging = [ "log", "env_logger", "derive_builder_core/logging" ]
+struct_default = []
 skeptic_tests = ["skeptic"]
 
 [dependencies]

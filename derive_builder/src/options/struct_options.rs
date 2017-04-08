@@ -1,5 +1,6 @@
 use syn;
 use derive_builder_core::{DeprecationNotes, BuilderPattern, Builder, BuildMethod};
+use options::DefaultExpression;
 
 /// These struct options define how the builder is generated.
 #[derive(Debug, Clone)]
@@ -23,6 +24,8 @@ pub struct StructOptions {
     pub struct_size_hint: usize,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
+    /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None).
+    pub default_expression: Option<DefaultExpression>,
 }
 
 impl StructOptions {
@@ -36,7 +39,7 @@ impl StructOptions {
             fields: Vec::with_capacity(self.struct_size_hint),
             functions: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
-            deprecation_notes: DeprecationNotes::default(),
+            deprecation_notes: self.deprecation_notes.clone(),
         }
     }
     /// Returns a `BuildMethod` according to the options.
@@ -52,6 +55,7 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
+            default_struct: self.default_expression.as_ref().map(|x| { x.parse_block() }),
         }
     }
 }

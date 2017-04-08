@@ -8,6 +8,7 @@ pub struct FieldMode {
     field_type: syn::Ty,
     setter_attrs: Option<Vec<syn::Attribute>>,
     deprecation_notes: DeprecationNotes,
+    pub use_default_struct: bool,
 }
 
 impl Default for FieldMode {
@@ -17,6 +18,7 @@ impl Default for FieldMode {
            field_type: syn::Ty::Never,
            setter_attrs: None,
            deprecation_notes: Default::default(),
+           use_default_struct: false,
        }
     }
 }
@@ -32,6 +34,7 @@ impl OptionsBuilder<FieldMode> {
             field_type: f.ty,
             setter_attrs: None,
             deprecation_notes: Default::default(),
+            use_default_struct: false,
         });
 
         builder.parse_attributes(&f.attrs);
@@ -55,7 +58,7 @@ impl OptionsBuilder<FieldMode> {
         let mut deprecation_notes = self.mode.deprecation_notes;
         deprecation_notes.extend(&defaults.mode.deprecation_notes);
 
-        /// move a nested field out of `self`, if it `Some(_)` or else clone it from `defaults`
+        // move a nested field out of `self`, if it is `Some(_)` or else clone it from `defaults`
         macro_rules! f {
             ($($field:ident).*) => {
                 self.$($field).*.or_else(|| defaults.$($field).*.clone())
@@ -67,6 +70,7 @@ impl OptionsBuilder<FieldMode> {
             field_type: self.mode.field_type,
             setter_attrs: f!(mode.setter_attrs),
             deprecation_notes: deprecation_notes,
+            use_default_struct: self.mode.use_default_struct || defaults.mode.use_default_struct,
         };
 
         OptionsBuilder::<FieldMode> {
@@ -103,6 +107,10 @@ impl OptionsBuilderMode for FieldMode {
         panic!("Support for `#![no_std]` can only be set on the stuct level (but found {}).",
                self.where_diagnostics())
     }
+
+    fn struct_mode(&self) -> bool {
+        false
+    }
 }
 
 impl From<OptionsBuilder<FieldMode>> for FieldOptions {
@@ -131,6 +139,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             setter_into: b.setter_into.unwrap_or(false),
             deprecation_notes: b.mode.deprecation_notes.clone(),
             default_expression: b.default_expression.clone(),
+            use_default_struct: b.mode.use_default_struct,
             attrs: b.mode.setter_attrs.clone().unwrap_or_default(),
         }
     }

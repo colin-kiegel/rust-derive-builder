@@ -1,5 +1,7 @@
 use syn;
-use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField};
+use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField,
+                          Block};
+use options::DefaultExpression;
 
 /// These field options define how the builder interacts with the field.
 #[derive(Debug, Clone)]
@@ -12,8 +14,10 @@ pub struct FieldOptions {
     pub setter_ident: syn::Ident,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
-    /// e.g. `#[builder(default="42u32")]` (default to None)
+    /// Default expression for the field, e.g. `#[builder(default="42u32")]` (default to None).
     pub default_expression: Option<DefaultExpression>,
+    /// Whether the build_method defines a default struct.
+    pub use_default_struct: bool,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,
     /// The field type.
@@ -26,11 +30,20 @@ pub struct FieldOptions {
     pub attrs: Vec<syn::Attribute>
 }
 
-/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
-#[derive(Debug, Clone)]
-pub enum DefaultExpression {
-    Explicit(String),
-    Trait,
+impl DefaultExpression {
+    pub fn parse_block(&self) -> Block {
+        let expr = match *self {
+            DefaultExpression::Explicit(ref s) => {
+                if s.is_empty() {
+                    panic!(r#"Empty default expressions `default=""` are not supported."#);
+                }
+                s
+            },
+            DefaultExpression::Trait => "::std::default::Default::default()",
+        };
+
+        expr.parse().expect(&format!("Couldn't parse default expression `{:?}`", self))
+    }
 }
 
 impl FieldOptions {
@@ -59,17 +72,8 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            explicit_default: self.default_expression.as_ref().map(|x| {
-                match *x {
-                    DefaultExpression::Explicit(ref s) => {
-                        if s.is_empty() {
-                            panic!(r#"Empty default expressions `default=""` are not supported."#);
-                        }
-                        s
-                    },
-                    DefaultExpression::Trait => "::std::default::Default::default()",
-                }.parse().expect(&format!("Couldn't parse default expression `{:?}`", x))
-            }),
+            default_value: self.default_expression.as_ref().map(|x| { x.parse_block() }),
+            use_default_struct: self.use_default_struct,
         }
     }
 

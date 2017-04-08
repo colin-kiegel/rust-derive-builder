@@ -66,10 +66,19 @@ impl OptionsBuilderMode for StructMode {
         desc: "no_std support",
         map: |x: bool| { x },
     }
+
+    fn struct_mode(&self) -> bool {
+        true
+    }
 }
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
     fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+        #[cfg(feature = "struct_default")]
+        let (field_default_expression, struct_default_expression) = (None, b.default_expression);
+        #[cfg(not(feature = "struct_default"))]
+        let (field_default_expression, struct_default_expression) = (b.default_expression, None);
+
         let field_defaults = OptionsBuilder::<FieldMode> {
             setter_enabled: b.setter_enabled,
             builder_pattern: b.builder_pattern,
@@ -77,8 +86,12 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
-            default_expression: b.default_expression,
-            mode: FieldMode::default(),
+            default_expression: field_default_expression,
+            mode: {
+                let mut mode = FieldMode::default();
+                mode.use_default_struct = struct_default_expression.is_some();
+                mode
+            },
         };
 
         let m = b.mode;
@@ -94,6 +107,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
             no_std: m.no_std.unwrap_or(false),
+            default_expression: struct_default_expression,
         };
 
         (struct_options, field_defaults)

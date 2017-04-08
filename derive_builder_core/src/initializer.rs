@@ -2,6 +2,7 @@ use quote::{Tokens, ToTokens};
 use syn;
 use BuilderPattern;
 use Block;
+use DEFAULT_STRUCT_NAME;
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -20,7 +21,7 @@ use Block;
 /// # use derive_builder_core::{DeprecationNotes, Initializer, BuilderPattern};
 /// # fn main() {
 /// #    let mut initializer = default_initializer!();
-/// #    initializer.explicit_default = Some("42".parse().unwrap());
+/// #    initializer.default_value = Some("42".parse().unwrap());
 /// #    initializer.builder_pattern = BuilderPattern::Owned;
 /// #
 /// #    assert_eq!(quote!(#initializer), quote!(
@@ -40,7 +41,11 @@ pub struct Initializer<'a> {
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
     /// Default value for the target field.
-    pub explicit_default: Option<Block>,
+    ///
+    /// This takes precedence over a default struct identifier.
+    pub default_value: Option<Block>,
+    /// Whether the build_method defines a default struct.
+    pub use_default_struct: bool,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -80,14 +85,18 @@ impl<'a> Initializer<'a> {
 
     /// To be used inside of `#struct_field: match self.#builder_field { ... }`
     fn match_none(&'a self) -> MatchNone<'a> {
-        match self.explicit_default {
+        match self.default_value {
             Some(ref expr) => MatchNone::DefaultTo(expr),
-            None => MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident)),
+            None => if self.use_default_struct {
+                MatchNone::UseDefaultStructField(self.field_ident)
+            } else {
+                MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+            }
         }
     }
 
     fn default(&'a self) -> Tokens {
-        match self.explicit_default {
+        match self.default_value {
             Some(ref expr) => quote!(#expr),
             None => quote!(::std::default::Default::default()),
         }
@@ -98,6 +107,10 @@ impl<'a> Initializer<'a> {
 enum MatchNone<'a> {
     /// Inner value must be a valid Rust expression
     DefaultTo(&'a Block),
+    /// Inner value must be the field identifier
+    ///
+    /// The default struct must be in scope in the build_method.
+    UseDefaultStructField(&'a syn::Ident),
     /// Inner value must be the field name
     ReturnError(String),
 }
@@ -108,6 +121,12 @@ impl<'a> ToTokens for MatchNone<'a> {
             MatchNone::DefaultTo(expr) => tokens.append(quote!(
                 None => #expr
             )),
+            MatchNone::UseDefaultStructField(field_ident) => {
+                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+                tokens.append(quote!(
+                    None => #struct_ident.#field_ident
+                ))
+            },
             MatchNone::ReturnError(ref err) => tokens.append(quote!(
                 None => return ::std::result::Result::Err(::std::string::String::from(#err))
             )),
@@ -144,7 +163,8 @@ macro_rules! default_initializer {
             field_ident: &syn::Ident::new("foo"),
             setter_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
-            explicit_default: None,
+            default_value: None,
+            use_default_struct: false,
         }
     }
 }
@@ -200,14 +220,27 @@ mod tests {
     }
 
     #[test]
-    fn custom_default() {
+    fn default_value() {
         let mut initializer = default_initializer!();
-        initializer.explicit_default = Some("42".parse().unwrap());
+        initializer.default_value = Some("42".parse().unwrap());
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
                 Some(ref value) => ::std::clone::Clone::clone(value),
                 None => { 42 },
+            },
+        ));
+    }
+
+    #[test]
+    fn default_struct() {
+        let mut initializer = default_initializer!();
+        initializer.use_default_struct = true;
+
+        assert_eq!(quote!(#initializer), quote!(
+            foo: match self.foo {
+                Some(ref value) => ::std::clone::Clone::clone(value),
+                None => __default.foo,
             },
         ));
     }

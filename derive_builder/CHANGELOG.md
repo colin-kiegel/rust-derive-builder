@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Deprecated
+- `#[builder(default)]` and `#[builder(default="...")]` at the struct level will
+  change their behaviour in 0.5.0 and construct a default value for the struct,
+  instead of all fields individually. To opt into the new behaviour and squelch
+  this deprecation warning you can add the `struct_default` feature flag.
+
 ## [0.4.0] - 2017-03-25
 
 ### Added

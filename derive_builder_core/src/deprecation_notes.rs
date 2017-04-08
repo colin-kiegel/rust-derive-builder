@@ -3,7 +3,8 @@ use syn;
 
 /// Deprecation notes we want to emit to the user, implementing `quote::ToTokens`.
 ///
-/// Can be expanded at every place that accepts item definitions (e.g. function bodys).
+/// Can be expanded at every place that accepts statements and item definitions
+/// (e.g. function bodys).
 ///
 /// # Examples
 ///
@@ -20,8 +21,8 @@ use syn;
 /// #    assert_eq!(quote!(#note), quote!(
 ///         {
 ///             #[deprecated(note="Some Warning")]
-///             fn derive_builder_core_deprecation_notice() { }
-///             derive_builder_core_deprecation_notice();
+///             fn derive_builder_core_deprecation_note() { }
+///             derive_builder_core_deprecation_note();
 ///         }
 /// #    ));
 /// # }
@@ -37,7 +38,7 @@ pub struct DeprecationNotes(Vec<String>);
 impl ToTokens for DeprecationNotes {
     fn to_tokens(&self, tokens: &mut Tokens) {
         for note in &self.0 {
-            let fn_ident = syn::Ident::new("derive_builder_core_deprecation_notice");
+            let fn_ident = syn::Ident::new("derive_builder_core_deprecation_note");
             tokens.append(quote!(
                 {
                     #[deprecated(note=#note)]
@@ -61,6 +62,32 @@ impl DeprecationNotes {
             self.0.push(x.to_owned())
         }
     }
+
+    /// Create a view of these deprecation notes that can annotate a struct.
+    pub fn as_item<'a>(&'a self) -> DeprecationNotesAsItem<'a> {
+        DeprecationNotesAsItem(&self)
+    }
+}
+
+/// A view of `DeprecationNotes` that can be used in any context that accept items.
+///
+/// Expands to a function `__deprecation_notes` which emits the notes.
+#[derive(Debug)]
+pub struct DeprecationNotesAsItem<'a>(&'a DeprecationNotes);
+
+impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        let deprecation_notes = self.0;
+
+        if !deprecation_notes.0.is_empty() {
+            tokens.append(quote!(
+                #[doc(hidden)]
+                fn derive_builder_core_deprecation_note() {
+                    #deprecation_notes
+                }
+            ))
+        }
+    }
 }
 
 #[test]
@@ -70,8 +97,8 @@ fn deprecation_note() {
     assert_eq!(quote!(#note), quote!(
         {
             #[deprecated(note="Some Warning")]
-            fn derive_builder_core_deprecation_notice() { }
-            derive_builder_core_deprecation_notice();
+            fn derive_builder_core_deprecation_note() { }
+            derive_builder_core_deprecation_note();
         }
     ));
 }
