@@ -87,7 +87,11 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
             default_expression: field_default_expression,
-            mode: FieldMode::default(),
+            mode: {
+                let mut mode = FieldMode::default();
+                mode.use_default_struct = struct_default_expression.is_some();
+                mode
+            },
         };
 
         let m = b.mode;

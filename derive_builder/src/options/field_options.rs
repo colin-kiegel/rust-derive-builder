@@ -14,8 +14,10 @@ pub struct FieldOptions {
     pub setter_ident: syn::Ident,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
-    /// Default expression for the field, e.g. `#[builder(default="42u32")]` (default to None)
+    /// Default expression for the field, e.g. `#[builder(default="42u32")]` (default to None).
     pub default_expression: Option<DefaultExpression>,
+    /// Whether the build_method defines a default struct.
+    pub use_default_struct: bool,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,
     /// The field type.
@@ -70,7 +72,8 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            explicit_default: self.default_expression.as_ref().map(|x| { x.parse_block() })
+            default_value: self.default_expression.as_ref().map(|x| { x.parse_block() }),
+            use_default_struct: self.use_default_struct,
         }
     }
 

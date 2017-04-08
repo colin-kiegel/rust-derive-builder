@@ -151,6 +151,6 @@ mod struct_level {
             .not_type_default(None)
             .build()
             .expect("Struct-level default makes all fields optional");
-        assert_eq!(None, ipsum.not_type_default);
+        assert_eq!(ipsum.not_type_default, None);
     }
 }

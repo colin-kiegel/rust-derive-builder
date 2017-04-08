@@ -24,7 +24,7 @@ pub struct StructOptions {
     pub struct_size_hint: usize,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
-    /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None)
+    /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None).
     pub default_expression: Option<DefaultExpression>,
 }
 
@@ -55,7 +55,7 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
-            explicit_default: self.default_expression.as_ref().map(|x| { x.parse_block() }),
+            default_struct: self.default_expression.as_ref().map(|x| { x.parse_block() }),
         }
     }
 }

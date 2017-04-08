@@ -56,3 +56,5 @@ pub use setter::Setter;
 pub use doc_comment::doc_comment_from;
 pub use options::BuilderPattern;
 pub use block::Block;
+
+const DEFAULT_STRUCT_NAME: &'static str = "__default";
