@@ -1,6 +1,6 @@
 use syn;
-use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField};
-
+use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField,
+                          Block};
 use options::DefaultExpression;
 
 /// These field options define how the builder interacts with the field.
@@ -26,6 +26,22 @@ pub struct FieldOptions {
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
     pub attrs: Vec<syn::Attribute>
+}
+
+impl DefaultExpression {
+    pub fn parse_block(&self) -> Block {
+        let expr = match *self {
+            DefaultExpression::Explicit(ref s) => {
+                if s.is_empty() {
+                    panic!(r#"Empty default expressions `default=""` are not supported."#);
+                }
+                s
+            },
+            DefaultExpression::Trait => "::std::default::Default::default()",
+        };
+
+        expr.parse().expect(&format!("Couldn't parse default expression `{:?}`", self))
+    }
 }
 
 impl FieldOptions {
@@ -54,23 +70,7 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            explicit_default: self.default_expression.as_ref().map(|x| {
-                match *x {
-                    DefaultExpression::Explicit(ref s) => {
-                        if s.is_empty() {
-                            panic!(r#"Empty default expressions `default=""` are not supported."#);
-                        }
-                        s.parse()
-                    },
-                    // Use the struct level default only if the feature is enabled.
-                    DefaultExpression::Struct if cfg!(feature = "struct_default") => format!("__default.{}", self.field_ident).parse(),
-                    
-                    // ... otherwise, fall back to the old style of generating defaults 
-                    // based on the field's type.
-                    DefaultExpression::Trait 
-                    | DefaultExpression::Struct => "::std::default::Default::default()".parse(),
-                }.expect(&format!("Couldn't parse default expression `{:?}`", x))
-            }),
+            explicit_default: self.default_expression.as_ref().map(|x| { x.parse_block() })
         }
     }
 

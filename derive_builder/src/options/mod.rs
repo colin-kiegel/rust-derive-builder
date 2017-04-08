@@ -19,7 +19,6 @@ pub use self::struct_options::StructOptions;
 pub enum DefaultExpression {
     Explicit(String),
     Trait,
-    Struct,
 }
 
 /// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.
@@ -57,6 +56,7 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
     fn no_std(&mut self, x: bool);
+    fn struct_mode(&self) -> bool;
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -193,7 +193,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(true)
             },
             "default" => {
-                if !cfg!(feature = "struct_default") {
+                if !cfg!(feature = "struct_default") && self.mode.struct_mode() {
                     let where_info = self.where_diagnostics();
                     self.mode.push_deprecation_note(format!(
                         "warning: the meaning of `#[builder(default)]` on the struct level will change in the \

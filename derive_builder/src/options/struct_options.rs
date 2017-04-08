@@ -1,6 +1,5 @@
 use syn;
-use derive_builder_core::{Block, DeprecationNotes, BuilderPattern, Builder, BuildMethod};
-
+use derive_builder_core::{DeprecationNotes, BuilderPattern, Builder, BuildMethod};
 use options::DefaultExpression;
 
 /// These struct options define how the builder is generated.
@@ -25,8 +24,8 @@ pub struct StructOptions {
     pub struct_size_hint: usize,
     /// Whether the generated code should comply with `#![no_std]`.
     pub no_std: bool,
-    /// Whether or not to use the struct's `Default` impl for missing fields.
-    pub struct_default: Option<DefaultExpression>,
+    /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None)
+    pub default_expression: Option<DefaultExpression>,
 }
 
 impl StructOptions {
@@ -56,20 +55,7 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
-            struct_default: if cfg!(feature = "struct_default") {
-                self.struct_default.as_ref().map(struct_default)
-            } else {
-                None
-            },
+            explicit_default: self.default_expression.as_ref().map(|x| { x.parse_block() }),
         }
     }
-}
-
-/// Converts a DefaultExpression into the correct code block for the initializer.
-fn struct_default(expr: &DefaultExpression) -> Block {
-    (match *expr {
-        DefaultExpression::Struct 
-        | DefaultExpression::Trait => "::std::default::Default::default()".parse(),
-        DefaultExpression::Explicit(ref body) => format!("{}()", body).parse()
-    }).expect("An explicit struct default must be a valid path to an expression")
 }

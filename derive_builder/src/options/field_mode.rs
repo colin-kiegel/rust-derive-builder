@@ -103,6 +103,10 @@ impl OptionsBuilderMode for FieldMode {
         panic!("Support for `#![no_std]` can only be set on the stuct level (but found {}).",
                self.where_diagnostics())
     }
+
+    fn struct_mode(&self) -> bool {
+        false
+    }
 }
 
 impl From<OptionsBuilder<FieldMode>> for FieldOptions {

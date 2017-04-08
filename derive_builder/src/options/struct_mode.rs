@@ -1,5 +1,5 @@
 use syn;
-use options::{DefaultExpression, OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
+use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
 use derive_builder_core::DeprecationNotes;
 
 #[derive(Debug, Clone)]
@@ -66,19 +66,19 @@ impl OptionsBuilderMode for StructMode {
         desc: "no_std support",
         map: |x: bool| { x },
     }
+
+    fn struct_mode(&self) -> bool {
+        true
+    }
 }
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
     fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
-        let field_default = match b.default_expression {
-            Some(DefaultExpression::Trait) 
-            | Some(DefaultExpression::Struct)
-            | Some(DefaultExpression::Explicit(_)) => {
-                Some(DefaultExpression::Struct)
-            },
-            None => None
-        };
-        
+        #[cfg(feature = "struct_default")]
+        let (field_default_expression, struct_default_expression) = (None, b.default_expression);
+        #[cfg(not(feature = "struct_default"))]
+        let (field_default_expression, struct_default_expression) = (b.default_expression, None);
+
         let field_defaults = OptionsBuilder::<FieldMode> {
             setter_enabled: b.setter_enabled,
             builder_pattern: b.builder_pattern,
@@ -86,7 +86,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
-            default_expression: field_default,
+            default_expression: field_default_expression,
             mode: FieldMode::default(),
         };
 
@@ -103,7 +103,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
             no_std: m.no_std.unwrap_or(false),
-            struct_default: b.default_expression,
+            default_expression: struct_default_expression,
         };
 
         (struct_options, field_defaults)
