@@ -32,10 +32,10 @@ quote = "0.3"
 log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
 derive_builder_core = { version = "0.1", path = "../derive_builder_core" }
-skeptic = { version = "0.8", optional = true }
+skeptic = { version = "0.9", optional = true }
 
 [build-dependencies]
-skeptic = { version = "0.8", optional = true }
+skeptic = { version = "0.9", optional = true }
 log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
 
