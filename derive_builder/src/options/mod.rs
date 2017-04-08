@@ -13,8 +13,7 @@ pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
 
-/// A `DefaultExpression` can be an explicit value, refer to the canonical trait, 
-/// or get its value from the struct's `Default` implementation.
+/// A `DefaultExpression` can be either explicit or refer to the canonical trait.
 #[derive(Debug, Clone)]
 pub enum DefaultExpression {
     Explicit(String),

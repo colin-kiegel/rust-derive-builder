@@ -3,7 +3,8 @@ use syn;
 
 /// Deprecation notes we want to emit to the user, implementing `quote::ToTokens`.
 ///
-/// Can be expanded at every place that accepts item definitions (e.g. function bodys).
+/// Can be expanded at every place that accepts statements and item definitions
+/// (e.g. function bodys).
 ///
 /// # Examples
 ///

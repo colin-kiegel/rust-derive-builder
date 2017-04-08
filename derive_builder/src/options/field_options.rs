@@ -14,7 +14,7 @@ pub struct FieldOptions {
     pub setter_ident: syn::Ident,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: syn::Visibility,
-    /// e.g. `#[builder(default="42u32")]` (default to None)
+    /// Default expression for the field, e.g. `#[builder(default="42u32")]` (default to None)
     pub default_expression: Option<DefaultExpression>,
     /// The field name, may deviate from `setter_ident`.
     pub field_ident: syn::Ident,

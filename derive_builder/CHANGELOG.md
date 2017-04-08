@@ -2,17 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.4.1] - 2017-04-07
+## [Unreleased]
 
-### Changed
-- changed behavior of `#[builder(default)]` at the struct level; it now calls 
-  `Default::default()` unless a path to a function is provided. This change is 
-  gated behind the `struct_default` flag, which will be enabled by default in
-  0.5.0.
-- changed behavior of `#[builder(default="...")]` at the struct level; it now
-  calls the function with the specified path during `build()`, rather than becoming
-  the default value placed into each field. This change is gated behind the
-  `struct_default` flag, which will be enabled by default in 0.5.0.
+### Deprecated
+- `#[builder(default)]` and `#[builder(default="...")]` at the struct level will
+  change their behaviour in 0.5.0 and construct a default value for the struct,
+  instead of all fields individually. To opt into the new behaviour and squelch
+  this deprecation warning you can add the `struct_default` feature flag.
 
 ## [0.4.0] - 2017-03-25
 
