@@ -169,4 +169,19 @@ mod tests {
             }
         ));
     }
+
+    #[test]
+    fn explicit_default() {
+        let mut build_method = default_build_method!();
+        build_method.explicit_default = Some("Default::default()".parse().unwrap());
+
+        assert_eq!(quote!(#build_method), quote!(
+            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                Ok(Foo {
+                    foo: self.foo,
+                    ..{Default::default()}
+                })
+            }
+        ));
+    }
 }

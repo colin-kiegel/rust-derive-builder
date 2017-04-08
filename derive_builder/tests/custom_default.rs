@@ -66,53 +66,27 @@ mod field_level {
 }
 
 mod struct_level {
-    #[derive(Debug, PartialEq, Default, Builder, Clone)]
-    #[builder(default)]
+    #[derive(Debug, Clone, PartialEq, Eq, Builder)]
+    #[builder(default="explicit_default()")]
     struct Lorem {
-        implicit_default: String,
-        #[builder(default)]
-        explicit_default: String,
-        #[builder(default="\"foo\".to_string()")]
-        escaped_default: String,
-        #[builder(default=r#"format!("Hello {}!", "World")"#)]
-        raw_default: String,
+        #[builder(default="true")]
+        overwritten: bool,
+        not_type_default: Option<&'static str>,
     }
 
-    #[test]
-    fn implicit_default() {
-        let x = LoremBuilder::default()
-            .build()
-            .unwrap();
-
-        assert_eq!(x, Lorem {
-            implicit_default: "".to_string(),
-            explicit_default: "".to_string(),
-            escaped_default: "foo".to_string(),
-            raw_default: "Hello World!".to_string(),
-        });
+    #[cfg(feature = "struct_default")]
+    fn explicit_default() -> Lorem {
+        Lorem {
+            overwritten: false,
+            not_type_default: Some("defined on struct-level"),
+        }
     }
 
-    #[test]
-    fn builder() {
-        let x = LoremBuilder::default()
-            .implicit_default("ipsum".to_string())
-            .explicit_default("lorem".to_string())
-            .escaped_default("dolor".to_string())
-            .raw_default("sit".to_string())
-            .build()
-            .unwrap();
-
-        assert_eq!(x, Lorem {
-            implicit_default: "ipsum".to_string(),
-            explicit_default: "lorem".to_string(),
-            escaped_default: "dolor".to_string(),
-            raw_default: "sit".to_string(),
-        });
+    #[cfg(not(feature = "struct_default"))]
+    fn explicit_default() -> Option<&'static str> {
+        Some("defined on field-level")
     }
-}
 
-#[cfg(feature = "struct_default")]
-mod struct_impl {
     #[derive(Debug, Clone, PartialEq, Eq, Builder)]
     #[builder(default)]
     struct Ipsum {
@@ -120,7 +94,7 @@ mod struct_impl {
         also_custom: bool,
         is_type_default: String,
     }
-    
+
     impl Default for Ipsum {
         fn default() -> Self {
             Ipsum {
@@ -130,12 +104,47 @@ mod struct_impl {
             }
         }
     }
-    
+
     #[test]
-    fn defaults_are_equal() {
-        assert_eq!(Ok(Ipsum::default()), IpsumBuilder::default().build());
+    fn explicit_defaults_are_equal() {
+        let lorem = LoremBuilder::default()
+            .build()
+            .unwrap();
+
+        // new behaviour starting with 0.5.x:
+        #[cfg(feature = "struct_default")]
+        assert_eq!(lorem, Lorem {
+            overwritten: true,
+            ..explicit_default()
+        });
+
+        // old behaviour since 0.4.x:
+        #[cfg(not(feature = "struct_default"))]
+        assert_eq!(lorem, Lorem {
+            overwritten: true,
+            not_type_default: explicit_default(),
+        });
     }
-    
+
+    #[test]
+    fn implicit_defaults_are_equal() {
+        let ipsum = IpsumBuilder::default()
+            .build()
+            .unwrap();
+
+        // new behaviour starting with 0.5.x:
+        #[cfg(feature = "struct_default")]
+        assert_eq!(ipsum, Ipsum::default());
+
+        // old behaviour since 0.4.x:
+        #[cfg(not(feature = "struct_default"))]
+        assert_eq!(ipsum, Ipsum {
+            not_type_default: Default::default(),
+            also_custom: Default::default(),
+            is_type_default: Default::default(),
+        });
+    }
+
     #[test]
     fn overrides_work() {
         let ipsum = IpsumBuilder::default()
@@ -143,44 +152,5 @@ mod struct_impl {
             .build()
             .expect("Struct-level default makes all fields optional");
         assert_eq!(None, ipsum.not_type_default);
-    }
-}
-
-#[cfg(feature = "struct_default")]
-mod struct_explicit {
-    fn helper() -> Dolor {
-        Dolor {
-            not_type_default: Some(20)
-        }
-    }
-    
-    #[derive(Debug, PartialEq, Builder)]
-    #[builder(default = "helper")]
-    struct Dolor {
-        not_type_default: Option<u16>
-    }
-    
-    #[test]
-    fn defaults_are_equal() {
-        assert_eq!(Ok(helper()), DolorBuilder::default().build());
-    }
-}
-
-mod local_foolishness {
-#[derive(Debug, PartialEq, Builder)]
-struct Dolor {
-    
-    #[builder(default)]
-    msg: String,
-    
-    /// This will print "Hi!" if z_failure is not explicitly initialized.
-    #[builder(default = "{println!(\"Hi!\"); Some(\"woot\".to_string())}")]
-    z_failure: Option<String>
-}
-    
-    #[test]
-    #[cfg(feature = "struct_default")]
-    fn defaults() {
-        assert_eq!(Some("woot".to_string()), DolorBuilder::default().build().unwrap().z_failure);
     }
 }
