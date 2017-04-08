@@ -72,14 +72,13 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_fields = &self.fields;
             let functions = &self.functions;
             let builder_doc_comment = &self.doc_comment;
-            let deprecation_notes = &self.deprecation_notes.as_struct_notes();
+            let deprecation_notes = &self.deprecation_notes.as_item();
 
             debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}", ty_generics, where_clause, impl_generics);
 
             tokens.append(quote!(
                 #[derive(Default, Clone)]
                 #builder_doc_comment
-                #deprecation_notes
                 #builder_vis struct #builder_ident #ty_generics #where_clause {
                     #(#builder_fields)*
                 }
@@ -87,6 +86,7 @@ impl<'a> ToTokens for Builder<'a> {
                 #[allow(dead_code)]
                 impl #impl_generics #builder_ident #ty_generics #where_clause {
                     #(#functions)*
+                    #deprecation_notes
                 }
             ));
         } else {
