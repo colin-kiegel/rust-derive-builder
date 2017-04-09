@@ -27,7 +27,8 @@ pub struct FieldOptions {
     /// Emit deprecation notes to the user,
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
-    pub attrs: Vec<syn::Attribute>
+    /// Setter attributes, e.g. `#[allow(non_snake_case)]`.
+    pub attrs: Vec<syn::Attribute>,
 }
 
 impl DefaultExpression {

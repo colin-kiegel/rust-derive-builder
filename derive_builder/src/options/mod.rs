@@ -195,10 +195,12 @@ impl<Mode> OptionsBuilder<Mode> where
                 if !cfg!(feature = "struct_default") && self.mode.struct_mode() {
                     let where_info = self.where_diagnostics();
                     self.mode.push_deprecation_note(format!(
-                        "the meaning of `#[builder(default)]` on the struct level (found {}) will change in the \
-                         next version (see https://github.com/colin-kiegel/rust-derive-builder/issues/61 for \
-                         more details). To squelch this message and adopt the new behavior now, compile \
-                         `derive_builder` with `--features \"struct_default\"`.", where_info));
+                        "the meaning of `#[builder(default)]` on the struct level (found {}) will \
+                         change in the next version (see \
+                         https://github.com/colin-kiegel/rust-derive-builder/issues/61 for \
+                         more details). To squelch this message and adopt the new behavior now, \
+                         compile `derive_builder` with `--features \"struct_default\"`.",
+                         where_info));
                 }
 
                 self.default_expression(DefaultExpression::Trait)
