@@ -55,7 +55,9 @@ impl StructOptions {
             initializers: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             no_std: self.no_std,
-            default_struct: self.default_expression.as_ref().map(|x| { x.parse_block() }),
+            default_struct: self.default_expression
+                .as_ref()
+                .map(|x| { x.parse_block(self.no_std) }),
         }
     }
 }

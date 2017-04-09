@@ -29,10 +29,12 @@ pub struct FieldOptions {
     pub deprecation_notes: DeprecationNotes,
     /// Setter attributes, e.g. `#[allow(non_snake_case)]`.
     pub attrs: Vec<syn::Attribute>,
+    /// Whether the generated code should comply with `#![no_std]`.
+    pub no_std: bool,
 }
 
 impl DefaultExpression {
-    pub fn parse_block(&self) -> Block {
+    pub fn parse_block(&self, no_std: bool) -> Block {
         let expr = match *self {
             DefaultExpression::Explicit(ref s) => {
                 if s.is_empty() {
@@ -40,7 +42,11 @@ impl DefaultExpression {
                 }
                 s
             },
-            DefaultExpression::Trait => "::std::default::Default::default()",
+            DefaultExpression::Trait => if no_std {
+                "::core::default::Default::default()"
+            } else {
+                "::std::default::Default::default()"
+            },
         };
 
         expr.parse().expect(&format!("Couldn't parse default expression `{:?}`", self))
@@ -60,6 +66,7 @@ impl FieldOptions {
             field_type: &self.field_type,
             generic_into: self.setter_into,
             deprecation_notes: &self.deprecation_notes,
+            no_std: self.no_std,
         }
     }
 
@@ -73,8 +80,11 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             field_ident: &self.field_ident,
             builder_pattern: self.builder_pattern,
-            default_value: self.default_expression.as_ref().map(|x| { x.parse_block() }),
+            default_value: self.default_expression
+                .as_ref()
+                .map(|x| { x.parse_block(self.no_std) }),
             use_default_struct: self.use_default_struct,
+            no_std: self.no_std,
         }
     }
 
@@ -86,6 +96,7 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             setter_visibility: &self.setter_visibility,
             attrs: &self.attrs,
+            no_std: self.no_std,
         }
     }
 }

@@ -81,6 +81,7 @@ impl OptionsBuilder<FieldMode> {
             setter_vis: f!(setter_vis),
             default_expression: f!(default_expression),
             setter_into: f!(setter_into),
+            no_std: f!(no_std),
             mode: mode,
         }
     }
@@ -101,11 +102,6 @@ impl OptionsBuilderMode for FieldMode {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String {
         format!("on field `{}`", self.field_ident.as_ref())
-    }
-
-    fn no_std(&mut self, _x: bool) {
-        panic!("Support for `#![no_std]` can only be set on the stuct level (but found {}).",
-               self.where_diagnostics())
     }
 
     fn struct_mode(&self) -> bool {
@@ -140,6 +136,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             deprecation_notes: b.mode.deprecation_notes.clone(),
             default_expression: b.default_expression.clone(),
             use_default_struct: b.mode.use_default_struct,
+            no_std: b.no_std.unwrap_or(false),
             attrs: b.mode.setter_attrs.clone().unwrap_or_default(),
         }
     }
