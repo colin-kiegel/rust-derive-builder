@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.4.2] - 2017-04-10
 
 ### Fixed
 - support generic references in structs #55
@@ -87,6 +87,7 @@ Requires Rust 1.15 or newer.
  - support for generic structs
 
 [Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.0...HEAD
+[0.4.2]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.1...v0.4.2
 [0.4.1]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.0...v0.4.1
 [0.4.0]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.3.0...v0.4.0
 [0.3.0]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.2.1...v0.3.0
