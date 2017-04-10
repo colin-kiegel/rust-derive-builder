@@ -81,6 +81,7 @@ impl OptionsBuilder<FieldMode> {
             setter_vis: f!(setter_vis),
             default_expression: f!(default_expression),
             setter_into: f!(setter_into),
+            try_setter_enabled: f!(try_setter_enabled),
             no_std: f!(no_std),
             mode: mode,
         }
@@ -133,6 +134,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             field_ident: field_ident,
             field_type: field_type,
             setter_into: b.setter_into.unwrap_or(false),
+            try_setter_enabled: b.try_setter_enabled.unwrap_or(false),
             deprecation_notes: b.mode.deprecation_notes.clone(),
             default_expression: b.default_expression.clone(),
             use_default_struct: b.mode.use_default_struct,

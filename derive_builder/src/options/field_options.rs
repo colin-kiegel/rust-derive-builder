@@ -31,6 +31,8 @@ pub struct FieldOptions {
     pub attrs: Vec<syn::Attribute>,
     /// Bindings to libstd or libcore.
     pub bindings: Bindings,
+    /// Enables code generation for the TryInto setter.
+    pub try_setter_enabled: bool,
 }
 
 impl DefaultExpression {
