@@ -2,6 +2,7 @@ use quote::{Tokens, ToTokens};
 use syn;
 use BuilderPattern;
 use DeprecationNotes;
+use Bindings;
 
 /// Setter for the struct fields in the build method, implementing `quote::ToTokens`.
 ///
@@ -51,8 +52,8 @@ pub struct Setter<'a> {
     pub generic_into: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
-    /// Whether the generated code should comply with `#![no_std]`.
-    pub no_std: bool,
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -66,20 +67,13 @@ impl<'a> ToTokens for Setter<'a> {
             let ident = self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
+            let clone = self.bindings.clone_trait();
+            let option = self.bindings.option_ty();
+            let into = self.bindings.into_trait();
 
             let self_param: Tokens;
             let return_ty: Tokens;
             let self_into_return_ty: Tokens;
-
-            let (clone, option, into) = if self.no_std {(
-                quote!(::core::clone::Clone),
-                quote!(::core::option::Option),
-                quote!(::core::convert::Into),
-            )} else {(
-                quote!(::std::clone::Clone),
-                quote!(::std::option::Option),
-                quote!(::std::convert::Into),
-            )};
 
             match pattern {
                 BuilderPattern::Owned => {
@@ -145,7 +139,7 @@ macro_rules! default_setter {
             field_type: &syn::parse_type("Foo").unwrap(),
             generic_into: false,
             deprecation_notes: &Default::default(),
-            no_std: false,
+            bindings: Default::default(),
         };
     }
 }
@@ -254,7 +248,7 @@ mod tests {
     #[test]
     fn no_std() {
         let mut setter = default_setter!();
-        setter.no_std = true;
+        setter.bindings.no_std = true;
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(quote!(#setter), quote!(
@@ -269,7 +263,7 @@ mod tests {
     #[test]
     fn no_std_generic() {
         let mut setter = default_setter!();
-        setter.no_std = true;
+        setter.bindings.no_std = true;
         setter.generic_into = true;
 
         assert_eq!(quote!(#setter), quote!(

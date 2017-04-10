@@ -1,6 +1,6 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
-use derive_builder_core::DeprecationNotes;
+use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
 pub struct StructMode {
@@ -99,7 +99,9 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
-            no_std: b.no_std.unwrap_or(false),
+            bindings: Bindings {
+                no_std: b.no_std.unwrap_or(false),
+            },
             default_expression: struct_default_expression,
         };
 

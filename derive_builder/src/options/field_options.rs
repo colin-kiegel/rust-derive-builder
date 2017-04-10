@@ -1,6 +1,6 @@
 use syn;
 use derive_builder_core::{DeprecationNotes, BuilderPattern, Setter, Initializer, BuilderField,
-                          Block};
+                          Block, Bindings};
 use options::DefaultExpression;
 
 /// These field options define how the builder interacts with the field.
@@ -29,8 +29,8 @@ pub struct FieldOptions {
     pub deprecation_notes: DeprecationNotes,
     /// Setter attributes, e.g. `#[allow(non_snake_case)]`.
     pub attrs: Vec<syn::Attribute>,
-    /// Whether the generated code should comply with `#![no_std]`.
-    pub no_std: bool,
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
 }
 
 impl DefaultExpression {
@@ -66,7 +66,7 @@ impl FieldOptions {
             field_type: &self.field_type,
             generic_into: self.setter_into,
             deprecation_notes: &self.deprecation_notes,
-            no_std: self.no_std,
+            bindings: self.bindings,
         }
     }
 
@@ -82,9 +82,9 @@ impl FieldOptions {
             builder_pattern: self.builder_pattern,
             default_value: self.default_expression
                 .as_ref()
-                .map(|x| { x.parse_block(self.no_std) }),
+                .map(|x| { x.parse_block(self.bindings.no_std) }),
             use_default_struct: self.use_default_struct,
-            no_std: self.no_std,
+            bindings: self.bindings,
         }
     }
 
@@ -96,7 +96,7 @@ impl FieldOptions {
             setter_enabled: self.setter_enabled,
             setter_visibility: &self.setter_visibility,
             attrs: &self.attrs,
-            no_std: self.no_std,
+            bindings: self.bindings,
         }
     }
 }

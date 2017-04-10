@@ -46,6 +46,8 @@ mod initializer;
 mod setter;
 mod options;
 mod block;
+mod bindings;
+mod tokens;
 
 pub use build_method::BuildMethod;
 pub use builder_field::BuilderField;
@@ -56,5 +58,7 @@ pub use setter::Setter;
 pub use doc_comment::doc_comment_from;
 pub use options::BuilderPattern;
 pub use block::Block;
+pub use bindings::Bindings;
+pub use tokens::RawTokens;
 
 const DEFAULT_STRUCT_NAME: &'static str = "__default";

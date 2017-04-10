@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+### Added
+- Bindings to abstract over libstd/libcore
+
+### Changed
+- Use `bindings: Bindings` instead of `no_std: bool`
+
 ### Fixed
 - support generic references in structs #55
 - no_std support #63

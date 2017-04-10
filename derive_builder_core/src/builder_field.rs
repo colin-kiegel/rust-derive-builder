@@ -1,5 +1,6 @@
 use quote::{Tokens, ToTokens};
 use syn;
+use Bindings;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///
@@ -41,8 +42,8 @@ pub struct BuilderField<'a> {
     pub setter_visibility: &'a syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
-    /// Whether the generated code should comply with `#![no_std]`.
-    pub no_std: bool,
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for BuilderField<'a> {
@@ -53,12 +54,7 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-
-            let option = if self.no_std {
-                quote!(::core::option::Option)
-            } else {
-                quote!(::std::option::Option)
-            };
+            let option = self.bindings.option_ty();
 
             tokens.append(quote!(
                 #(#attrs)* #vis #ident: #option<#ty>,
@@ -69,12 +65,7 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-
-            let phantom_data = if self.no_std {
-                quote!(::core::marker::PhantomData)
-            } else {
-                quote!(::std::marker::PhantomData)
-            };
+            let phantom_data = self.bindings.phantom_data_ty();
 
             tokens.append(quote!(
                 #(#attrs)* #ident: #phantom_data<#ty>,
@@ -95,7 +86,7 @@ macro_rules! default_builder_field {
             setter_enabled: true,
             setter_visibility: &syn::Visibility::Public,
             attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()],
-            no_std: false,
+            bindings: Default::default(),
         }
     }
 }
@@ -127,7 +118,7 @@ mod tests {
     #[test]
     fn no_std_setter_enabled() {
         let mut field = default_builder_field!();
-        field.no_std = true;
+        field.bindings.no_std = true;
 
         assert_eq!(quote!(#field), quote!(
             #[some_attr] pub foo: ::core::option::Option<String>,
@@ -137,7 +128,7 @@ mod tests {
     #[test]
     fn no_std_setter_disabled() {
         let mut field = default_builder_field!();
-        field.no_std = true;
+        field.bindings.no_std = true;
         field.setter_enabled = false;
 
         assert_eq!(quote!(#field), quote!(

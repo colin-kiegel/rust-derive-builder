@@ -1,6 +1,6 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, FieldOptions};
-use derive_builder_core::DeprecationNotes;
+use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Clone, Debug)]
 pub struct FieldMode {
@@ -136,7 +136,9 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             deprecation_notes: b.mode.deprecation_notes.clone(),
             default_expression: b.default_expression.clone(),
             use_default_struct: b.mode.use_default_struct,
-            no_std: b.no_std.unwrap_or(false),
+            bindings: Bindings {
+                no_std: b.no_std.unwrap_or(false),
+            },
             attrs: b.mode.setter_attrs.clone().unwrap_or_default(),
         }
     }
