@@ -1,6 +1,6 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, FieldMode, StructOptions};
-use derive_builder_core::DeprecationNotes;
+use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
 pub struct StructMode {
@@ -11,7 +11,6 @@ pub struct StructMode {
     builder_vis: Option<syn::Visibility>,
     deprecation_notes: DeprecationNotes,
     struct_size_hint: usize,
-    no_std: Option<bool>,
 }
 
 impl OptionsBuilder<StructMode> {
@@ -27,7 +26,6 @@ impl OptionsBuilder<StructMode> {
             builder_vis: None,
             deprecation_notes: Default::default(),
             struct_size_hint: 0,
-            no_std: None,
         });
 
         builder.parse_attributes(&ast.attrs);
@@ -61,12 +59,6 @@ impl OptionsBuilderMode for StructMode {
         format!("on struct `{}`", self.build_target_name)
     }
 
-    impl_setter!{
-        ident: no_std,
-        desc: "no_std support",
-        map: |x: bool| { x },
-    }
-
     fn struct_mode(&self) -> bool {
         true
     }
@@ -87,6 +79,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
             default_expression: field_default_expression,
+            no_std: b.no_std,
             mode: {
                 let mut mode = FieldMode::default();
                 mode.use_default_struct = struct_default_expression.is_some();
@@ -106,7 +99,9 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
-            no_std: m.no_std.unwrap_or(false),
+            bindings: Bindings {
+                no_std: b.no_std.unwrap_or(false),
+            },
             default_expression: struct_default_expression,
         };
 

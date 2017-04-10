@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - support generic references in structs #55
+- support `#![no_std]` #63
 
 ## [0.4.1] - 2017-04-08
 

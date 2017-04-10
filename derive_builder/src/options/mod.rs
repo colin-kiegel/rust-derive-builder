@@ -45,6 +45,7 @@ pub struct OptionsBuilder<Mode> {
     setter_vis: Option<syn::Visibility>,
     default_expression: Option<DefaultExpression>,
     setter_into: Option<bool>,
+    no_std: Option<bool>,
     mode: Mode,
 }
 
@@ -54,7 +55,6 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
-    fn no_std(&mut self, x: bool);
     fn struct_mode(&self) -> bool;
 }
 
@@ -68,6 +68,7 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
             setter_vis: None,
             default_expression: None,
             setter_into: None,
+            no_std: None,
             mode: mode,
         }
     }
@@ -104,6 +105,12 @@ impl<Mode> OptionsBuilder<Mode> where
         ident: default_expression,
         desc: "default expression",
         map: |x: DefaultExpression| { x },
+    }
+
+    impl_setter!{
+        ident: no_std,
+        desc: "no_std support",
+        map: |x: bool| { x },
     }
 
     pub fn parse_attributes<'a, T>(&mut self, attributes: T) -> &mut Self where
@@ -206,7 +213,12 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.default_expression(DefaultExpression::Trait)
             },
             "no_std" => {
-                self.mode.no_std(true)
+                if self.mode.struct_mode() {
+                    self.no_std(true)
+                } else {
+                    panic!("Support for `#![no_std]` can only be set on the stuct level \
+                            (but found {}).", self.where_diagnostics())
+                }
             },
             _ => {
                 panic!("Unknown option `{}` {}", ident.as_ref(), self.where_diagnostics())

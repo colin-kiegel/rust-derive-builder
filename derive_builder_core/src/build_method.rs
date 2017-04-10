@@ -2,6 +2,7 @@ use quote::{Tokens, ToTokens};
 use syn;
 use Block;
 use BuilderPattern;
+use Bindings;
 use Initializer;
 use doc_comment::doc_comment_from;
 use DEFAULT_STRUCT_NAME;
@@ -31,6 +32,7 @@ use DEFAULT_STRUCT_NAME;
 /// #    ));
 /// # }
 /// ```
+#[derive(Debug)]
 pub struct BuildMethod<'a> {
     /// Enables code generation for this build method.
     pub enabled: bool,
@@ -50,8 +52,8 @@ pub struct BuildMethod<'a> {
     pub initializers: Vec<Tokens>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
-    /// Whether the generated code should comply with `#![no_std]`.
-    pub no_std: bool,
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
     /// Default value for the whole struct.
     ///
     /// This will be in scope for all initializers as `__default`.
@@ -77,14 +79,8 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
                 quote!(let #ident: #target_ty = #default_expr;)
             });
-
-        let (result, string) = if self.no_std {(
-            quote!(::core::result::Result),
-            quote!(::collections::string::String),
-        )} else {(
-            quote!(::std::result::Result),
-            quote!(::std::string::String),
-        )};
+        let result = self.bindings.result_ty();
+        let string = self.bindings.string_ty();
 
         if self.enabled {
             trace!("Deriving build method `{}`.", self.ident.as_ref());
@@ -136,7 +132,7 @@ macro_rules! default_build_method {
             target_ty_generics: None,
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
-            no_std: false,
+            bindings: Default::default(),
             default_struct: None,
         }
     }
@@ -163,7 +159,7 @@ mod tests {
     #[test]
     fn no_std() {
         let mut build_method = default_build_method!();
-        build_method.no_std = true;
+        build_method.bindings.no_std = true;
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {

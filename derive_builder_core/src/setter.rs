@@ -2,6 +2,7 @@ use quote::{Tokens, ToTokens};
 use syn;
 use BuilderPattern;
 use DeprecationNotes;
+use Bindings;
 
 /// Setter for the struct fields in the build method, implementing `quote::ToTokens`.
 ///
@@ -51,6 +52,8 @@ pub struct Setter<'a> {
     pub generic_into: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -64,6 +67,9 @@ impl<'a> ToTokens for Setter<'a> {
             let ident = self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
+            let clone = self.bindings.clone_trait();
+            let option = self.bindings.option_ty();
+            let into = self.bindings.into_trait();
 
             let self_param: Tokens;
             let return_ty: Tokens;
@@ -83,7 +89,7 @@ impl<'a> ToTokens for Setter<'a> {
                 BuilderPattern::Immutable => {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
-                    self_into_return_ty = quote!(::std::clone::Clone::clone(self));
+                    self_into_return_ty = quote!(#clone::clone(self));
                 }
             };
 
@@ -92,7 +98,7 @@ impl<'a> ToTokens for Setter<'a> {
             let into_value: Tokens;
 
             if self.generic_into {
-                ty_params = quote!(<VALUE: ::std::convert::Into<#ty>>);
+                ty_params = quote!(<VALUE: #into<#ty>>);
                 param_ty = quote!(VALUE);
                 into_value = quote!(value.into());
             } else {
@@ -108,7 +114,7 @@ impl<'a> ToTokens for Setter<'a> {
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = ::std::option::Option::Some(#into_value);
+                    new.#field_ident = #option::Some(#into_value);
                     new
             }));
         } else {
@@ -133,6 +139,7 @@ macro_rules! default_setter {
             field_type: &syn::parse_type("Foo").unwrap(),
             generic_into: false,
             deprecation_notes: &Default::default(),
+            bindings: Default::default(),
         };
     }
 }
@@ -233,6 +240,36 @@ mod tests {
                 #deprecated
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value.into());
+                new
+            }
+        ));
+    }
+
+    #[test]
+    fn no_std() {
+        let mut setter = default_setter!();
+        setter.bindings.no_std = true;
+        setter.pattern = BuilderPattern::Immutable;
+
+        assert_eq!(quote!(#setter), quote!(
+            pub fn foo(&self, value: Foo) -> Self {
+                let mut new = ::core::clone::Clone::clone(self);
+                new.foo = ::core::option::Option::Some(value);
+                new
+            }
+        ));
+    }
+
+    #[test]
+    fn no_std_generic() {
+        let mut setter = default_setter!();
+        setter.bindings.no_std = true;
+        setter.generic_into = true;
+
+        assert_eq!(quote!(#setter), quote!(
+            pub fn foo <VALUE: ::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+                let mut new = self;
+                new.foo = ::core::option::Option::Some(value.into());
                 new
             }
         ));

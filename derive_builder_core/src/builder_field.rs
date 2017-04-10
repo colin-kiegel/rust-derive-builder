@@ -1,5 +1,6 @@
 use quote::{Tokens, ToTokens};
 use syn;
+use Bindings;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///
@@ -41,6 +42,8 @@ pub struct BuilderField<'a> {
     pub setter_visibility: &'a syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
+    /// Bindings to libstd or libcore.
+    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for BuilderField<'a> {
@@ -51,9 +54,10 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
+            let option = self.bindings.option_ty();
 
             tokens.append(quote!(
-                #(#attrs)* #vis #ident: ::std::option::Option<#ty>,
+                #(#attrs)* #vis #ident: #option<#ty>,
             ));
         } else {
             trace!("Skipping builder field for `{}`, fallback to PhantomData.",
@@ -61,9 +65,10 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
+            let phantom_data = self.bindings.phantom_data_ty();
 
             tokens.append(quote!(
-                #(#attrs)* #ident: ::std::marker::PhantomData<#ty>,
+                #(#attrs)* #ident: #phantom_data<#ty>,
             ));
         }
     }
@@ -80,7 +85,8 @@ macro_rules! default_builder_field {
             field_type: &syn::parse_type("String").unwrap(),
             setter_enabled: true,
             setter_visibility: &syn::Visibility::Public,
-            attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()]
+            attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()],
+            bindings: Default::default(),
         }
     }
 }
@@ -106,6 +112,27 @@ mod tests {
 
         assert_eq!(quote!(#field), quote!(
             #[some_attr] foo: ::std::marker::PhantomData<String>,
+        ));
+    }
+
+    #[test]
+    fn no_std_setter_enabled() {
+        let mut field = default_builder_field!();
+        field.bindings.no_std = true;
+
+        assert_eq!(quote!(#field), quote!(
+            #[some_attr] pub foo: ::core::option::Option<String>,
+        ));
+    }
+
+    #[test]
+    fn no_std_setter_disabled() {
+        let mut field = default_builder_field!();
+        field.bindings.no_std = true;
+        field.setter_enabled = false;
+
+        assert_eq!(quote!(#field), quote!(
+            #[some_attr] foo: ::core::marker::PhantomData<String>,
         ));
     }
 }
