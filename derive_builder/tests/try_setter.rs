@@ -1,10 +1,13 @@
-#![feature(try_from)]
+#![cfg_attr(feature = "try_setter", feature(try_from))]
 
 #[macro_use]
 extern crate derive_builder;
 
+#[allow(unused_imports)]
 mod struct_level {
+    #[cfg(feature = "try_setter")]
     use std::convert::TryFrom;
+    
     use std::net::{IpAddr, AddrParseError};
     use std::str::FromStr;
     use std::string::ToString;
@@ -18,6 +21,7 @@ mod struct_level {
         }
     }
 
+    #[cfg(feature = "try_setter")]
     impl<'a> TryFrom<&'a str> for MyAddr {
         type Err = AddrParseError;
 
@@ -39,6 +43,7 @@ mod struct_level {
     }
 
     #[test]
+    #[cfg(feature = "try_setter")]
     fn fallible_set() {
         let mut builder = LoremBuilder::default();
         let try_result = builder.try_source("1.2.3.4");
@@ -56,6 +61,7 @@ mod struct_level {
             .build()
     }
 
+    #[cfg(feature = "try_setter")]
     fn try_helper() -> Result<Lorem, String> {
         LoremBuilder::default()
             .try_source("1.2.3.4").map_err(|e| e.to_string())?
@@ -64,6 +70,7 @@ mod struct_level {
     }
 
     #[test]
+    #[cfg(feature = "try_setter")]
     fn with_helper() {
         assert_eq!(exact_helper().unwrap(), try_helper().unwrap());
     }

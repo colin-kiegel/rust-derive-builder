@@ -25,6 +25,7 @@ proc-macro = true
 logging = [ "log", "env_logger", "derive_builder_core/logging" ]
 struct_default = []
 skeptic_tests = ["skeptic"]
+try_setter = []
 
 [dependencies]
 syn = "0.11"
