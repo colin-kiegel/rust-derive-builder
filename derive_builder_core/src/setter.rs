@@ -34,6 +34,8 @@ use Bindings;
 pub struct Setter<'a> {
     /// Enables code generation for this setter fn.
     pub enabled: bool,
+    /// Enables code generation for the `try_` variant of this setter fn.
+    pub try_enabled: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
     /// How the setter method takes and returns `self` (e.g. mutably).
@@ -58,7 +60,7 @@ pub struct Setter<'a> {
 
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
-        if self.enabled {
+        if self.enabled || self.try_enabled {
             trace!("Deriving setter for `{}`.", self.field_ident);
             let ty = self.field_type;
             let pattern = self.pattern;
@@ -117,6 +119,27 @@ impl<'a> ToTokens for Setter<'a> {
                     new.#field_ident = #option::Some(#into_value);
                     new
             }));
+            
+            if self.try_enabled {
+                let try_into = self.bindings.try_into_trait();
+                let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
+                let try_ident = syn::Ident::new(format!("try_{}", ident));
+                let result = self.bindings.result_ty();
+                
+                tokens.append(quote!(
+                    #(#attrs)*
+                    #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
+                        -> #result<#return_ty, VALUE::Err>
+                    {
+                        #deprecation_notes
+                        let value : #ty = value.try_into()?;
+                        let mut new = #self_into_return_ty;
+                        new.#field_ident = #option::Some(value);
+                        Ok(new)
+                }));
+            } else {
+                trace!("Skipping try_setter for `{}`.", self.field_ident);
+            }
         } else {
             trace!("Skipping setter for `{}`.", self.field_ident);
         }
@@ -131,6 +154,7 @@ macro_rules! default_setter {
     () => {
         Setter {
             enabled: true,
+            try_enabled: false,
             visibility: &syn::Visibility::Public,
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],

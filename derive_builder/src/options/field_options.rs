@@ -60,6 +60,7 @@ impl FieldOptions {
     pub fn as_setter<'a>(&'a self) -> Setter<'a> {
         Setter {
             enabled: self.setter_enabled,
+            try_enabled: self.try_setter_enabled,
             visibility: &self.setter_visibility,
             pattern: self.builder_pattern,
             attrs: &self.attrs,
