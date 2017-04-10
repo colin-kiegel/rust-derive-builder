@@ -1,8 +1,8 @@
 [![Build status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
-[![Documentation](https://docs.rs/derive_builder/badge.svg)](https://docs.rs/derive_builder_core)
-[![Latest version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder_core)
-[![All downloads](https://img.shields.io/crates/d/derive_builder.svg)](https://crates.io/crates/derive_builder_core)
-[![Downloads of latest version](https://img.shields.io/crates/dv/derive_builder.svg)](https://crates.io/crates/derive_builder_core)
+[![Documentation](https://docs.rs/derive_builder_core/badge.svg)](https://docs.rs/derive_builder_core)
+[![Latest version](https://img.shields.io/crates/v/derive_builder_core.svg)](https://crates.io/crates/derive_builder_core)
+[![All downloads](https://img.shields.io/crates/d/derive_builder_core.svg)](https://crates.io/crates/derive_builder_core)
+[![Downloads of latest version](https://img.shields.io/crates/dv/derive_builder_core.svg)](https://crates.io/crates/derive_builder_core)
 
 # Crate [`derive_builder_core`]
 
