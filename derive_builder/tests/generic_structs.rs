@@ -3,39 +3,56 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate derive_builder;
 
+use std::fmt::Display;
+use std::clone::Clone;
+
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem<T>
-    where T: std::clone::Clone
+struct Generic<T: Display>
+    where T: Clone
 {
     ipsum: &'static str,
     pub dolor: T,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-struct GenLorem2<T>
-    where T: std::clone::Clone
+pub struct GenericReference<'a, T: 'a + Default>
+    where T: Display
 {
-    ipsum: &'static str,
-    pub dolor: T,
+    pub bar: Option<&'a T>,
 }
 
 #[test]
 #[should_panic(expected="`ipsum` must be initialized")]
 fn panic_if_uninitialized() {
-    GenLoremBuilder::<String>::default().build().unwrap();
+    GenericBuilder::<String>::default().build().unwrap();
 }
 
 #[test]
-fn builder() {
-    let x = GenLoremBuilder::default()
-        .ipsum("GenLorem")
+fn generic_builder() {
+    let x = GenericBuilder::default()
+        .ipsum("Generic")
         .dolor(true)
         .build()
         .unwrap();
 
     assert_eq!(x,
-               GenLorem {
-                   ipsum: "GenLorem".into(),
+               Generic {
+                   ipsum: "Generic".into(),
                    dolor: true,
+               });
+}
+
+#[test]
+fn generic_reference_builder() {
+    static BAR: u32 = 42;
+
+    let x = GenericReferenceBuilder::<'static, u32>::default()
+        .bar(Some(&BAR))
+        .build()
+        .unwrap();
+
+    assert_eq!(x,
+               GenericReference {
+                   bar: Some(&BAR),
                });
 }

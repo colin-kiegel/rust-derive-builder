@@ -79,7 +79,7 @@ impl<'a> ToTokens for Builder<'a> {
             tokens.append(quote!(
                 #[derive(Default, Clone)]
                 #builder_doc_comment
-                #builder_vis struct #builder_ident #ty_generics #where_clause {
+                #builder_vis struct #builder_ident #impl_generics #where_clause {
                     #(#builder_fields)*
                 }
 
@@ -174,12 +174,37 @@ mod tests {
 
         assert_eq!(quote!(#builder), quote!(
             #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T> where T: Clone {
+            pub struct FooBuilder<'a, T: Debug> where T: Clone {
                 foo: u32,
             }
 
             #[allow(dead_code)]
             impl<'a, T: Debug> FooBuilder<'a, T> where T: Clone {
+                fn bar() -> {
+                    unimplemented!()
+                }
+            }
+        ));
+    }
+
+    #[test]
+    fn generic_reference() {
+        let ast = syn::parse_macro_input(stringify!(
+            struct Lorem<'a, T: 'a + Default> where T: Clone{ }
+        )).expect("Couldn't parse item");
+
+        let generics = ast.generics;
+        let mut builder = default_builder!();
+        builder.generics = Some(&generics);
+
+        assert_eq!(quote!(#builder), quote!(
+            #[derive(Default, Clone)]
+            pub struct FooBuilder<'a, T: 'a + Default> where T: Clone {
+                foo: u32,
+            }
+
+            #[allow(dead_code)]
+            impl<'a, T: 'a + Default> FooBuilder<'a, T> where T: Clone {
                 fn bar() -> {
                     unimplemented!()
                 }
