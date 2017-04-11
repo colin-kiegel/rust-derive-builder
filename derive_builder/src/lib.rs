@@ -260,8 +260,6 @@
 //! }
 //! ```
 //!
-//! A complete example of using fallible setters is available in `examples/try_setter.rs`.
-//!
 //! ## Default Values
 //!
 //! You can define default values for each field via annotation by `#[builder(default="...")]`,
