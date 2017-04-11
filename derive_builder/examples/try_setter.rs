@@ -1,10 +1,12 @@
 //! This example illustrates the use of try-setters.
+//! Tests are suppressed so that this doesn't break the build on stable.
+#![cfg(not(test))]
 #![feature(try_from)]
 
 #[macro_use]
 extern crate derive_builder;
 
-use std::convert::{From, TryFrom};
+use std::convert::TryFrom;
 use std::net::{IpAddr, AddrParseError};
 use std::str::FromStr;
 use std::string::ToString;

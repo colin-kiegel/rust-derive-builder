@@ -223,19 +223,40 @@
 //! (see rust-lang issue [#33417](https://github.com/rust-lang/rust/issues/33417)) similar to
 //! `Into` with the key distinction that the conversion can fail, and therefore produces a `Result`.
 //! 
-//! You can declare the `try_setter` attribute today, and your builder will work on stable Rust -
-//! the fallible setters will automatically light up in future when the `try_from` feature is
-//! stabilized.
+//! You can only declare the `try_setter` attribute today if you're targeting nightly, and you have
+//! to add `#![feature(try_from)]` to your crate to use it.
 //!
 //!
 //! ```rust,ignore
+//! #![feature(try_from)]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
 //! #[derive(Builder, Debug, PartialEq)]
 //! #[builder(try_setter, setter(into))]
 //! struct Lorem {
+//!     pub name: String,
 //!     pub ipsum: u8,
+//! }
+//! 
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Ipsum {
+//!     #[builder(try_setter, setter(into, name = "foo"))]
+//!     pub dolor: u8,
+//! }
+//!
+//! fn main() {
+//!    LoremBuilder::default()
+//!        .try_ipsum(1u16).unwrap()
+//!        .name("hello")
+//!        .build()
+//!        .expect("1 fits into a u8");
+//!
+//!    IpsumBuilder::default()
+//!        .try_foo(1u16)
+//!        .unwrap()
+//!        .build()
+//!        .expect("1 fits into a u8");
 //! }
 //! ```
 //!
