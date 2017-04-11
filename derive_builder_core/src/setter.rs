@@ -258,34 +258,22 @@ mod tests {
         setter.deprecation_notes = &deprecated;
         setter.try_setter = true;
 
-        // Had to hoist these out to avoid a recursion limit in the quote!
-        // macro invocation below.
-        let action = quote!(
-            let mut new = self;
-            new.foo = ::std::option::Option::Some(value.into());
-            new
-        );
-        
-        let try_action = quote!(
-            let converted : Foo = value.try_into()?;
-            let mut new = self;
-            new.foo = ::std::option::Option::Some(converted);
-            Ok(new)
-        );
-
-        println!("{}", quote!(#setter));
-
         assert_eq!(quote!(#setter), quote!(
             #[some_attr]
             pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
-                #action
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(value.into());
+                new
             }
                         
             #[some_attr]
             pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
                 -> ::std::result::Result<&mut Self, VALUE::Err> {
-                #try_action
+                let converted : Foo = value.try_into()?;
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(converted);
+                Ok(new)
             }
         ));
     }
@@ -334,28 +322,19 @@ mod tests {
         setter.pattern = BuilderPattern::Mutable;
         setter.try_setter = true;
         
-        let setter_quote = quote!(
+        assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        );
-        
-        // hoisting necessary to avoid recursion limit.
-        let try_setter_body = quote!(
-            let converted : Foo = value.try_into()?;
-            let mut new = self;
-            new.foo = ::std::option::Option::Some(converted);
-            Ok(new)
-        );
-        
-        assert_eq!(quote!(#setter), quote!(
-            #setter_quote
             
             pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
                 -> ::std::result::Result<&mut Self, VALUE::Err> {
-                #try_setter_body
+                let converted : Foo = value.try_into()?;
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(converted);
+                Ok(new)
             }
         ));
     }

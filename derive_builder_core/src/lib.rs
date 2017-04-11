@@ -22,6 +22,7 @@
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
 #![deny(warnings, missing_docs)]
+#![cfg_attr(test, recursion_limit = "100")]
 
 extern crate proc_macro;
 extern crate syn;
