@@ -1,6 +1,6 @@
 //! This example illustrates the use of try-setters.
-//! Tests are suppressed so that this doesn't break the build on stable.
-#![cfg(not(test))]
+//! Tests are suppressed using a fake feature so that this doesn't break the build on stable.
+#![cfg(feature = "try_from")]
 #![feature(try_from)]
 
 #[macro_use]
