@@ -129,7 +129,7 @@ impl<'a> ToTokens for Setter<'a> {
                 tokens.append(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
-                        -> #result<#return_ty, VALUE::Err>
+                        -> #result<#return_ty, VALUE::Error>
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
@@ -269,7 +269,7 @@ mod tests {
                         
             #[some_attr]
             pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
-                -> ::std::result::Result<&mut Self, VALUE::Err> {
+                -> ::std::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(converted);
@@ -330,7 +330,7 @@ mod tests {
             }
             
             pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
-                -> ::std::result::Result<&mut Self, VALUE::Err> {
+                -> ::std::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(converted);

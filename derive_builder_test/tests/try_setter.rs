@@ -24,9 +24,9 @@ mod struct_level {
 
     #[cfg(feature = "nightlytests")]
     impl<'a> TryFrom<&'a str> for MyAddr {
-        type Err = AddrParseError;
+        type Error = AddrParseError;
 
-        fn try_from(v: &str) -> Result<Self, Self::Err> {
+        fn try_from(v: &str) -> Result<Self, Self::Error> {
             Ok(MyAddr(v.parse()?))
         }
     }
