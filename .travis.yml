@@ -72,7 +72,7 @@ script: |
       exit 1
       ;;
   esac
-  ./.travis-run-all.sh "${commands[@]}"
+  dev/travis-run-all.sh "${commands[@]}"
 after_success: |
   # upload the documentation from the build with stable (automatically only
   # runs on the master branch, not individual PRs)
