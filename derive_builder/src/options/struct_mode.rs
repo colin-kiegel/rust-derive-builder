@@ -78,7 +78,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_prefix: b.setter_prefix,
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
-            try_setter_enabled: b.try_setter_enabled,
+            try_setter: b.try_setter,
             default_expression: field_default_expression,
             no_std: b.no_std,
             mode: {

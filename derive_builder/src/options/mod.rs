@@ -45,7 +45,7 @@ pub struct OptionsBuilder<Mode> {
     setter_vis: Option<syn::Visibility>,
     default_expression: Option<DefaultExpression>,
     setter_into: Option<bool>,
-    try_setter_enabled: Option<bool>,
+    try_setter: Option<bool>,
     no_std: Option<bool>,
     mode: Mode,
 }
@@ -67,7 +67,7 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
             setter_prefix: None,
             setter_name: None,
             setter_vis: None,
-            try_setter_enabled: None,
+            try_setter: None,
             default_expression: None,
             setter_into: None,
             no_std: None,
@@ -104,7 +104,7 @@ impl<Mode> OptionsBuilder<Mode> where
     }
     
     impl_setter!{
-        ident: try_setter_enabled,
+        ident: try_setter,
         desc: "try_setter activation",
         map: |x: bool| { x },
     }
@@ -207,7 +207,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 self.setter_enabled(true)
             },
             "try_setter" => {
-                self.try_setter_enabled(true)
+                self.try_setter(true)
             }
             "default" => {
                 if !cfg!(feature = "struct_default") && self.mode.struct_mode() {
