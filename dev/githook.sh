@@ -29,7 +29,7 @@ errors=0
 function main {
 	load_config
 
-	assert_clean_state
+	check_clean_state
 
 	[ "$checkformat" == true ] && check_format
 	[ "$checkstable" == true ] && run_tests_on "stable"
@@ -39,10 +39,10 @@ function main {
 	[ "$checkfeatures" == true ] && run_script "dev/checkfeatures.sh"
 
 	if [ "$errors" != 0 ]; then
-		echo -e "pre-commit status: ${FMT_ERR}Failed${FMT_RESET}"
+		echo -e "${FMT_ERR}EE${FMT_RESET}: Some checks failed!"
 		exit 1
 	else
-		echo -e "pre-commit status: ${FMT_OK}OK${FMT_RESET}"
+		echo -e "${FMT_OK}OK${FMT_RESET}: All checks passed!"
 	fi
 }
 
@@ -75,48 +75,15 @@ function run_script {
 	check_or_echo $ret "" "$result"
 }
 
-function assert_clean_state {
-	echo_begin "Working directory is"
+function check_clean_state {
+	echo_begin "Checking clean working directory"
 
 	result=$(git status --porcelain)
 	if [[ -z "$result" ]]; then
-		check_or_echo 0 "clean" "$result"
+		check_or_echo 0 "" "$result"
 	else
-		check_or_echo 1 "dirty" "$result"
-		echo -e "${FMT_ERR}EE${FMT_RESET}: Please commit or stash changes!"
-		exit 1
+		check_or_echo 1 "please commit or stash changes!" "$result"
 	fi
-}
-
-function stash_changes {
-  echo_begin "Stashing any unstaged changes"
-	count=$(git stash list | wc -l)
-	result=$(
-	  exec 2>&1
-	  git stash save --include-untracked --keep-index "#GitHookAutoStash"
-	); ret=$?
-	if [ $(git stash list | wc -l) == $count ]; then
-		msg="skipped"
-	else
-		msg="saved as '#GitHookAutoStash' (revert manually via `git stash pop "#GitHookAutoStash"`)"
-	fi
-	check_or_echo $? "$msg" "$result"
-}
-
-function unstash_changes {
-	echo_begin "Unstashing the stashed changes"
-	if git stash list | grep -qe "^stash@{0}.*#GitHookAutoStash"; then
-    msg=""
-		result=$(
-		  exec 2>&1
-			git stash pop
-		); ret=$?
-	else
-		msg="skipped"
-		result=""
-		ret=0
-	fi
-	check_or_echo $ret "$msg" "$result"
 }
 
 function load_config {

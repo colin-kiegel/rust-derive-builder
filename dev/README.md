@@ -9,6 +9,21 @@ It's very useful to set `dev/githook.sh` as a `pre-push` hook, like this:
 This will basically do all the tests that travis would do, before the push is
 executed.
 
+Running the tests might take a little while, because the script will update
+each required toolchain via rustup if neccessary. It also buffers all writes to
+stdout/stderr and only prints it on failure. A successful run should look like:
+
+```
+$ git push
+II: Working directory is... ✓
+II: Running tests on stable... ✓
+II: Running tests on beta... ✓
+II: Running tests on nightly... ✓
+II: Running dev/compiletests.sh... ✓
+II: Running dev/checkfeatures.sh... ✓
+OK: All checks passed!
+```
+
 ## Tips:
 
 * You can tell git to skip all tests via the `--no-verify` argument,
