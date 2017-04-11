@@ -1,11 +1,11 @@
-#![cfg_attr(feature = "try_setter", feature(try_from))]
+#![cfg_attr(feature = "nightlytests", feature(try_from))]
 
 #[macro_use]
 extern crate derive_builder;
 
 #[allow(unused_imports)]
 mod struct_level {
-    #[cfg(feature = "try_setter")]
+    #[cfg(feature = "try_from")]
     use std::convert::TryFrom;
     
     use std::net::{IpAddr, AddrParseError};
@@ -21,7 +21,7 @@ mod struct_level {
         }
     }
 
-    #[cfg(feature = "try_setter")]
+    #[cfg(feature = "nightlytests")]
     impl<'a> TryFrom<&'a str> for MyAddr {
         type Err = AddrParseError;
 
@@ -39,11 +39,14 @@ mod struct_level {
 
     #[test]
     fn infallible_set() {
-        let _ = LoremBuilder::default().source(IpAddr::from_str("1.2.3.4").unwrap()).build();
+        let _ = LoremBuilder::default()
+            .source(IpAddr::from_str("1.2.3.4").unwrap())
+            .dest(IpAddr::from_str("0.0.0.0").unwrap())
+            .build();
     }
 
     #[test]
-    #[cfg(feature = "try_setter")]
+    #[cfg(feature = "nightlytests")]
     fn fallible_set() {
         let mut builder = LoremBuilder::default();
         let try_result = builder.try_source("1.2.3.4");
@@ -55,7 +58,7 @@ mod struct_level {
     }
 
     // Allow dead code here since the test that uses this depends on the try_setter feature.
-    #[cfg_attr(not(feature = "try_setter"), allow(dead_code))]
+    #[cfg_attr(not(feature = "nightlytests"), allow(dead_code))]
     fn exact_helper() -> Result<Lorem, String> {
         LoremBuilder::default()
             .source(IpAddr::from_str("1.2.3.4").unwrap())
@@ -63,7 +66,7 @@ mod struct_level {
             .build()
     }
 
-    #[cfg(feature = "try_setter")]
+    #[cfg(feature = "nightlytests")]
     fn try_helper() -> Result<Lorem, String> {
         LoremBuilder::default()
             .try_source("1.2.3.4").map_err(|e| e.to_string())?
@@ -72,7 +75,7 @@ mod struct_level {
     }
 
     #[test]
-    #[cfg(feature = "try_setter")]
+    #[cfg(feature = "nightlytests")]
     fn with_helper() {
         assert_eq!(exact_helper().unwrap(), try_helper().unwrap());
     }

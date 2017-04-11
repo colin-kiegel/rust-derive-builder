@@ -131,9 +131,9 @@ impl<'a> ToTokens for Setter<'a> {
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
                         -> #result<#return_ty, VALUE::Err>
                     {
-                        let value : #ty = value.try_into()?;
+                        let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
-                        new.#field_ident = #option::Some(value);
+                        new.#field_ident = #option::Some(converted);
                         Ok(new)
                 }));
             } else {
@@ -244,7 +244,7 @@ mod tests {
         ));
     }
 
-    // including
+    // including try_setter
     #[test]
     fn full() {
         let attrs = vec![syn::parse_outer_attr("#[some_attr]").unwrap()];
@@ -256,14 +256,36 @@ mod tests {
         setter.attrs = attrs.as_slice();
         setter.generic_into = true;
         setter.deprecation_notes = &deprecated;
+        setter.try_setter = true;
+
+        // Had to hoist these out to avoid a recursion limit in the quote!
+        // macro invocation below.
+        let action = quote!(
+            let mut new = self;
+            new.foo = ::std::option::Option::Some(value.into());
+            new
+        );
+        
+        let try_action = quote!(
+            let converted : Foo = value.try_into()?;
+            let mut new = self;
+            new.foo = ::std::option::Option::Some(converted);
+            Ok(new)
+        );
+
+        println!("{}", quote!(#setter));
 
         assert_eq!(quote!(#setter), quote!(
             #[some_attr]
             pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
-                new
+                #action
+            }
+                        
+            #[some_attr]
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+                -> ::std::result::Result<&mut Self, VALUE::Err> {
+                #try_action
             }
         ));
     }
@@ -304,5 +326,37 @@ mod tests {
         setter.enabled = false;
 
         assert_eq!(quote!(#setter), quote!());
+    }
+    
+    #[test]
+    fn try_setter() {
+        let mut setter : Setter = default_setter!();
+        setter.pattern = BuilderPattern::Mutable;
+        setter.try_setter = true;
+        
+        let setter_quote = quote!(
+            pub fn foo(&mut self, value: Foo) -> &mut Self {
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(value);
+                new
+            }
+        );
+        
+        // hoisting necessary to avoid recursion limit.
+        let try_setter_body = quote!(
+            let converted : Foo = value.try_into()?;
+            let mut new = self;
+            new.foo = ::std::option::Option::Some(converted);
+            Ok(new)
+        );
+        
+        assert_eq!(quote!(#setter), quote!(
+            #setter_quote
+            
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+                -> ::std::result::Result<&mut Self, VALUE::Err> {
+                #try_setter_body
+            }
+        ));
     }
 }

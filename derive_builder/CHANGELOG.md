@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.4.3] - 2017-04-13
+
+### Added
+- try_setters, e.g. `#[builder(try_setter)]`. These setters are exposed alongside the
+  normal field setters and allow callers to pass in values which have fallible 
+  conversions to the needed type through `TryInto`. This attribute can be used on any 
+  Rust channel, but will only emit setters on nightly when `#![feature(try_from)]` is 
+  declared in the consuming crate's root; this will change when Rust issue 
+  [#33417](https://github.com/rust-lang/rust/issues/33417) is resolved.
+
 ## [0.4.2] - 2017-04-10
 
 ### Fixed
