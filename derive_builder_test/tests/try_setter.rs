@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate derive_builder;
 
+#[cfg(feature = "nightlytests")]
 #[allow(unused_imports)]
 mod struct_level {
     #[cfg(feature = "nightlytests")]
@@ -43,8 +44,6 @@ mod struct_level {
         pub source: MyAddr
     }
     
-    // Allow dead code here since the test that uses this depends on the try_setter feature.
-    #[cfg_attr(not(feature = "nightlytests"), allow(dead_code))]
     fn exact_helper() -> Result<Lorem, String> {
         LoremBuilder::default()
             .source(IpAddr::from_str("1.2.3.4").unwrap())
