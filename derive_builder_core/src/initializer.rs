@@ -37,7 +37,7 @@ use DEFAULT_STRUCT_NAME;
 pub struct Initializer<'a> {
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
-    /// Wether the builder implements a setter for this field.
+    /// Whether the builder implements a setter for this field.
     pub setter_enabled: bool,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
@@ -104,9 +104,14 @@ impl<'a> Initializer<'a> {
         }
     }
 
-    fn default(&'a self) -> Tokens {
+    fn default(&'a self) -> Tokens {        
         match self.default_value {
             Some(ref expr) => quote!(#expr),
+            None if self.use_default_struct => {
+                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+                let field_ident = self.field_ident;
+                quote!(#struct_ident.#field_ident)
+            }
             None => {
                 let default = self.bindings.default_trait();
                 quote!(#default::default())
