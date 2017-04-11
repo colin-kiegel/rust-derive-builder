@@ -35,6 +35,7 @@ struct SetterOptIn {
     setter_present_by_shorthand_opt_in_2: u32,
 }
 
+#[cfg(feature = "struct_default")]
 #[derive(Debug, PartialEq, Builder, Clone)]
 #[builder(default, setter(skip))]
 struct SetterOptInStructDefault {
@@ -68,6 +69,7 @@ impl SetterOptIn {
     fn setter_skipped_by_shorthand_default() {}
 }
 
+#[cfg(feature = "struct_default")]
 impl Default for SetterOptInStructDefault {
     fn default() -> Self {
         SetterOptInStructDefault {
@@ -110,6 +112,7 @@ fn setter_opt_in() {
 }
 
 #[test]
+#[cfg(feature = "struct_default")]
 fn setter_skipped_with_struct_default() {
     let x = SetterOptInStructDefaultBuilder::default().build().unwrap();
     assert_eq!(x, SetterOptInStructDefault::default());
