@@ -67,11 +67,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let target_ty = &self.target_ty;
         let target_ty_generics = &self.target_ty_generics;
         let initializers = &self.initializers;
-        let self_param = match self.pattern {
-            BuilderPattern::Owned => quote!(self),
-            BuilderPattern::Mutable |
-            BuilderPattern::Immutable => quote!(&self),
-        };
+        let self_param = self.pattern.to_build_method_tokens();
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct
             .as_ref()
