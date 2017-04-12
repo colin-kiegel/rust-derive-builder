@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function main {
-  export CARGO_TARGET_DIR="target/__compiletests"
+  export CARGO_TARGET_DIR="../target/__nightlytests"
 
   commands=(
     "cd derive_builder_test && rustup run nightly cargo test --test compiletests --features nightlytests --color always"

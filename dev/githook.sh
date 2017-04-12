@@ -18,7 +18,7 @@
 #       git config hooks.checkstable true
 #       git config hooks.checkbeta true
 #       git config hooks.checknightly true
-#       git config hooks.compiletests true
+#       git config hooks.nightlytests true
 #       git config hooks.checkfeatures true
 #
 # Note this will stash all local changes.
@@ -35,7 +35,7 @@ function main {
 	[ "$checkstable" == true ] && run_tests_on "stable"
 	[ "$checkbeta" == true ] && run_tests_on "beta"
 	[ "$checknightly" == true ] && run_tests_on "nightly"
-	[ "$compiletests" == true ] && run_script "dev/compiletests.sh"
+	[ "$nightlytests" == true ] && run_script "dev/nightlytests.sh"
 	[ "$checkfeatures" == true ] && run_script "dev/checkfeatures.sh"
 
 	if [ "$errors" != 0 ]; then
@@ -96,7 +96,7 @@ function load_config {
 	lookup_git_flag checkstable
 	lookup_git_flag checkbeta
 	lookup_git_flag checknightly
-	lookup_git_flag compiletests
+	lookup_git_flag nightlytests
 	lookup_git_flag checkfeatures
 
   if [ $config_status -ne 0 ]; then

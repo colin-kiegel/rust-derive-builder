@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function main {
-  export CARGO_TARGET_DIR="$(base_dir)/target/__checkfeatures"
+  export CARGO_TARGET_DIR="../target/__checkfeatures"
 
   commands=(
     "cd derive_builder_test && rustup run 1.15.0 cargo test --all --no-fail-fast --features struct_default --color always"
