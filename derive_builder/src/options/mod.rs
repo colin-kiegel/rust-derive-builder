@@ -102,7 +102,7 @@ impl<Mode> OptionsBuilder<Mode> where
         desc: "setter type conversion",
         map: |x: bool| { x },
     }
-    
+
     impl_setter!{
         ident: try_setter,
         desc: "try_setter activation",
@@ -119,6 +119,18 @@ impl<Mode> OptionsBuilder<Mode> where
         ident: no_std,
         desc: "no_std support",
         map: |x: bool| { x },
+    }
+
+    impl_setter!{
+        ident: setter_prefix,
+        desc: "setter prefix",
+        map: |x: String| { x },
+    }
+
+    impl_setter!{
+        ident: setter_name,
+        desc: "setter name",
+        map: |x: String| { x },
     }
 
     pub fn parse_attributes<'a, T>(&mut self, attributes: T) -> &mut Self where
@@ -356,6 +368,9 @@ impl<Mode> OptionsBuilder<Mode> where
             "prefix" => {
                 self.parse_setter_prefix(lit)
             },
+            "name" => {
+                self.parse_setter_name(lit)
+            },
             "skip" => {
                 self.parse_setter_skip(lit)
             },
@@ -383,7 +398,18 @@ impl<Mode> OptionsBuilder<Mode> where
     fn parse_setter_prefix(&mut self, lit: &syn::Lit) {
         trace!("Parsing prefix `{:?}`", lit);
         let value = parse_lit_as_string(lit).unwrap();
-        self.setter_prefix = Some(value.clone());
+        self.setter_prefix(value.clone());
+    }
+
+    fn parse_setter_name(&mut self, lit: &syn::Lit) {
+        trace!("Parsing name `{:?}`", lit);
+        let value = parse_lit_as_string(lit).unwrap();
+        if self.mode.struct_mode() {
+            panic!("Setter names can only be set on the field level \
+                    (but found {}).", self.where_diagnostics())
+        } else {
+            self.setter_name(value.clone());
+        }
     }
 
     fn parse_default_expression(&mut self, lit: &syn::Lit) {

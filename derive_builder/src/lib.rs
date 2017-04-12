@@ -183,13 +183,17 @@
 //! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
 //! setters.
 //!
-//! ## Setter Prefixes
+//! ## Setter Name/Prefix
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! You can precede your struct (or field) with e.g. `#[builder(setter(prefix="xyz"))` to change
-//! the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is included
-//! by default, since Rust favors snake case here.
+//! - You can customize the setter name via `#[builder(setter(name="foo"))`.
+//! - Alternatively you can set a prefix via `#[builder(setter(prefix="xyz"))`, which will change
+//!   the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is
+//!   inserted, since Rust favors snake case here.
+//!
+//! Prefixes can also be defined on the struct level, but renames only work on fields. Renames
+//! take precedence over prefix definitions.
 //!
 //! ## Generic Setters
 //!

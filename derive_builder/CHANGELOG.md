@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Added
+- customize setter names via `#[builder(setter(name="..."))]`
+
 ## [0.4.4] - 2017-04-12
 
 ### Added
