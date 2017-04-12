@@ -4,7 +4,7 @@ function main {
   export CARGO_TARGET_DIR="../target/__checkfeatures"
 
   commands=(
-    "cd derive_builder_test && rustup run 1.15.0 cargo test --all --no-fail-fast --features struct_default --color always"
+    "cd derive_builder_test && rustup run 1.15.0 cargo test --all --color always --features struct_default"
   )
 
   dev/travis-run-all.sh "${commands[@]}"
