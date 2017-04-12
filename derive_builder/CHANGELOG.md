@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.4.4] - 2017-04-12
 
 ### Added
 - try_setters, e.g. `#[builder(try_setter)]`. These setters are exposed
@@ -102,6 +102,7 @@ Requires Rust 1.15 or newer.
  - support for generic structs
 
 [Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.0...HEAD
+[0.4.4]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.3...v0.4.4
 [0.4.3]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.2...v0.4.3
 [0.4.2]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.1...v0.4.2
 [0.4.1]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.0...v0.4.1

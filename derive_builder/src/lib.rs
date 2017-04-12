@@ -259,8 +259,7 @@
 //!
 //! #  #[cfg(feature = "nightlytests")]
 //!    IpsumBuilder::default()
-//!        .try_foo(1u16)
-//!        .unwrap()
+//!        .try_foo(1u16).unwrap()
 //!        .build()
 //!        .expect("1 fits into a u8");
 //! }
