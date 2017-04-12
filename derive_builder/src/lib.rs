@@ -515,5 +515,15 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
     builder.push_build_fn(build_fn);
 
-    quote!(#builder)
+    let try_from_impl = if cfg!(feature = "try_from") {
+        Some(opts.as_try_from())
+    } else {
+        None
+    };
+    
+    quote!(
+        #builder
+        
+        #try_from_impl
+    )
 }

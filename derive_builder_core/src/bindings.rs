@@ -79,6 +79,15 @@ impl Bindings {
             ":: std :: convert :: TryInto"
         })
     }
+    
+    /// TryFrom trait.
+    pub fn try_from_trait(&self) -> RawTokens<&'static str> {
+        RawTokens(if self.no_std {
+            ":: core :: convert :: TryFrom"
+        } else {
+            ":: std :: convert :: TryFrom"
+        })
+    }
 }
 
 #[test]

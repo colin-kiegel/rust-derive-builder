@@ -1,3 +1,5 @@
+use quote::Tokens;
+
 /// Controls the signature of a setter method,
 /// more specifically how `self` is passed and returned.
 ///
@@ -17,6 +19,17 @@ pub enum BuilderPattern {
     ///   optimize chained `clone` calls away in release mode.
     ///   Therefore this turns out not to be as bad as it sounds.
     Immutable,
+}
+
+impl BuilderPattern {
+    /// Expresses this pattern
+    pub fn to_build_method_tokens(&self) -> Tokens {
+        match *self {
+            BuilderPattern::Owned => quote!(self),
+            BuilderPattern::Mutable |
+            BuilderPattern::Immutable => quote!(&self),
+        }
+    }
 }
 
 /// Defaults to `Mutable`.
