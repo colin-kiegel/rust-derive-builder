@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [features]
-nightlytests = ["compiletest_rs"]
+nightlytests = ["compiletest_rs", "derive_builder/nightlytests"]
 logging = [ "derive_builder/logging" ]
 struct_default = [ "derive_builder/struct_default" ]
 

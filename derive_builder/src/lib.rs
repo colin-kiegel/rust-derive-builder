@@ -227,11 +227,14 @@
 //! You can only declare the `try_setter` attribute today if you're targeting nightly, and you have
 //! to add `#![feature(try_from)]` to your crate to use it.
 //!
-//! ```rust,ignore
-//! #![feature(try_from)]
+//! ```rust
+//! // #![feature(try_from)]
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #[cfg(feature = "nightlytests")]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
+//! # #[cfg(feature = "nightlytests")]
 //! #[derive(Builder, Debug, PartialEq)]
 //! #[builder(try_setter, setter(into))]
 //! struct Lorem {
@@ -239,6 +242,7 @@
 //!     pub ipsum: u8,
 //! }
 //!
+//! # #[cfg(feature = "nightlytests")]
 //! #[derive(Builder, Debug, PartialEq)]
 //! struct Ipsum {
 //!     #[builder(try_setter, setter(into, name = "foo"))]
@@ -246,12 +250,14 @@
 //! }
 //!
 //! fn main() {
+//! #  #[cfg(feature = "nightlytests")]
 //!    LoremBuilder::default()
 //!        .try_ipsum(1u16).unwrap()
 //!        .name("hello")
 //!        .build()
 //!        .expect("1 fits into a u8");
 //!
+//! #  #[cfg(feature = "nightlytests")]
 //!    IpsumBuilder::default()
 //!        .try_foo(1u16)
 //!        .unwrap()
