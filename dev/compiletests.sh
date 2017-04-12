@@ -4,7 +4,7 @@ function main {
   export CARGO_TARGET_DIR="target/__compiletests"
 
   commands=(
-    "cd derive_builder_test && rustup run nightly cargo test --test compiletests --features compiletests --color always"
+    "cd derive_builder_test && rustup run nightly cargo test --test compiletests --features nightlytests --color always"
   )
 
   dev/travis-run-all.sh "${commands[@]}"

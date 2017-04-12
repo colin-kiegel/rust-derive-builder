@@ -34,6 +34,8 @@ use Bindings;
 pub struct Setter<'a> {
     /// Enables code generation for this setter fn.
     pub enabled: bool,
+    /// Enables code generation for the `try_` variant of this setter fn.
+    pub try_setter: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
     /// How the setter method takes and returns `self` (e.g. mutably).
@@ -117,6 +119,26 @@ impl<'a> ToTokens for Setter<'a> {
                     new.#field_ident = #option::Some(#into_value);
                     new
             }));
+            
+            if self.try_setter {
+                let try_into = self.bindings.try_into_trait();
+                let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
+                let try_ident = syn::Ident::new(format!("try_{}", ident));
+                let result = self.bindings.result_ty();
+                
+                tokens.append(quote!(
+                    #(#attrs)*
+                    #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
+                        -> #result<#return_ty, VALUE::Error>
+                    {
+                        let converted : #ty = value.try_into()?;
+                        let mut new = #self_into_return_ty;
+                        new.#field_ident = #option::Some(converted);
+                        Ok(new)
+                }));
+            } else {
+                trace!("Skipping try_setter for `{}`.", self.field_ident);
+            }
         } else {
             trace!("Skipping setter for `{}`.", self.field_ident);
         }
@@ -131,6 +153,7 @@ macro_rules! default_setter {
     () => {
         Setter {
             enabled: true,
+            try_setter: false,
             visibility: &syn::Visibility::Public,
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
@@ -221,7 +244,7 @@ mod tests {
         ));
     }
 
-    // including
+    // including try_setter
     #[test]
     fn full() {
         let attrs = vec![syn::parse_outer_attr("#[some_attr]").unwrap()];
@@ -233,6 +256,7 @@ mod tests {
         setter.attrs = attrs.as_slice();
         setter.generic_into = true;
         setter.deprecation_notes = &deprecated;
+        setter.try_setter = true;
 
         assert_eq!(quote!(#setter), quote!(
             #[some_attr]
@@ -241,6 +265,15 @@ mod tests {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value.into());
                 new
+            }
+                        
+            #[some_attr]
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+                -> ::std::result::Result<&mut Self, VALUE::Error> {
+                let converted : Foo = value.try_into()?;
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(converted);
+                Ok(new)
             }
         ));
     }
@@ -281,5 +314,28 @@ mod tests {
         setter.enabled = false;
 
         assert_eq!(quote!(#setter), quote!());
+    }
+    
+    #[test]
+    fn try_setter() {
+        let mut setter: Setter = default_setter!();
+        setter.pattern = BuilderPattern::Mutable;
+        setter.try_setter = true;
+        
+        assert_eq!(quote!(#setter), quote!(
+            pub fn foo(&mut self, value: Foo) -> &mut Self {
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(value);
+                new
+            }
+            
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+                -> ::std::result::Result<&mut Self, VALUE::Error> {
+                let converted : Foo = value.try_into()?;
+                let mut new = self;
+                new.foo = ::std::option::Option::Some(converted);
+                Ok(new)
+            }
+        ));
     }
 }

@@ -10,7 +10,7 @@ matrix:
     - rust: 1.15.0
       env: JOB=build CARGO_FEATURES="struct_default"
     - rust: nightly
-      env: JOB=build CARGO_FEATURES="compiletests logging"
+      env: JOB=build CARGO_FEATURES="nightlytests logging"
     - rust: nightly
       env: JOB=style_check
   allow_failures:

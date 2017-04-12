@@ -1,4 +1,4 @@
-#![cfg(feature = "compiletests")]
+#![cfg(feature = "nightlytests")]
 extern crate compiletest_rs as compiletest;
 
 // note:

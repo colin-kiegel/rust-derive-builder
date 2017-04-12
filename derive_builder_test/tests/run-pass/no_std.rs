@@ -22,7 +22,7 @@ struct IgnoreEmptyStruct {}
 struct Foo {
     #[builder(default)]
     defaulted: u32,
-    #[builder(setter(skip))]
+    #[builder(setter(skip), try_setter)]
     skipped: u32,
 }
 

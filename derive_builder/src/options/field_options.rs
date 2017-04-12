@@ -31,6 +31,8 @@ pub struct FieldOptions {
     pub attrs: Vec<syn::Attribute>,
     /// Bindings to libstd or libcore.
     pub bindings: Bindings,
+    /// Enables code generation for the TryInto setter.
+    pub try_setter: bool,
 }
 
 impl DefaultExpression {
@@ -58,6 +60,7 @@ impl FieldOptions {
     pub fn as_setter<'a>(&'a self) -> Setter<'a> {
         Setter {
             enabled: self.setter_enabled,
+            try_setter: self.try_setter,
             visibility: &self.setter_visibility,
             pattern: self.builder_pattern,
             attrs: &self.attrs,

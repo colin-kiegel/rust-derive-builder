@@ -216,6 +216,50 @@
 //! }
 //! ```
 //!
+//! ## Fallible Setters
+//!
+//! Alongside the normal setter methods, you can expose fallible setters which are generic over
+//! the `TryInto` trait. TryInto is a not-yet-stable trait
+//! (see rust-lang issue [#33417](https://github.com/rust-lang/rust/issues/33417)) similar to
+//! `Into` with the key distinction that the conversion can fail, and therefore produces a
+//! `Result`.
+//!
+//! You can only declare the `try_setter` attribute today if you're targeting nightly, and you have
+//! to add `#![feature(try_from)]` to your crate to use it.
+//!
+//! ```rust,ignore
+//! #![feature(try_from)]
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! #[builder(try_setter, setter(into))]
+//! struct Lorem {
+//!     pub name: String,
+//!     pub ipsum: u8,
+//! }
+//!
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Ipsum {
+//!     #[builder(try_setter, setter(into, name = "foo"))]
+//!     pub dolor: u8,
+//! }
+//!
+//! fn main() {
+//!    LoremBuilder::default()
+//!        .try_ipsum(1u16).unwrap()
+//!        .name("hello")
+//!        .build()
+//!        .expect("1 fits into a u8");
+//!
+//!    IpsumBuilder::default()
+//!        .try_foo(1u16)
+//!        .unwrap()
+//!        .build()
+//!        .expect("1 fits into a u8");
+//! }
+//! ```
+//!
 //! ## Default Values
 //!
 //! You can define default values for each field via annotation by `#[builder(default="...")]`,
@@ -366,6 +410,9 @@
 //! - If derive_builder depends on your crate, and vice versa, then a cyclic
 //!   dependency would occur. To break it you could try to depend on the
 //!   [`derive_builder_core`] crate instead.
+//! - The `try_setter` attribute and `owned` builder pattern are not compatible in practice;
+//!   an error during building will consume the builder, making it impossible to continue
+//!   construction.
 //!
 //! ## Debugging Info
 //!
