@@ -106,7 +106,7 @@ Requires Rust 1.15 or newer.
  - generate setter methods
  - support for generic structs
 
-[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.0...HEAD
+[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.4...HEAD
 [0.4.4]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.3...v0.4.4
 [0.4.3]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.2...v0.4.3
 [0.4.2]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.1...v0.4.2
