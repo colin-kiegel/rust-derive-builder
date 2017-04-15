@@ -64,8 +64,8 @@ impl DeprecationNotes {
     }
 
     /// Create a view of these deprecation notes that can annotate a struct.
-    pub fn as_item<'a>(&'a self) -> DeprecationNotesAsItem<'a> {
-        DeprecationNotesAsItem(&self)
+    pub fn as_item(&self) -> DeprecationNotesAsItem {
+        DeprecationNotesAsItem(self)
     }
 }
 
