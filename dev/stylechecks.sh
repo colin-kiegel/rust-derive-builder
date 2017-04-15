@@ -6,10 +6,8 @@ function main {
   commands=(
     "cd derive_builder_core && cargo clippy -- -Dclippy --color always"
     "cd derive_builder      && cargo clippy -- -Dclippy --color always"
-    "cd derive_builder_test && cargo clippy -- -Dclippy --color always"
     "cd derive_builder_core && cargo fmt -- --write-mode diff"
     "cd derive_builder      && cargo fmt -- --write-mode diff"
-    "cd derive_builder_test && cargo fmt -- --write-mode diff"
   )
 
   dev/travis-run-all.sh "${commands[@]}"
