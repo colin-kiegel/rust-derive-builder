@@ -250,7 +250,7 @@ mod tests {
         let attrs = vec![syn::parse_outer_attr("#[some_attr]").unwrap()];
 
         let mut deprecated = DeprecationNotes::default();
-        deprecated.push(String::from("Some example."));
+        deprecated.push("Some example.".to_string());
 
         let mut setter = default_setter!();
         setter.attrs = attrs.as_slice();

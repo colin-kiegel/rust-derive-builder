@@ -56,7 +56,7 @@ fn public_setters_override_foreign_module() {
         .build()
         .unwrap();
 
-    assert_eq!(x.public, String::from("Hello"));
+    assert_eq!(x.public, "Hello".to_string());
 }
 
 #[test]
@@ -67,7 +67,7 @@ fn public_setters_foreign_module() {
         .build()
         .unwrap();
 
-    assert_eq!(y.public, String::from("Hello"));
+    assert_eq!(y.public, "Hello".to_string());
 }
 
 // compile-test should fail with "error: method `ipsum` is private"

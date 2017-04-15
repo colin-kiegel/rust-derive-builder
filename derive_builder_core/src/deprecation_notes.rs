@@ -17,7 +17,7 @@ use syn;
 /// # use derive_builder_core::DeprecationNotes;
 /// # fn main() {
 /// #    let mut note = DeprecationNotes::default();
-/// #    note.push(String::from("Some Warning"));
+/// #    note.push("Some Warning".to_string());
 /// #    assert_eq!(quote!(#note), quote!(
 ///         {
 ///             #[deprecated(note="Some Warning")]
@@ -93,7 +93,7 @@ impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
 #[test]
 fn deprecation_note() {
     let mut note = DeprecationNotes::default();
-    note.push(String::from("Some Warning"));
+    note.push("Some Warning".to_string());
     assert_eq!(quote!(#note), quote!(
         {
             #[deprecated(note="Some Warning")]
