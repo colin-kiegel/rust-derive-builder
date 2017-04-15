@@ -74,7 +74,10 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
-            debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}", ty_generics, where_clause, impl_generics);
+            debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}",
+                   ty_generics,
+                   where_clause,
+                   impl_generics);
 
             tokens.append(quote!(
                 #[derive(Default, Clone)]

@@ -51,7 +51,10 @@ pub mod foo {
 #[test]
 #[should_panic(expected="`private` must be initialized")]
 fn public_setters_override_foreign_module() {
-    let x = foo::LoremBuilder::default().public("Hello").build().unwrap();
+    let x = foo::LoremBuilder::default()
+        .public("Hello")
+        .build()
+        .unwrap();
 
     assert_eq!(x.public, String::from("Hello"));
 }
@@ -59,7 +62,10 @@ fn public_setters_override_foreign_module() {
 #[test]
 #[should_panic(expected="`private` must be initialized")]
 fn public_setters_foreign_module() {
-    let y = foo::IpsumBuilder::default().public("Hello").build().unwrap();
+    let y = foo::IpsumBuilder::default()
+        .public("Hello")
+        .build()
+        .unwrap();
 
     assert_eq!(y.public, String::from("Hello"));
 }

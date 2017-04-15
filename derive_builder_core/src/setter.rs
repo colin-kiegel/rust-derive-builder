@@ -119,13 +119,13 @@ impl<'a> ToTokens for Setter<'a> {
                     new.#field_ident = #option::Some(#into_value);
                     new
             }));
-            
+
             if self.try_setter {
                 let try_into = self.bindings.try_into_trait();
                 let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
                 let try_ident = syn::Ident::new(format!("try_{}", ident));
                 let result = self.bindings.result_ty();
-                
+
                 tokens.append(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
@@ -266,9 +266,9 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value.into());
                 new
             }
-                        
+
             #[some_attr]
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
                 -> ::std::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
@@ -315,21 +315,21 @@ mod tests {
 
         assert_eq!(quote!(#setter), quote!());
     }
-    
+
     #[test]
     fn try_setter() {
         let mut setter: Setter = default_setter!();
         setter.pattern = BuilderPattern::Mutable;
         setter.try_setter = true;
-        
+
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-            
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE) 
+
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
                 -> ::std::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;

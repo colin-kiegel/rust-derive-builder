@@ -37,7 +37,7 @@ struct Lorem {
 #[derive(Debug, PartialEq, Builder)]
 #[builder(try_setter, setter(into, prefix = "set"))]
 struct Ipsum {
-    pub source: MyAddr
+    pub source: MyAddr,
 }
 
 fn exact_helper() -> Result<Lorem, String> {
@@ -68,7 +68,8 @@ fn infallible_set() {
 fn fallible_set() {
     let mut builder = LoremBuilder::default();
     let try_result = builder.try_source("1.2.3.4");
-    let built = try_result.expect("Passed well-formed address")
+    let built = try_result
+        .expect("Passed well-formed address")
         .dest(IpAddr::from_str("0.0.0.0").unwrap())
         .build()
         .unwrap();

@@ -82,10 +82,12 @@ impl<'a> Initializer<'a> {
         match self.builder_pattern {
             BuilderPattern::Owned => MatchSome::Move,
             BuilderPattern::Mutable |
-            BuilderPattern::Immutable => if self.bindings.no_std {
-                MatchSome::CloneNoStd
-            } else {
-                MatchSome::Clone
+            BuilderPattern::Immutable => {
+                if self.bindings.no_std {
+                    MatchSome::CloneNoStd
+                } else {
+                    MatchSome::Clone
+                }
             },
         }
     }
@@ -94,17 +96,20 @@ impl<'a> Initializer<'a> {
     fn match_none(&'a self) -> MatchNone<'a> {
         match self.default_value {
             Some(ref expr) => MatchNone::DefaultTo(expr),
-            None => if self.use_default_struct {
-                MatchNone::UseDefaultStructField(self.field_ident)
-            } else if self.bindings.no_std {
-                MatchNone::ReturnErrorNoStd(format!("`{}` must be initialized", self.field_ident))
-            } else {
-                MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+            None => {
+                if self.use_default_struct {
+                    MatchNone::UseDefaultStructField(self.field_ident)
+                } else if self.bindings.no_std {
+                    MatchNone::ReturnErrorNoStd(format!("`{}` must be initialized",
+                                                        self.field_ident))
+                } else {
+                    MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+                }
             }
         }
     }
 
-    fn default(&'a self) -> Tokens {        
+    fn default(&'a self) -> Tokens {
         match self.default_value {
             Some(ref expr) => quote!(#expr),
             None if self.use_default_struct => {
