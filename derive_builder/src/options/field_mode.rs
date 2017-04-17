@@ -91,7 +91,7 @@ impl OptionsBuilder<FieldMode> {
 
 impl OptionsBuilderMode for FieldMode {
     fn parse_builder_name(&mut self, _name: &syn::Lit) {
-        panic!("Builder name can only be set on the stuct level (but found {}).",
+        panic!("Builder name can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
 
@@ -107,6 +107,11 @@ impl OptionsBuilderMode for FieldMode {
 
     fn struct_mode(&self) -> bool {
         false
+    }
+    
+    fn parse_build_fn_options(&mut self, _: &[syn::NestedMetaItem]) {
+        panic!("Build function options can only be set on the struct level (but found {}).", 
+               self.where_diagnostics())
     }
 }
 

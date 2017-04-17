@@ -37,7 +37,7 @@ pub struct BuildMethod<'a> {
     /// Enables code generation for this build method.
     pub enabled: bool,
     /// Name of this build fn.
-    pub ident: syn::Ident,
+    pub ident: &'a syn::Ident,
     /// Visibility of the build method, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
     /// How the build method takes and returns `self` (e.g. mutably).
@@ -125,7 +125,7 @@ macro_rules! default_build_method {
     () => {
         BuildMethod {
             enabled: true,
-            ident: syn::Ident::new("build"),
+            ident: &syn::Ident::new("build"),
             visibility: &syn::Visibility::Public,
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::new("Foo"),
@@ -183,5 +183,28 @@ mod tests {
                 })
             }
         ));
+    }
+    
+    #[test]
+    fn skip() {
+        let mut build_method = default_build_method!();
+        build_method.enabled = false;
+        
+        assert_eq!(quote!(), quote!(#build_method));
+    }
+    
+    #[test]
+    fn rename() {
+        let ident = syn::Ident::new("finish");
+        let mut build_method : BuildMethod = default_build_method!();
+        build_method.ident = &ident;
+        
+        assert_eq!(quote!(#build_method), quote!(
+            pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                Ok(Foo {
+                    foo: self.foo,
+                })
+            }
+        ))
     }
 }
