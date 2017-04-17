@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "nightlytests", feature(try_from))]
 #![allow(dead_code)]
 
 #[macro_use]

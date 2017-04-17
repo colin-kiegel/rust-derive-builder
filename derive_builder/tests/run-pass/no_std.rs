@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "nightlytests", feature(try_from))]
+
 // requires nightly toolchain!
 //
 // compile-flags:-C panic=abort
