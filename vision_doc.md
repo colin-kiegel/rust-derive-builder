@@ -10,15 +10,18 @@ A builder should produce only objects that uphold the invariants of the target t
 ## Documentation
 Authors should focus documentation efforts on the target type.
 * If the builder is the only way to create the target type, then the target type should discuss the requirements for its own creation.
-* The builder can automatically include a link to the target type doc HTML from its own struct-level doc comment.
+* The builder can - in most cases - automatically include a link to the target type doc HTML from its own struct-level doc comment.
 
 ## Imports
 A crate/module should always export the target type of a builder to allow the _built_ type to appear in function and struct type declarations. The exporting crate should _generally_ also expose the builder type, but may choose to exclude it from a prelude or the crate root, preferring to expose it in a child module. The crate is also free to keep the builder for its own internal use.
 
-For the case of builder population with statically-known values or through explicit construction from function arguments, the target type should (optionally) expose a static `builder()` method which returns the builder type. In addition to keeping the imports shorter, this will appear in RLS ["find all reference"] queries by type, will be updated automatically during type renaming within the workspace observed by the language server, and will [show docs for the target type on type hover] (requesting docs on the static method will get the user to the builder-specific documentation).
+For the case of builder population with statically-known values or through explicit construction from function arguments, the target type should (optionally) expose a static `builder()` method which returns the builder type. In addition to keeping the imports shorter, this will appear in RLS ["find all reference"] queries by type, will be updated automatically during type renaming within the workspace observed by the language server, and will [show docs for the target type on type hover] (requesting docs on the static method will get the user to the builder-specific documentation). For more information on this, see the [language server protocol] that RLS is implementing.
 
 ## Fallible vs. Infallible Builders
 The typesafe builder case (which is capable of statically validating that all required fields are present) can be achieved using a generic which marks when all required fields are present. A constructor on the builder can take non-optional values for all the required fields, and return a builder with the correct session type. By exposing inherent and trait `impl` blocks only on the generic instantiation with the correct state as its type parameter, the same implementation can serve both purposes.
+
+## Validation
+The builder should be focused specifically on the assembly of inputs and validating the completeness of the parameter set; additional validation should be handled by a constructor function provided by the target type. That constructor function may be public or private, depending on whether or not the crate author wants to _require_ the use of the builder.
 
 # Use Case
 Consider a `ConnectionPool` object. It has:
@@ -278,3 +281,4 @@ mod consuming_crate {
 [idiomatic]: https://aturon.github.io/ownership/builders.html
 ["find all references"]: https://github.com/rust-lang-nursery/rls/blob/master/src/server.rs#L162
 [show docs for the target type on type hover]: https://github.com/rust-lang-nursery/rls/blob/master/src/server.rs#L160
+[language server protocol]: https://github.com/Microsoft/language-server-protocol
