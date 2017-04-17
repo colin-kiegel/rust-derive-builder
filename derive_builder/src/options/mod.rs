@@ -66,6 +66,7 @@ pub struct OptionsBuilder<Mode> {
 /// Certain attributes need to be handled differently for `StructOptions` and `FieldOptions`.
 pub trait OptionsBuilderMode: ::std::fmt::Debug {
     fn parse_builder_name(&mut self, lit: &syn::Lit);
+    fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]);
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
@@ -307,6 +308,9 @@ impl<Mode> OptionsBuilder<Mode> where
                     self.setter_enabled(true);
                 }
             },
+            "derive" => {
+                self.mode.parse_derive(nested);
+            }
             _ => {
                 panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }

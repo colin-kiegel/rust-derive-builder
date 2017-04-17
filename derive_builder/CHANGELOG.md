@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - customize setter names via `#[builder(setter(name="..."))]`
+- derive additional traits via `#[builder(derive(Trait1, Trait2, ...))]`
 
 ## [0.4.4] - 2017-04-12
 
