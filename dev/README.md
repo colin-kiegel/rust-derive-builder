@@ -1,9 +1,18 @@
 # DEV Tools
 
-It's very useful to set `dev/githook.sh` as a `pre-push` hook, like this:
+It's very useful to set `dev/githook.sh` as a `pre-push` hook.
+
+On Linux, do this:
 
 ```bash
 (cd .git/hooks && ln -s ../../dev/githook.sh pre-push)
+```
+
+As macOS doesn't support symlinks in `readlink`, do this:
+
+```bash
+(cd .git/hooks && echo $'#!/bin/bash
+ ../../dev/githook.sh' > pre-push)
 ```
 
 This will basically do all the tests that travis would do, before the push is
