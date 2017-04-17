@@ -372,6 +372,28 @@
 //! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
 //! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
 //!
+//! ## Additional Trait Derivations
+//!
+//! You can derive additional traits on the builder, including traits defined by other crates:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Clone)]
+//! #[builder(derive(Debug, PartialEq, Eq))]
+//! pub struct Lorem {
+//!     foo: u8,
+//!     bar: String,
+//! }
+//! 
+//! fn main() {
+//!    assert_eq!(LoremBuilder::default(), LoremBuilder::default());
+//! }
+//! ```
+//!
+//! Attributes declared for those traits are _not_ forwarded to the fields on the builder.
+//!
 //! ## Documentation Comments and Attributes
 //!
 //! `#[derive(Builder)]` copies doc comments and attributes (`#[...]`) from your fields

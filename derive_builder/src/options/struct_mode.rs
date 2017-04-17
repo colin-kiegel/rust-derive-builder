@@ -11,6 +11,7 @@ pub struct StructMode {
     build_target_vis: syn::Visibility,
     builder_name: Option<String>,
     builder_vis: Option<syn::Visibility>,
+    derive_traits: Option<Vec<syn::Ident>>,
     deprecation_notes: DeprecationNotes,
     struct_size_hint: usize,
 }
@@ -28,6 +29,7 @@ impl OptionsBuilder<StructMode> {
             builder_vis: None,
             build_fn_enabled: None,
             build_fn_name: None,
+            derive_traits: None,
             deprecation_notes: Default::default(),
             struct_size_hint: 0,
         });
@@ -55,6 +57,12 @@ impl StructMode {
         ident: build_fn_enabled,
         desc: "build function enabled",
         map: |x: bool| { x },
+    }
+    
+    impl_setter!{
+        ident: derive_traits,
+        desc: "derive traits",
+        map: |x: Vec<syn::Ident>| { x },
     }
     
     #[allow(non_snake_case)]
@@ -151,6 +159,25 @@ impl OptionsBuilderMode for StructMode {
         }
     }
 
+    fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]) {
+        let mut traits = vec![];
+        for x in nested {
+            match *x {
+                // We don't allow name-value pairs or further nesting here, so
+                // only look for words.
+                syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref tr)) => {
+                    traits.push(tr.clone())
+                }
+                _ => {
+                    panic!("The derive(...) option should be a list of traits (at {}).",
+                           self.where_diagnostics())
+                }
+            }
+        }
+
+        self.derive_traits(traits);
+    }
+
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
         self.deprecation_notes.push(x.into());
         self
@@ -203,6 +230,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             builder_visibility: m.builder_vis.unwrap_or(m.build_target_vis),
             builder_pattern: b.builder_pattern.unwrap_or_default(),
             build_target_ident: syn::Ident::new(m.build_target_name),
+            derives: m.derive_traits.unwrap_or_default(),
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
