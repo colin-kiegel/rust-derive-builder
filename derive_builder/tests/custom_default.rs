@@ -36,13 +36,14 @@ mod field_level {
             .build()
             .unwrap();
 
-        assert_eq!(x, Lorem {
-            required: "ipsum".to_string(),
-            explicit_default: "".to_string(),
-            escaped_default: "foo".to_string(),
-            raw_default: "Hello World!".to_string(),
-            computed_default: "ipsum-EMPTY-EMPTY-EMPTY".to_string(),
-        });
+        assert_eq!(x,
+                   Lorem {
+                       required: "ipsum".to_string(),
+                       explicit_default: "".to_string(),
+                       escaped_default: "foo".to_string(),
+                       raw_default: "Hello World!".to_string(),
+                       computed_default: "ipsum-EMPTY-EMPTY-EMPTY".to_string(),
+                   });
     }
 
     #[test]
@@ -55,13 +56,14 @@ mod field_level {
             .build()
             .unwrap();
 
-        assert_eq!(x, Lorem {
-            required: "ipsum".to_string(),
-            explicit_default: "lorem".to_string(),
-            escaped_default: "dolor".to_string(),
-            raw_default: "sit".to_string(),
-            computed_default: "ipsum-lorem-dolor-sit".to_string(),
-        });
+        assert_eq!(x,
+                   Lorem {
+                       required: "ipsum".to_string(),
+                       explicit_default: "lorem".to_string(),
+                       escaped_default: "dolor".to_string(),
+                       raw_default: "sit".to_string(),
+                       computed_default: "ipsum-lorem-dolor-sit".to_string(),
+                   });
     }
 }
 
@@ -107,30 +109,28 @@ mod struct_level {
 
     #[test]
     fn explicit_defaults_are_equal() {
-        let lorem = LoremBuilder::default()
-            .build()
-            .unwrap();
+        let lorem = LoremBuilder::default().build().unwrap();
 
         // new behaviour starting with 0.5.x:
         #[cfg(feature = "struct_default")]
-        assert_eq!(lorem, Lorem {
-            overwritten: true,
-            ..explicit_default()
-        });
+        assert_eq!(lorem,
+                   Lorem {
+                       overwritten: true,
+                       ..explicit_default()
+                   });
 
         // old behaviour since 0.4.x:
         #[cfg(not(feature = "struct_default"))]
-        assert_eq!(lorem, Lorem {
-            overwritten: true,
-            not_type_default: explicit_default(),
-        });
+        assert_eq!(lorem,
+                   Lorem {
+                       overwritten: true,
+                       not_type_default: explicit_default(),
+                   });
     }
 
     #[test]
     fn implicit_defaults_are_equal() {
-        let ipsum = IpsumBuilder::default()
-            .build()
-            .unwrap();
+        let ipsum = IpsumBuilder::default().build().unwrap();
 
         // new behaviour starting with 0.5.x:
         #[cfg(feature = "struct_default")]
@@ -138,11 +138,12 @@ mod struct_level {
 
         // old behaviour since 0.4.x:
         #[cfg(not(feature = "struct_default"))]
-        assert_eq!(ipsum, Ipsum {
-            not_type_default: Default::default(),
-            also_custom: Default::default(),
-            is_type_default: Default::default(),
-        });
+        assert_eq!(ipsum,
+                   Ipsum {
+                       not_type_default: Default::default(),
+                       also_custom: Default::default(),
+                       is_type_default: Default::default(),
+                   });
     }
 
     #[test]

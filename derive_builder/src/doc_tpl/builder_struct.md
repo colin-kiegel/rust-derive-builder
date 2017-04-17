@@ -1,1 +1,1 @@
-Builder for `{struct_name}`.
+Builder for [`{struct_name}`](struct.{struct_name}.html).

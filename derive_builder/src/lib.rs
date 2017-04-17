@@ -412,16 +412,18 @@
 //!
 //! - Tuple structs and unit structs are not supported as they have no field
 //!   names.
+//! - Generic structs need the boundary `where T: std::clone::Clone` if
+//!   used in combination with the immutable/mutable pattern
 //! - Generic setters introduce a type parameter `VALUE: Into<_>`. Therefore you can't use
 //!  `VALUE` as a type parameter on a generic struct in combination with generic setters.
+//! - The `try_setter` attribute and `owned` builder pattern are not compatible in practice;
+//!   an error during building will consume the builder, making it impossible to continue
+//!   construction.
 //! - When re-exporting the underlying struct under a different name, the
 //!   auto-generated documentation will not match.
 //! - If derive_builder depends on your crate, and vice versa, then a cyclic
 //!   dependency would occur. To break it you could try to depend on the
 //!   [`derive_builder_core`] crate instead.
-//! - The `try_setter` attribute and `owned` builder pattern are not compatible in practice;
-//!   an error during building will consume the builder, making it impossible to continue
-//!   construction.
 //!
 //! ## Debugging Info
 //!

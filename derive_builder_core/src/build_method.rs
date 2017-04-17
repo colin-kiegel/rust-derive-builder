@@ -72,9 +72,9 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let default_struct = self.default_struct
             .as_ref()
             .map(|default_expr| {
-                let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
-                quote!(let #ident: #target_ty = #default_expr;)
-            });
+                     let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+                     quote!(let #ident: #target_ty = #default_expr;)
+                 });
         let result = self.bindings.result_ty();
         let string = self.bindings.string_ty();
 

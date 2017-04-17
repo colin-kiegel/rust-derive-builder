@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "nightlytests", feature(try_from))]
+/// This dummy crate serves as a playground to inspect things like generated documentation
 
 #[macro_use]
 extern crate derive_builder;
