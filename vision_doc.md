@@ -1,11 +1,11 @@
 # Vision
-`derive_builder` provides an ergonomic way to deal with construction of guaranteed-complete objects from a range of inputs:
+`derive_builder` provides an ergonomic and [idiomatic] way to deal with construction of guaranteed-complete objects from a range of inputs:
 
 * Statically-known values
 * Function arguments
 * Wire/file/database inputs
 
-The builder should be focused specifically on the assembly of inputs and validating the completeness of the parameter set; additional validation should be handled by a constructor function provided by the target type. That constructor function may be public or private, depending on whether or not the crate author wants to _require_ the use of the builder.
+A builder should produce only objects that uphold the invariants of the target type. This includes, but is not limited to, checks upheld by the type system.
 
 ## Documentation
 Authors should focus documentation efforts on the target type.
@@ -15,14 +15,10 @@ Authors should focus documentation efforts on the target type.
 ## Imports
 A crate/module should always export the target type of a builder to allow the _built_ type to appear in function and struct type declarations. The exporting crate should _generally_ also expose the builder type, but may choose to exclude it from a prelude or the crate root, preferring to expose it in a child module. The crate is also free to keep the builder for its own internal use.
 
-For the case of builder population with statically-known values or through explicit construction from function arguments, the target type should (optionally) expose a static `builder()` method which returns the builder type. In addition to keeping the imports shorter, this will appear in RLS "find all reference" queries by type, will be updated automatically during type renaming within the workspace, and will show docs for the target type on type hover (requesting docs on the static method will get the user to the builder-specific documentation).
+For the case of builder population with statically-known values or through explicit construction from function arguments, the target type should (optionally) expose a static `builder()` method which returns the builder type. In addition to keeping the imports shorter, this will appear in RLS ["find all reference"] queries by type, will be updated automatically during type renaming within the workspace observed by the language server, and will [show docs for the target type on type hover] (requesting docs on the static method will get the user to the builder-specific documentation).
 
 ## Fallible vs. Infallible Builders
-The infallible-builder-with-required-fields case is interesting, but brittle; it can only be achieved by generating a custom constructor function which takes all required values up front, and creates a type which cannot be a drop-in replacement for a fallible builder.
-
-In this proposal, an infallible builder is one which declares `#[builder(default)]` at the struct level and does not skip the automatic build function, which requires that all fields be optional and any well-formed value be acceptable. When a builder meets these criteria, a `From<&mut TargetBuilder> for Target` impl would be automatically emitted (exact implementations emitted would depend on builder pattern). **Open question: does this change the signature of the emitted `build` method, add a new inherent method, or just add the `Into` implementation?**
-
-To handle the mix-required-and-optional case, exporting crate would refactor to have a `Target` struct and a `TargetOptions` struct, with a builder derived on one or both of those. The `TargetOptions` struct would have only optional fields, thus enabling an infallible build of it.
+The typesafe builder case (which is capable of statically validating that all required fields are present) can be achieved using a generic which marks when all required fields are present. A constructor on the builder can take non-optional values for all the required fields, and return a builder with the correct session type. By exposing inherent and trait `impl` blocks only on the generic instantiation with the correct state as its type parameter, the same implementation can serve both purposes.
 
 # Use Case
 Consider a `ConnectionPool` object. It has:
@@ -66,13 +62,14 @@ pub struct ConnectionPool {
 impl ConnectionPool {
     /// Could be private if the builder was meant to be only way to create instance.
     pub fn new(host: String, api_key: ApiKey, timeout: Duration) -> Result<Self> {
-        // @FAERN; validation would occur here
+        // validation would occur here
         
         let socket = unimplemented!(); // try to open the socket...
         ConnectionPool {
             host: host,
             api_key: api_key,
-            timeout: timeout
+            timeout: timeout,
+            socket: socket,
         }
     }
     
@@ -147,7 +144,7 @@ mod exporting_crate {
     /// * `target_factory`: Name needs work, but this tells the macro to add an 
     ///   inherent `builder` function on the target type.
     #[derive(Debug, Clone, Builder, Serialize)]
-    #[builder(setter(into), try_setter, preserve_attrs(serde), derive = "Deserialize", build_fn(skip), target_factory)]
+    #[builder(setter(into), try_setter, preserve_attrs(serde), derive(Deserialize), build_fn(skip), target_factory)]
     pub struct StatRequest {
         /// This particular field should be named `stat` on the inbound request;
         /// that requires a field-level annotation.
@@ -277,3 +274,7 @@ mod consuming_crate {
     }
 }
 ```
+
+[idiomatic]: https://aturon.github.io/ownership/builders.html
+["find all references"]: https://github.com/rust-lang-nursery/rls/blob/master/src/server.rs#L162
+[show docs for the target type on type hover]: https://github.com/rust-lang-nursery/rls/blob/master/src/server.rs#L160
