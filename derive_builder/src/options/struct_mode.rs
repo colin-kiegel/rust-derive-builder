@@ -4,6 +4,8 @@ use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
 pub struct StructMode {
+    build_fn_name: String,
+    build_fn_enabled: bool,
     build_target_name: String,
     build_target_generics: syn::Generics,
     build_target_vis: syn::Visibility,

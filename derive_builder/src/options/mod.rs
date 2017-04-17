@@ -239,7 +239,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 if self.mode.struct_mode() {
                     self.no_std(true)
                 } else {
-                    panic!("Support for `#![no_std]` can only be set on the stuct level \
+                    panic!("Support for `#![no_std]` can only be set on the struct level \
                             (but found {}).", self.where_diagnostics())
                 }
             },
@@ -294,6 +294,14 @@ impl<Mode> OptionsBuilder<Mode> where
                     self.setter_enabled(true);
                 }
             },
+            "build_fn" => {
+                if self.mode.struct_mode() {
+                    self.parse_build_fn_options(nested);
+                } else {
+                    panic!("Options related to build_fn can only be set at struct level \
+                            (found at {})", self.where_diagnostics());
+                }
+            }
             _ => {
                 panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
@@ -440,6 +448,37 @@ impl<Mode> OptionsBuilder<Mode> where
     fn parse_setter_skip(&mut self, skip: &syn::Lit) {
         trace!("Parsing skip setter `{:?}`", skip);
         self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
+    }
+    
+    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]) {
+        trace!("Parsing build_fn options.");
+        unimplemented!()
+    }
+    
+    #[allow(non_snake_case)]
+    fn parse_build_fn_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
+        trace!("Build Method Options - Parsing MetaItem `{:?}`.", meta_item);
+        match *meta_item {
+            syn::MetaItem::Word(ref ident) => {
+                self.parse_build_fn_options_word(ident)
+            },
+            syn::MetaItem::NameValue(ref ident, ref lit) => {
+                self.parse_build_fn_options_nameValue(ident, lit)
+            },
+            syn::MetaItem::List(ref ident, ref nested_attrs) => {
+                self.parse_build_fn_options_list(ident, nested_attrs)
+            }
+        }
+    }
+    
+    fn parse_build_fn_name(&mut self, lit: &syn::Lit) {
+        trace!("Parsing name `{:?}`", lit);
+        let value = parse_lit_as_string(lit).unwrap();
+        self.
+    }
+    
+    fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
+        unimplemented!()
     }
 
     /// Provide a diagnostic _where_-clause for panics.
