@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "nightlytests", feature(try_from))]
+
 // NOTE: generate fully expanded version with `cargo expand`.
 //
 //       cargo expand --example doc_example

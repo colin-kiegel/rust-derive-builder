@@ -35,7 +35,7 @@ impl<'a> ToTokens for TryFromImpl<'a> {
         // This should NOT appear in the where clause or target type declaration,
         // which is why we have to make the clone.
         let mut i_generics = self.generics.clone();
-        i_generics.lifetimes.push(syn::LifetimeDef::new("'unused"));
+        i_generics.lifetimes.push(syn::LifetimeDef::new("'try_from"));
         let (impl_generics, _, _) = i_generics.split_for_impl();
         
         let builder_ty = &self.builder_ty;
@@ -46,46 +46,41 @@ impl<'a> ToTokens for TryFromImpl<'a> {
         let result_ty = self.bindings.result_ty();
         let string_ty = self.bindings.string_ty();
         
-        let immutable_borrow = quote!(
-            impl #impl_generics #try_from<&'unused #builder_ty #ty_generics> for #target_ty #ty_generics 
-                #where_clause {
-                type Error = #string_ty;
-                
-                fn try_from(v: &#builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
-                    v.#fn_ident()
+        // Emit the conversion which matches the builder pattern. This is required,
+        // as the borrow patterns don't work for owned-pattern builders whose fields
+        // may not implement `Clone`.
+        tokens.append(match self.pattern {
+            BuilderPattern::Immutable => quote!(
+                impl #impl_generics #try_from<&'try_from #builder_ty #ty_generics> for #target_ty #ty_generics 
+                    #where_clause {
+                    type Error = #string_ty;
+                    
+                    fn try_from(v: &#builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
+                        v.#fn_ident()
+                    }
                 }
-            }
-        );
-        
-        let mutable_borrow = quote!(
-            impl #impl_generics #try_from<&'unused mut #builder_ty #ty_generics> for #target_ty #ty_generics 
-                #where_clause {
-                type Error = #string_ty;
-                
-                fn try_from(v: &mut #builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
-                    v.#fn_ident()
+            ),
+            BuilderPattern::Mutable => quote!(
+                impl #impl_generics #try_from<&'try_from mut #builder_ty #ty_generics> for #target_ty #ty_generics 
+                    #where_clause {
+                    type Error = #string_ty;
+                    
+                    fn try_from(v: &mut #builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
+                        v.#fn_ident()
+                    }
                 }
-            }
-        );
-        
-        let owned = quote!(
-            impl #owned_generics #try_from<#builder_ty #ty_generics> for #target_ty #ty_generics 
-                #where_clause {
-                type Error = #string_ty;
-                
-                fn try_from(v: #builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
-                    v.#fn_ident()
+            ),
+            BuilderPattern::Owned => quote!(
+                impl #owned_generics #try_from<#builder_ty #ty_generics> for #target_ty #ty_generics 
+                    #where_clause {
+                    type Error = #string_ty;
+                    
+                    fn try_from(v: #builder_ty #ty_generics) -> #result_ty<Self, Self::Error> {
+                        v.#fn_ident()
+                    }
                 }
-            }
-        );
-        
-        tokens.append(quote!(
-            #immutable_borrow
-            
-            #mutable_borrow
-            
-            #owned            
-        ))
+            )
+        });
     }
 }
 
@@ -106,28 +101,31 @@ macro_rules! default_try_from {
 
 #[cfg(test)]
 mod tests {
-    use super::TryFromImpl;
     use syn;
+    
+    use super::TryFromImpl;
+    use BuilderPattern;
     
     #[test]
     fn simple() {
         let tf = default_try_from!();
         
         assert_eq!(quote!(#tf), quote!(
-            impl<'unused> ::std::convert::TryFrom<&'unused FooBuilder> for Foo {
-                type Error = ::std::string::String;
-                fn try_from(v: &FooBuilder) -> ::std::result::Result<Self, Self::Error> {
-                    v.build()
-                }
-            }
-            
-            impl<'unused> ::std::convert::TryFrom<&'unused mut FooBuilder> for Foo {
+            impl<'try_from> ::std::convert::TryFrom<&'try_from mut FooBuilder> for Foo {
                 type Error = ::std::string::String;
                 fn try_from(v: &mut FooBuilder) -> ::std::result::Result<Self, Self::Error> {
                     v.build()
                 }
             }
-            
+        ))
+    }
+    
+    #[test]
+    fn owned() {
+        let mut tf = default_try_from!();
+        tf.pattern = BuilderPattern::Owned;
+        
+        assert_eq!(quote!(#tf), quote!(
             impl ::std::convert::TryFrom<FooBuilder> for Foo {
                 type Error = ::std::string::String;
                 fn try_from(v: FooBuilder) -> ::std::result::Result<Self, Self::Error> {
@@ -149,23 +147,9 @@ mod tests {
         tf.generics = &new_generics;
         
         assert_eq!(quote!(#tf), quote!(
-            impl<'a, 'unused> ::std::convert::TryFrom<&'unused FooBuilder<'a> > for Foo<'a> {
-                type Error = ::std::string::String;
-                fn try_from(v: &FooBuilder<'a>) -> ::std::result::Result<Self, Self::Error> {
-                    v.build()
-                }
-            }
-            
-            impl<'a, 'unused> ::std::convert::TryFrom<&'unused mut FooBuilder<'a> > for Foo<'a> {
+            impl<'a, 'try_from> ::std::convert::TryFrom<&'try_from mut FooBuilder<'a> > for Foo<'a> {
                 type Error = ::std::string::String;
                 fn try_from(v: &mut FooBuilder<'a>) -> ::std::result::Result<Self, Self::Error> {
-                    v.build()
-                }
-            }
-            
-            impl<'a> ::std::convert::TryFrom<FooBuilder<'a> > for Foo<'a> {
-                type Error = ::std::string::String;
-                fn try_from(v: FooBuilder<'a>) -> ::std::result::Result<Self, Self::Error> {
                     v.build()
                 }
             }

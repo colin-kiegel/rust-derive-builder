@@ -26,7 +26,7 @@ logging = [ "log", "env_logger", "derive_builder_core/logging" ]
 try_from = []
 struct_default = []
 skeptic_tests = ["skeptic"]
-nightlytests = ["compiletest_rs"]
+nightlytests = ["compiletest_rs", "try_from"]
 
 [dependencies]
 syn = "0.11"
