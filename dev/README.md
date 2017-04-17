@@ -12,7 +12,7 @@ As macOS doesn't support symlinks in `readlink`, do this:
 
 ```bash
 (cd .git/hooks && echo $'#!/bin/bash
- ../../dev/githook.sh' > pre-push)
+ dev/githook.sh' > pre-push)
 ```
 
 This will basically do all the tests that travis would do, before the push is
