@@ -17,7 +17,7 @@ use syn;
 /// # use derive_builder_core::DeprecationNotes;
 /// # fn main() {
 /// #    let mut note = DeprecationNotes::default();
-/// #    note.push(String::from("Some Warning"));
+/// #    note.push("Some Warning".to_string());
 /// #    assert_eq!(quote!(#note), quote!(
 ///         {
 ///             #[deprecated(note="Some Warning")]
@@ -64,8 +64,8 @@ impl DeprecationNotes {
     }
 
     /// Create a view of these deprecation notes that can annotate a struct.
-    pub fn as_item<'a>(&'a self) -> DeprecationNotesAsItem<'a> {
-        DeprecationNotesAsItem(&self)
+    pub fn as_item(&self) -> DeprecationNotesAsItem {
+        DeprecationNotesAsItem(self)
     }
 }
 
@@ -93,7 +93,7 @@ impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
 #[test]
 fn deprecation_note() {
     let mut note = DeprecationNotes::default();
-    note.push(String::from("Some Warning"));
+    note.push("Some Warning".to_string());
     assert_eq!(quote!(#note), quote!(
         {
             #[deprecated(note="Some Warning")]

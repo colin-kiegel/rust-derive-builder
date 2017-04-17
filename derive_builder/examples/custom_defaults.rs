@@ -14,7 +14,9 @@ struct Lorem {
 
 impl LoremBuilder {
     fn default_dolor(&self) -> Result<String, String> {
-        self.ipsum.clone().ok_or_else(|| "ipsum must be initialized to build dolor".to_string())
+        self.ipsum
+            .clone()
+            .ok_or_else(|| "ipsum must be initialized to build dolor".to_string())
     }
 
     fn default_sit(&self) -> Result<String, String> {
@@ -39,10 +41,11 @@ fn main() {
         .build()
         .unwrap();
 
-    assert_eq!(x, Lorem {
-        ipsum: "ipsum".to_string(),
-        dolor: "ipsum".to_string(),
-        sit: "sit ipsum".to_string(),
-        amet: "amet ipsum".to_string(),
-    });
+    assert_eq!(x,
+               Lorem {
+                   ipsum: "ipsum".to_string(),
+                   dolor: "ipsum".to_string(),
+                   sit: "sit ipsum".to_string(),
+                   amet: "amet ipsum".to_string(),
+               });
 }

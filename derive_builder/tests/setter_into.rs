@@ -17,26 +17,14 @@ struct Ipsum {
 
 #[test]
 fn generic_field() {
-    let x = LoremBuilder::default()
-        .foo("foo")
-        .build()
-        .unwrap();
+    let x = LoremBuilder::default().foo("foo").build().unwrap();
 
-    assert_eq!(x,
-               Lorem {
-                   foo: "foo".to_string(),
-               });
+    assert_eq!(x, Lorem { foo: "foo".to_string() });
 }
 
 #[test]
 fn generic_struct() {
-    let x = IpsumBuilder::default()
-        .foo(42u8)
-        .build()
-        .unwrap();
+    let x = IpsumBuilder::default().foo(42u8).build().unwrap();
 
-    assert_eq!(x,
-               Ipsum {
-                   foo: 42u32,
-               });
+    assert_eq!(x, Ipsum { foo: 42u32 });
 }

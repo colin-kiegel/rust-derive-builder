@@ -7,7 +7,7 @@ extern crate derive_builder;
 #[builder(setter(prefix="with"))]
 struct Lorem {
     ipsum: &'static str,
-    #[builder(setter(name="foo"))] // takes precedence over prefix
+    #[builder(setter(name="foo"))]
     pub dolor: &'static str,
 }
 

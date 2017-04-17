@@ -61,7 +61,10 @@ function run_tests_on {
 	echo_begin "Running tests on $1"
 	result=$(
 	  exec 2>&1
-		([ "$rustup" == true ] && rustup update $1) && (cd derive_builder_test && rustup run "$1" cargo test --all --color always)
+		if [ "$rustup" == true ]; then
+			rustup update $1 || exit
+		fi
+		cd derive_builder && rustup run "$1" cargo test --all --color always --features skeptic_tests
 	); ret=$?
 	check_or_echo $ret "" "$result"
 }

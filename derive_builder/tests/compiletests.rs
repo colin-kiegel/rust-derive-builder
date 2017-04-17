@@ -32,8 +32,7 @@ fn run_mode(mode: &'static str) {
     let build_dir = env::var("CARGO_TARGET_DIR").unwrap_or(format!("{}/target", base_dir));
     let artefacts_dir = format!("{}/{}", build_dir, PROFILE);
 
-    config.target_rustcflags =
-        Some(format!("-L {} -L {}/deps", artefacts_dir, artefacts_dir));
+    config.target_rustcflags = Some(format!("-L {} -L {}/deps", artefacts_dir, artefacts_dir));
 
     compiletest::run_tests(&config);
 }

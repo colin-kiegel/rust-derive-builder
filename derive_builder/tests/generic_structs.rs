@@ -51,8 +51,5 @@ fn generic_reference_builder() {
         .build()
         .unwrap();
 
-    assert_eq!(x,
-               GenericReference {
-                   bar: Some(&BAR),
-               });
+    assert_eq!(x, GenericReference { bar: Some(&BAR) });
 }
