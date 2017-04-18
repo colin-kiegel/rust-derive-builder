@@ -163,7 +163,7 @@ function check_or_echo {
 }
 
 function base_dir {
-  if hash readlink 2>/dev/null; then
+  if [ uname -s != "Darwin" ] -a hash readlink 2>/dev/null; then
     # use readlink, if installed, to follow symlinks
     local __DIR="$(dirname "$(readlink -f "$0")")"
   else
