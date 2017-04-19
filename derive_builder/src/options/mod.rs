@@ -459,7 +459,7 @@ impl<Mode> OptionsBuilder<Mode> where
         trace!("Parsing skip setter `{:?}`", skip);
         self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
     }
-    
+
     /// Provide a diagnostic _where_-clause for panics.
     ///
     /// Delegete to the `OptionsBuilderMode`.

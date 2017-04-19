@@ -22,13 +22,13 @@ impl OptionsBuilder<StructMode> {
 
         // Note: Set `build_target_name` _before_ parsing attributes, for better diagnostics!
         let mut builder = Self::from(StructMode {
+            build_fn_name: None,
+            build_fn_enabled: true,
             build_target_name: ast.ident.as_ref().to_string(),
             build_target_generics: ast.generics.clone(),
             build_target_vis: ast.vis.clone(),
             builder_name: None,
             builder_vis: None,
-            build_fn_enabled: None,
-            build_fn_name: None,
             deprecation_notes: Default::default(),
             validator_fn: None,
             struct_size_hint: 0,
