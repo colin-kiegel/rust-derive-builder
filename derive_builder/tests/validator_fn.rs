@@ -42,7 +42,7 @@ impl LoremBuilder {
 
 #[test]
 fn incomplete_fields() {
-    let err_msg = LoremBuilder::default().build().expect_err("Default has uninitialized fields");
+    let err_msg = LoremBuilder::default().build().unwrap_err();
     
     // In this case, the validator should have run but passed because there was no value set for `my_effort`.
     // Adding private `get` methods which return `Result<T, String>` by pulling in defaults will enable the
