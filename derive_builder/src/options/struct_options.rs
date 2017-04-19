@@ -31,6 +31,9 @@ pub struct StructOptions {
     pub bindings: Bindings,
     /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None).
     pub default_expression: Option<DefaultExpression>,
+    /// Path to the optional validation function to invoke before the 
+    /// macro-generated `build` method executes.
+    pub validation_fn: Option<syn::Path>,
 }
 
 impl StructOptions {
@@ -63,6 +66,7 @@ impl StructOptions {
             default_struct: self.default_expression
                 .as_ref()
                 .map(|x| { x.parse_block(self.bindings.no_std) }),
+            validation_fn: self.validation_fn.as_ref(),
         }
     }
 }
