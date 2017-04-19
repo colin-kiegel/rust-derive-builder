@@ -1,5 +1,5 @@
-#![cfg_attr(feature = "nightlytests", feature(try_from))]
-#![allow(dead_code)]
+#![allow(unused_features, dead_code)]
+#![feature(try_from)]
 
 #[macro_use]
 extern crate derive_builder;
