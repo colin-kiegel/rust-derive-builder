@@ -1,5 +1,5 @@
 use syn;
-use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool, FieldMode, StructOptions};
+use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool, parse_lit_as_path, FieldMode, StructOptions};
 use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
@@ -12,6 +12,7 @@ pub struct StructMode {
     builder_name: Option<String>,
     builder_vis: Option<syn::Visibility>,
     deprecation_notes: DeprecationNotes,
+    validator_fn: Option<syn::Path>,
     struct_size_hint: usize,
 }
 
@@ -29,6 +30,7 @@ impl OptionsBuilder<StructMode> {
             build_fn_enabled: true,
             build_fn_name: None,
             deprecation_notes: Default::default(),
+            validator_fn: None,
             struct_size_hint: 0,
         });
 
@@ -49,6 +51,12 @@ impl StructMode {
         ident: build_fn_name,
         desc: "build function name",
         map: |x: String| { x },
+    }
+    
+    impl_setter!{
+        ident: validator_fn,
+        desc: "validator function path",
+        map: |x: syn::Path| { x },
     }
     
     #[allow(non_snake_case)]
@@ -76,6 +84,9 @@ impl StructMode {
             },
             "skip" => {
                 self.parse_build_fn_skip(lit)
+            },
+            "validator" => {
+                self.parse_build_fn_validator(lit)
             },
             _ => {
                 panic!("Unknown build_fn option `{}` {}.", ident.as_ref(), self.where_diagnostics())
@@ -119,6 +130,12 @@ impl StructMode {
     #[allow(dead_code,unused_variables)]
     fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
         self.build_fn_enabled = !parse_lit_as_bool(skip).unwrap();
+    }
+    
+    fn parse_build_fn_validator(&mut self, lit: &syn::Lit) {
+        trace!("Parsing build function validator path `{:?}`", lit);
+        let value = parse_lit_as_path(lit).unwrap();
+        self.validator_fn(value);
     }
 }
 
@@ -204,6 +221,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 no_std: b.no_std.unwrap_or(false),
             },
             default_expression: struct_default_expression,
+            validation_fn: m.validator_fn,
         };
 
         (struct_options, field_defaults)

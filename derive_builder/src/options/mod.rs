@@ -497,3 +497,8 @@ fn parse_lit_as_bool(lit: &syn::Lit) -> Result<bool, String> {
         })
     }
 }
+
+fn parse_lit_as_path(lit: &syn::Lit) -> Result<syn::Path, String> {
+    syn::parse_path(parse_lit_as_string(lit)?)
+        .or_else(|_| Err(format!("Unable to interpret as path `{:?}`.", lit)))
+}

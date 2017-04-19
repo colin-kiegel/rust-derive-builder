@@ -300,7 +300,7 @@
 //! }
 //! ```
 //!
-//! ### Tips
+//! ### Tips on Defaults
 //!
 //! * The `#[builder(default)]` annotation can be used on the struct level, too. Overrides are
 //!   still possible.
@@ -371,6 +371,53 @@
 //! You can rename or suppress the auto-generated build method, leaving you free to implement 
 //! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
 //! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
+//!
+//! ## Pre-Build Validation
+//! If you're using the provided `build` method, you can declare 
+//! `#[builder(build_fn(validator="path::to::fn"))]` to specify a validator function which gets
+//! access to the builder before construction. 
+//! 
+//! The provided function must have the signature `(&FooBuilder) -> Result<_, String>`; 
+//! the `Ok` variant is not used by the `build` method, and must be accessible from the scope
+//! where the target struct is declared. The path does not need to be fully-qualified, and will
+//! consider `use` statements made at module level.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! #[builder(build_fn(validator="LoremBuilder::validate"))]
+//! struct Lorem {
+//!     #[builder(default="42")]
+//!     pub ipsum: u8,
+//! }
+//! 
+//! impl LoremBuilder {
+//!     /// Check that `Lorem` is putting in the right amount of effort.
+//!     fn validate(&self) -> Result<(), String> {
+//!         if let Some(ref ipsum) = self.ipsum {
+//!             match *ipsum {
+//!                 i if i < 20 => Err("Try harder".to_string()),
+//!                 i if i > 100 => Err("You'll tire yourself out".to_string()),
+//!                 _ => Ok(())
+//!             }
+//!         } else {
+//!             Ok(())
+//!         }
+//!     }
+//! }
+//!
+//! fn main() {
+//!     // If we don't set the field `ipsum`,
+//!     let x = LoremBuilder::default().build().unwrap();
+//!
+//!     // .. the custom default will be used for `ipsum`:
+//!     assert_eq!(x, Lorem {
+//!         ipsum: 42,
+//!     });
+//! }
+//! ```
 //!
 //! ## Documentation Comments and Attributes
 //!

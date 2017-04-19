@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
+- perform pre-build validation via `#[builder(build_fn(validator="path::to::fn"))]`
 
 ## [0.4.4] - 2017-04-12
 
