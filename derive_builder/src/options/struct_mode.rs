@@ -5,7 +5,7 @@ use derive_builder_core::{DeprecationNotes, Bindings};
 #[derive(Debug, Clone)]
 pub struct StructMode {
     build_fn_name: Option<String>,
-    build_fn_enabled: bool,
+    build_fn_enabled: Option<bool>,
     build_target_name: String,
     build_target_generics: syn::Generics,
     build_target_vis: syn::Visibility,
@@ -26,7 +26,7 @@ impl OptionsBuilder<StructMode> {
             build_target_vis: ast.vis.clone(),
             builder_name: None,
             builder_vis: None,
-            build_fn_enabled: true,
+            build_fn_enabled: None,
             build_fn_name: None,
             deprecation_notes: Default::default(),
             struct_size_hint: 0,
@@ -193,7 +193,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
         let m = b.mode;
 
         let struct_options = StructOptions {
-            build_fn_enabled: m.build_fn_enabled,
+            build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
             build_fn_name: syn::Ident::new(
                 m.build_fn_name.unwrap_or("build".to_string())
             ),
