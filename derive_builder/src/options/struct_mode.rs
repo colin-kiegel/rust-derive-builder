@@ -5,7 +5,7 @@ use derive_builder_core::{DeprecationNotes, Bindings};
 #[derive(Debug, Clone)]
 pub struct StructMode {
     build_fn_name: Option<String>,
-    build_fn_enabled: bool,
+    build_fn_enabled: Option<bool>,
     build_target_name: String,
     build_target_generics: syn::Generics,
     build_target_vis: syn::Visibility,
@@ -54,6 +54,12 @@ impl StructMode {
     }
     
     impl_setter!{
+        ident: build_fn_enabled,
+        desc: "build function enabled",
+        map: |x: bool| { x },
+    }
+    
+    impl_setter!{
         ident: validator_fn,
         desc: "validator function path",
         map: |x: syn::Path| { x },
@@ -99,7 +105,7 @@ impl StructMode {
         trace!("Setter Options - Parsing word `{}`", ident.as_ref());
         match ident.as_ref() {
             "skip" => {
-                self.build_fn_enabled = false;
+                self.build_fn_enabled(false);
             }
             _ => {
                 panic!("Unknown build_fn option `{}` {}.", ident.as_ref(), self.where_diagnostics())
@@ -129,7 +135,7 @@ impl StructMode {
     
     #[allow(dead_code,unused_variables)]
     fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
-        self.build_fn_enabled = !parse_lit_as_bool(skip).unwrap();
+        self.build_fn_enabled(!parse_lit_as_bool(skip).unwrap());
     }
     
     fn parse_build_fn_validator(&mut self, lit: &syn::Lit) {
@@ -204,7 +210,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
         let m = b.mode;
 
         let struct_options = StructOptions {
-            build_fn_enabled: m.build_fn_enabled,
+            build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
             build_fn_name: syn::Ident::new(
                 m.build_fn_name.unwrap_or("build".to_string())
             ),
