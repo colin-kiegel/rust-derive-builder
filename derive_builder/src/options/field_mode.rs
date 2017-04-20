@@ -79,6 +79,7 @@ impl OptionsBuilder<FieldMode> {
             setter_name: f!(setter_name),
             setter_prefix: f!(setter_prefix),
             setter_vis: f!(setter_vis),
+            field_vis: f!(field_vis),
             default_expression: f!(default_expression),
             setter_into: f!(setter_into),
             try_setter: f!(try_setter),
@@ -125,23 +126,26 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
                     },
                     _ => syn::Ident::new(field_ident.clone()),
                 }});
+                
+        let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
 
         FieldOptions {
             setter_enabled: b.setter_enabled.unwrap_or(true),
-            builder_pattern: b.builder_pattern.clone().unwrap_or_default(),
+            builder_pattern: b.builder_pattern.unwrap_or_default(),
             setter_ident: setter_ident,
-            setter_visibility: b.setter_vis.clone().unwrap_or(syn::Visibility::Public),
+            field_visibility: b.field_vis.unwrap_or_else(|| setter_vis.clone()),
+            setter_visibility: setter_vis,
             field_ident: field_ident,
             field_type: field_type,
             setter_into: b.setter_into.unwrap_or(false),
             try_setter: b.try_setter.unwrap_or(false),
-            deprecation_notes: b.mode.deprecation_notes.clone(),
-            default_expression: b.default_expression.clone(),
+            deprecation_notes: b.mode.deprecation_notes,
+            default_expression: b.default_expression,
             use_default_struct: b.mode.use_default_struct,
             bindings: Bindings {
                 no_std: b.no_std.unwrap_or(false),
             },
-            attrs: b.mode.setter_attrs.clone().unwrap_or_default(),
+            attrs: b.mode.setter_attrs.unwrap_or_default(),
         }
     }
 }

@@ -91,6 +91,7 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
 * **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 * **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
+* **Builder field visibility**: You can hide the fields of your builder by preceding your struct with `#[builder(field(private))]`.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
 * **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via `=".."`. This works both on the struct and field level.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate collections` to your crate. The latter requires the _nightly_ toolchain.

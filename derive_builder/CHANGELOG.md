@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - customize setter names via `#[builder(setter(name="..."))]`
+- set field visibility separate from setter visibility via `#[builder(field(private))]`
 
 ## [0.4.4] - 2017-04-12
 
