@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - customize setter names via `#[builder(setter(name="..."))]`
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
+- set field visibility separate from setter visibility via `#[builder(field(private))]`
 
 ## [0.4.4] - 2017-04-12
 

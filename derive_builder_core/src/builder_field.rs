@@ -33,12 +33,14 @@ pub struct BuilderField<'a> {
     ///
     /// The corresonding builder field will be `Option<field_type>`.
     pub field_type: &'a syn::Ty,
-    /// Wether the builder implements a setter for this field.
+    /// Whether the builder implements a setter for this field.
     ///
     /// Note: We will fallback to `PhantomData` if the setter is disabled
     ///       to hack around issues with unused generic type parameters - at least for now.
     pub setter_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
+    pub field_visibility: &'a syn::Visibility,
+    /// Visibility of this field's setter, e.g. `syn::Visibility::Public`.
     pub setter_visibility: &'a syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
@@ -50,7 +52,7 @@ impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         if self.setter_enabled {
             trace!("Deriving builder field for `{}`.", self.field_ident);
-            let vis = self.setter_visibility;
+            let vis = self.field_visibility;
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
@@ -84,6 +86,7 @@ macro_rules! default_builder_field {
             field_ident: &syn::Ident::new("foo"),
             field_type: &syn::parse_type("String").unwrap(),
             setter_enabled: true,
+            field_visibility: &syn::Visibility::Public,
             setter_visibility: &syn::Visibility::Public,
             attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()],
             bindings: Default::default(),
