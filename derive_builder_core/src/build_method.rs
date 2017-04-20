@@ -190,7 +190,7 @@ mod tests {
         let mut build_method = default_build_method!();
         build_method.enabled = false;
         
-        assert_eq!(quote!(), quote!(#build_method));
+        assert_eq!(quote!(#build_method), quote!());
     }
     
     #[test]

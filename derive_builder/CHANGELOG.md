@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Added
+- customize setter names via `#[builder(setter(name="..."))]`
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
 

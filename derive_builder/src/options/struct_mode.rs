@@ -51,6 +51,12 @@ impl StructMode {
         map: |x: String| { x },
     }
     
+    impl_setter!{
+        ident: build_fn_enabled,
+        desc: "build function enabled",
+        map: |x: bool| { x },
+    }
+    
     #[allow(non_snake_case)]
     fn parse_build_fn_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
         trace!("Build Method Options - Parsing MetaItem `{:?}`.", meta_item);
@@ -88,7 +94,7 @@ impl StructMode {
         trace!("Setter Options - Parsing word `{}`", ident.as_ref());
         match ident.as_ref() {
             "skip" => {
-                self.build_fn_enabled = false;
+                self.build_fn_enabled(false);
             }
             _ => {
                 panic!("Unknown build_fn option `{}` {}.", ident.as_ref(), self.where_diagnostics())
@@ -118,7 +124,7 @@ impl StructMode {
     
     #[allow(dead_code,unused_variables)]
     fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
-        self.build_fn_enabled = !parse_lit_as_bool(skip).unwrap();
+        self.build_fn_enabled(!parse_lit_as_bool(skip).unwrap());
     }
 }
 
