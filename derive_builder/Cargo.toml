@@ -3,7 +3,8 @@ name = "derive_builder"
 version = "0.4.4"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
-           "Jan-Erik Rediger <janerik@fnordig.de>"]
+           "Jan-Erik Rediger <janerik@fnordig.de>",
+           "Ted Driggs <ted.driggs@outlook.com>"]
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"

@@ -138,4 +138,15 @@ mod tests {
             #[some_attr] foo: ::core::marker::PhantomData<String>,
         ));
     }
+    
+    #[test]
+    fn private_field() {
+        let private = syn::Visibility::Inherited;
+        let mut field = default_builder_field!();
+        field.field_visibility = &private;
+        
+        assert_eq!(quote!(#field), quote!(
+            #[some_attr] foo: ::std::option::Option<String>,
+        ));
+    }
 }

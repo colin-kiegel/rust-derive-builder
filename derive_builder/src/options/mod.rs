@@ -236,7 +236,7 @@ impl<Mode> OptionsBuilder<Mode>
                 self.setter_public(false)
             },
             "setter" => {
-        // setter implicitly enabled
+                // setter implicitly enabled
                 self.setter_enabled(true)
             },
             "try_setter" => {
@@ -306,7 +306,7 @@ impl<Mode> OptionsBuilder<Mode>
         match ident.as_ref() {
             "setter" => {
                 self.parse_setter_options(nested);
-        // setter implicitly enabled
+                // setter implicitly enabled
                 if self.setter_enabled.is_none() {
                     self.setter_enabled(true);
                 }
