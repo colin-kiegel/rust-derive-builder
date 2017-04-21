@@ -12,6 +12,7 @@
 //! ## What you write
 //!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! #[macro_use]
 //! extern crate derive_builder;
 //!
@@ -25,7 +26,10 @@
 //!
 //! ## What you get
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -71,7 +75,10 @@
 //!
 //! Let's look again at the example above. You can now build structs like this:
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
@@ -84,7 +91,10 @@
 //!
 //! So let's make this call conditional
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
@@ -157,7 +167,10 @@
 //!
 //! The types of skipped fields must implement `Default`.
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -200,7 +213,10 @@
 //! You can make each setter generic over the `Into`-trait. It's as simple as adding
 //! `#[builder(setter(into))]` to either a field or the whole struct.
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -231,7 +247,10 @@
 //! You can only declare the `try_setter` attribute today if you're targeting nightly, and you have
 //! to add `#![feature(try_from)]` to your crate to use it.
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! // #![feature(try_from)]
 //! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[cfg(feature = "nightlytests")]
@@ -279,7 +298,10 @@
 //!
 //! The expression will be evaluated with each call to `build`.
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -310,7 +332,10 @@
 //!
 //! [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -351,7 +376,10 @@
 //!
 //! ## Generic Structs
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -380,7 +408,10 @@
 //! The whitelisting minimizes interference with other custom attributes like
 //! those used by Serde, Diesel, or others.
 //!
+//! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
+//!
 //! ```rust
+//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
