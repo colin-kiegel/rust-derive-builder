@@ -25,6 +25,7 @@ proc-macro = true
 [features]
 logging = [ "log", "env_logger", "derive_builder_core/logging" ]
 struct_default = []
+private_fields = []
 skeptic_tests = ["skeptic"]
 nightlytests = ["compiletest_rs"]
 

@@ -134,11 +134,17 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
                 
         let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
 
+        let field_vis = b.field_vis.unwrap_or_else(|| if cfg!(feature = "private_fields") {
+            syn::Visibility::Inherited
+        } else {
+            setter_vis.clone()
+        });
+
         FieldOptions {
             setter_enabled: b.setter_enabled.unwrap_or(true),
             builder_pattern: b.builder_pattern.unwrap_or_default(),
             setter_ident: setter_ident,
-            field_visibility: b.field_vis.unwrap_or_else(|| setter_vis.clone()),
+            field_visibility: field_vis,
             setter_visibility: setter_vis,
             field_ident: field_ident,
             field_type: field_type,

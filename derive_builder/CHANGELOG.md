@@ -8,7 +8,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - customize setter names via `#[builder(setter(name="..."))]`
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
-- set field visibility separate from setter visibility via `#[builder(field(private))]`
+- set field visibility separate from setter visibility via `#[builder(field(private))]` at the field or struct level
+
+### Deprecated
+- Builder fields will no longer be public by default; relying on this will now emit a deprecation warning. Fields can be explicitly made public at the struct or field level using the new `#[builder(field(public))]` attribute. To squelch this warning, use the `private_fields` crate feature or explicitly set field visibility at the struct level.
 
 ## [0.4.4] - 2017-04-12
 

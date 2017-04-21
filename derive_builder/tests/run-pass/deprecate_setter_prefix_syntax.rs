@@ -8,7 +8,7 @@ extern crate derive_builder;
 //~| NOTE in this expansion of #[derive(Builder)]
 //~| NOTE #[warn(deprecated)] on by default
 //~| NOTE in this expansion of #[derive(Builder)]
-
+#[builder(field(private))]
 struct Lorem {
     #[builder(setter_prefix="old_syntax")]
     ipsum: String,
