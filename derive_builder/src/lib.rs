@@ -396,7 +396,7 @@
 //! ```
 //!
 //! ## Build Method Customization
-//! You can rename or suppress the auto-generated build method, leaving you free to implement 
+//! You can rename or suppress the auto-generated build method, leaving you free to implement
 //! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
 //! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
 //!
@@ -553,15 +553,11 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
 
     builder.push_build_fn(build_fn);
 
-    let try_from_impl = if cfg!(feature = "try_from") {
-        Some(opts.as_try_from())
-    } else {
-        None
-    };
-    
+    let try_from_impl = opts.as_try_from();
+
     quote!(
         #builder
-        
+
         #try_from_impl
     )
 }

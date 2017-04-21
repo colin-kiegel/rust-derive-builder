@@ -39,7 +39,7 @@ impl LoremBuilder {
 impl IpsumBuilder {
     /// This should be fine, because we renamed the generated build_fn.
     #[allow(dead_code)]
-    fn build(&self) -> Result<Self, String> {
+    fn build(&self) -> Result<Ipsum, String> {
         unimplemented!()
     }
 }

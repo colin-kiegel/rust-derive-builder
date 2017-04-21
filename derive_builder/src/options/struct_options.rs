@@ -7,7 +7,7 @@ use options::DefaultExpression;
 pub struct StructOptions {
     /// Whether or not this struct should implement its own build method.
     pub build_fn_enabled: bool,
-    
+
     /// The name of the emitted build method.
     pub build_fn_name: syn::Ident,
     /// Name of the builder struct, e.g. `FooBuilder`.
@@ -65,10 +65,10 @@ impl StructOptions {
                 .map(|x| { x.parse_block(self.bindings.no_std) }),
         }
     }
-    
+
     pub fn as_try_from<'a>(&'a self) -> TryFromImpl<'a> {
         TryFromImpl {
-            enabled: true,
+            enabled: cfg!(feature = "try_from") && self.build_fn_enabled,
             fn_ident: syn::Ident::new("build"),
             pattern: self.builder_pattern,
             target_ty: &self.build_target_ident,
