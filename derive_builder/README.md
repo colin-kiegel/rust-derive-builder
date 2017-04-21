@@ -93,6 +93,7 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
 * **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via `=".."`. This works both on the struct and field level.
+* **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate collections` to your crate. The latter requires the _nightly_ toolchain.
 * **Logging**: If anything works unexpectedly you can enable detailed logs in two steps. First, add `features = ["logging"]` to the `derive_builder` dependency in `Cargo.toml`. Second, set this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
 

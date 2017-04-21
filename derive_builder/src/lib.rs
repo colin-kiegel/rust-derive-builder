@@ -395,6 +395,11 @@
 //! }
 //! ```
 //!
+//! ## Build Method Customization
+//! You can rename or suppress the auto-generated build method, leaving you free to implement 
+//! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
+//! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
+//!
 //! ## Documentation Comments and Attributes
 //!
 //! `#[derive(Builder)]` copies doc comments and attributes (`#[...]`) from your fields

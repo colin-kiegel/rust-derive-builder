@@ -14,7 +14,7 @@ function main {
 }
 
 function base_dir {
-  if [ uname -s != "Darwin" ] -a hash readlink 2>/dev/null; then
+  if [ $(uname -s) != "Darwin" ] && hash readlink 2>/dev/null; then
     # use readlink, if installed, to follow symlinks
     local __DIR="$(dirname "$(readlink -f "$0")")"
   else

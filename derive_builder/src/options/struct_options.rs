@@ -5,6 +5,11 @@ use options::DefaultExpression;
 /// These struct options define how the builder is generated.
 #[derive(Debug, Clone)]
 pub struct StructOptions {
+    /// Whether or not this struct should implement its own build method.
+    pub build_fn_enabled: bool,
+    
+    /// The name of the emitted build method.
+    pub build_fn_name: syn::Ident,
     /// Name of the builder struct, e.g. `FooBuilder`.
     pub builder_ident: syn::Ident,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
@@ -46,8 +51,8 @@ impl StructOptions {
     pub fn as_build_method<'a>(&'a self) -> BuildMethod<'a> {
         let (_impl_generics, ty_generics, _where_clause) = self.generics.split_for_impl();
         BuildMethod {
-            enabled: true,
-            ident: syn::Ident::new("build"),
+            enabled: self.build_fn_enabled,
+            ident: &self.build_fn_name,
             visibility: &self.builder_visibility,
             pattern: self.builder_pattern,
             target_ty: &self.build_target_ident,
