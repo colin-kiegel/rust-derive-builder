@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "nightlytests", feature(try_from))]
+#![cfg_attr(feature = "try_from", feature(try_from))]
 
 #[macro_use]
 extern crate pretty_assertions;

@@ -12,7 +12,7 @@
 //! ## What you write
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! #[macro_use]
 //! extern crate derive_builder;
 //!
@@ -29,7 +29,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -78,7 +78,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
@@ -94,7 +94,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
 //! # fn try_main() -> Result<(), String> {
@@ -170,7 +170,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -216,7 +216,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -251,9 +251,6 @@
 //!
 //! ```rust
 //! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
-//! // #![feature(try_from)]
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
-//! # #[cfg(feature = "nightlytests")]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -301,7 +298,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -335,7 +332,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -379,7 +376,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #
@@ -416,7 +413,7 @@
 //! <!-- this comment is a workaround for https://github.com/rust-lang/rust/issues/41401 -->
 //!
 //! ```rust
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
+//! # #![cfg_attr(feature = "try_from", feature(try_from))]
 //! # #[macro_use]
 //! # extern crate derive_builder;
 //! #

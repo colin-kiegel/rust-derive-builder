@@ -19,7 +19,6 @@ pub struct TryFromImpl<'a> {
     pub target_ty: &'a syn::Ident,
     /// Type parameters and lifetimes attached to this builder struct.
     pub generics: &'a syn::Generics,
-
     /// Bindings to libstd or libcore.
     pub bindings: Bindings,
 }

@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "nightlytests", feature(try_from))]
+#![cfg_attr(feature = "try_from", feature(try_from))]
 
 // NOTE: generate fully expanded version with `cargo expand`.
 //
