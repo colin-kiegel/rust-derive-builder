@@ -70,6 +70,8 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
     fn struct_mode(&self) -> bool;
+    
+    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]);
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -252,7 +254,7 @@ impl<Mode> OptionsBuilder<Mode> where
                 if self.mode.struct_mode() {
                     self.no_std(true)
                 } else {
-                    panic!("Support for `#![no_std]` can only be set on the stuct level \
+                    panic!("Support for `#![no_std]` can only be set on the struct level \
                             (but found {}).", self.where_diagnostics())
                 }
             },
@@ -307,6 +309,9 @@ impl<Mode> OptionsBuilder<Mode> where
                     self.setter_enabled(true);
                 }
             },
+            "build_fn" => {
+                self.mode.parse_build_fn_options(nested)
+            }
             _ => {
                 panic!("Unknown option `{}` {}.", ident.as_ref(), self.where_diagnostics())
             }
@@ -454,7 +459,7 @@ impl<Mode> OptionsBuilder<Mode> where
         trace!("Parsing skip setter `{:?}`", skip);
         self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
     }
-
+    
     /// Provide a diagnostic _where_-clause for panics.
     ///
     /// Delegete to the `OptionsBuilderMode`.
