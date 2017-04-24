@@ -159,6 +159,7 @@ impl OptionsBuilderMode for StructMode {
         }
     }
 
+    /// Parse the `derive` list for struct-level builder declarations.
     fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]) {
         let mut traits = vec![];
         let where_diag = self.where_diagnostics();
