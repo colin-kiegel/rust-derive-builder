@@ -17,5 +17,7 @@ struct Lorem {
 
 #[test]
 fn defaults() {
+    // This macro requires that the two sides implement `PartialEq` AND `Debug`,
+    // so this one line is testing that the requested traits were in fact generated.
     assert_eq!(LoremBuilder::default(), LoremBuilder::default());
 }

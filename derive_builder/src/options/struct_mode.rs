@@ -161,12 +161,19 @@ impl OptionsBuilderMode for StructMode {
 
     fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]) {
         let mut traits = vec![];
+        let where_diag = self.where_diagnostics();
         for x in nested {
             match *x {
                 // We don't allow name-value pairs or further nesting here, so
                 // only look for words.
                 syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref tr)) => {
-                    traits.push(tr.clone())
+                    match tr.as_ref() {
+                        "Default" | "Clone" => { self.push_deprecation_note(
+                            format!("The `Default` and `Clone` traits are automatically added to all \
+                            builders; explicitly deriving them is unnecessary ({})", where_diag)); 
+                        },
+                        _ => traits.push(tr.clone())
+                    }
                 }
                 _ => {
                     panic!("The derive(...) option should be a list of traits (at {}).",
