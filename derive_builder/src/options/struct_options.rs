@@ -1,5 +1,5 @@
 use syn;
-use derive_builder_core::{DeprecationNotes, BuilderPattern, Builder, BuildMethod, Bindings};
+use derive_builder_core::{DeprecationNotes, BuilderPattern, Builder, BuildMethod, Bindings, TryFromImpl};
 use options::DefaultExpression;
 
 /// These struct options define how the builder is generated.
@@ -7,7 +7,7 @@ use options::DefaultExpression;
 pub struct StructOptions {
     /// Whether or not this struct should implement its own build method.
     pub build_fn_enabled: bool,
-    
+
     /// The name of the emitted build method.
     pub build_fn_name: syn::Ident,
     /// Name of the builder struct, e.g. `FooBuilder`.
@@ -66,6 +66,18 @@ impl StructOptions {
             default_struct: self.default_expression
                 .as_ref()
                 .map(|x| { x.parse_block(self.bindings.no_std) }),
+        }
+    }
+
+    pub fn as_try_from<'a>(&'a self) -> TryFromImpl<'a> {
+        TryFromImpl {
+            enabled: cfg!(feature = "try_from") && self.build_fn_enabled,
+            fn_ident: syn::Ident::new("build"),
+            pattern: self.builder_pattern,
+            target_ty: &self.build_target_ident,
+            builder_ty: &self.builder_ident,
+            generics: &self.generics,
+            bindings: self.bindings,
         }
     }
 }

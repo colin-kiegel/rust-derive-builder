@@ -1,5 +1,8 @@
 #![cfg(feature = "skeptic_tests")]
 
+// workaround for https://github.com/brson/rust-skeptic/issues/22
+#![cfg(feature = "nightlytests")]
+
 // NOTE this combination may cause
 //      `error[E0464]: multiple matching crates for `derive_builder`
 //

@@ -2,8 +2,8 @@
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(collections, lang_items, start, core_intrinsics)]
-#![allow(dead_code)]
+#![allow(unused_features, dead_code)]
+#![feature(collections, lang_items, start, core_intrinsics, try_from)]
 use core::intrinsics;
 
 // Pull in the system libc library for what crt0.o likely requires.

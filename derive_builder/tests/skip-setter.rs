@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "try_from", feature(try_from))]
+
 // https://github.com/colin-kiegel/rust-derive-builder/issues/15
 #[macro_use]
 extern crate pretty_assertions;

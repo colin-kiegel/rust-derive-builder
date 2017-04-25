@@ -22,7 +22,7 @@
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
 #![deny(warnings, missing_docs)]
-#![cfg_attr(test, recursion_limit = "100")]
+#![cfg_attr(test, recursion_limit = "200")]
 
 extern crate proc_macro;
 extern crate syn;
@@ -49,6 +49,7 @@ mod options;
 mod block;
 mod bindings;
 mod tokens;
+mod try_from;
 
 pub use build_method::BuildMethod;
 pub use builder_field::BuilderField;
@@ -61,5 +62,6 @@ pub use options::BuilderPattern;
 pub use block::Block;
 pub use bindings::Bindings;
 pub use tokens::RawTokens;
+pub use try_from::TryFromImpl;
 
 const DEFAULT_STRUCT_NAME: &'static str = "__default";

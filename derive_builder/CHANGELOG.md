@@ -6,6 +6,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - customize setter names via `#[builder(setter(name="..."))]`
+- Implement `TryFrom` from builder to target type from generated builder 
+  when `try_from` crate feature is enabled.
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
 - derive additional traits via `#[builder(derive(Trait1, Trait2, ...))]`

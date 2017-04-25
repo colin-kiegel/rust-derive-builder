@@ -12,7 +12,7 @@
 
 ## How it Works
 
-```rust
+```rust,skt-default
 #[macro_use]
 extern crate derive_builder;
 

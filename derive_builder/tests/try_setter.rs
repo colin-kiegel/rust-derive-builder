@@ -18,7 +18,6 @@ impl From<IpAddr> for MyAddr {
     }
 }
 
-#[cfg(feature = "nightlytests")]
 impl<'a> TryFrom<&'a str> for MyAddr {
     type Error = AddrParseError;
 
@@ -47,7 +46,6 @@ fn exact_helper() -> Result<Lorem, String> {
         .build()
 }
 
-#[cfg(feature = "nightlytests")]
 fn try_helper() -> Result<Lorem, String> {
     LoremBuilder::default()
         .try_source("1.2.3.4").map_err(|e| e.to_string())?
@@ -64,7 +62,6 @@ fn infallible_set() {
 }
 
 #[test]
-#[cfg(feature = "nightlytests")]
 fn fallible_set() {
     let mut builder = LoremBuilder::default();
     let try_result = builder.try_source("1.2.3.4");
@@ -77,13 +74,11 @@ fn fallible_set() {
 }
 
 #[test]
-#[cfg(feature = "nightlytests")]
 fn with_helper() {
     assert_eq!(exact_helper().unwrap(), try_helper().unwrap());
 }
 
 #[test]
-#[cfg(feature = "nightlytests")]
 fn renamed() {
     IpsumBuilder::default()
         .try_set_source("0.0.0.0")
