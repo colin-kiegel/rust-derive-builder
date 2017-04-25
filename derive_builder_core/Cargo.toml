@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder_core"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
