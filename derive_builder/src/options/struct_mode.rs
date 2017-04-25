@@ -167,7 +167,21 @@ impl OptionsBuilderMode for StructMode {
 }
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
-    fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+    fn from(mut b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+        // Check if field visibility has been expressly set at the struct level.
+        // If not, and if the crate is operating under the old public fields mode,
+        // present a compilation warning.
+        if !cfg!(feature = "private_fields") && b.field_vis.is_none() {
+            let where_diagnostics = b.where_diagnostics();
+            b.mode.push_deprecation_note(format!(
+                "Builder fields will be private by default starting in the next version. \
+                (see https://github.com/colin-kiegel/rust-derive-builder/issues/86 for \
+                more details). To squelch this message and adopt the new behavior now, \
+                compile `derive_builder` with `--features \"private_fields\"` or add \
+                `field(<vis>)` to the builder attribute on the struct. (Found {})",
+                where_diagnostics));
+        }
+        
         #[cfg(feature = "struct_default")]
         let (field_default_expression, struct_default_expression) = (None, b.default_expression);
         #[cfg(not(feature = "struct_default"))]
@@ -181,6 +195,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
             try_setter: b.try_setter,
+            field_vis: b.field_vis,
             default_expression: field_default_expression,
             no_std: b.no_std,
             mode: {
