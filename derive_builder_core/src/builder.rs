@@ -45,8 +45,10 @@ pub struct Builder<'a> {
     pub ident: &'a syn::Ident,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [syn::Ident],
-    /// Type parameters and lifetimes attached to this builder struct.
+    /// Type parameters and lifetimes attached to this builder's struct definition.
     pub generics: Option<&'a syn::Generics>,
+    /// Type parameters and lifetimes attached to this builder's impl block.
+    pub impl_generics: Option<syn::ImplGenerics<'a>>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
     /// Fields of the builder struct, e.g. `foo: u32,`
@@ -68,24 +70,25 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_vis = self.visibility;
             let builder_ident = self.ident;
             let derives = self.derives;
-            let (impl_generics, ty_generics, where_clause) = self.generics
+            let (struct_generics, ty_generics, where_clause) = self.generics
                 .map(syn::Generics::split_for_impl)
                 .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
                 .unwrap_or((None, None, None));
+            let impl_generics = &self.impl_generics;
             let builder_fields = &self.fields;
             let functions = &self.functions;
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
-            debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}",
+            debug!("ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
                    ty_generics,
                    where_clause,
-                   impl_generics);
+                   struct_generics);
 
             tokens.append(quote!(
                 #[derive(Default, Clone #( , #derives)* )]
                 #builder_doc_comment
-                #builder_vis struct #builder_ident #impl_generics #where_clause {
+                #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
 
@@ -138,6 +141,7 @@ macro_rules! default_builder {
             ident: &syn::Ident::new("FooBuilder"),
             derives: &vec![],
             generics: None,
+            impl_generics: None,
             visibility: &syn::Visibility::Public,
             fields: vec![quote!(foo: u32,)],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
@@ -151,6 +155,7 @@ macro_rules! default_builder {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+    
     #[test]
     fn simple() {
         let builder = default_builder!();
@@ -169,24 +174,40 @@ mod tests {
             }
         ));
     }
+    
+    fn clone_bound(mut generics: syn::Generics) -> syn::Generics {
+        for mut typ in generics.ty_params.iter_mut() {
+            typ.bounds.push(syn::TyParamBound::Trait(
+                syn::PolyTraitRef {
+                    trait_ref: syn::parse_path("::std::clone::Clone").unwrap(),
+                    bound_lifetimes: vec![],
+                },
+                syn::TraitBoundModifier::None
+            ))
+        }
+        
+        generics
+    }
 
     #[test]
     fn generic() {
         let ast = syn::parse_macro_input(stringify!(
-            struct Lorem<'a, T: Debug> where T: Clone { }
+            struct Lorem<'a, T: Debug> where T: PartialEq { }
         )).expect("Couldn't parse item");
         let generics = ast.generics;
+        let impl_gen = clone_bound(generics.clone());
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
+        builder.impl_generics = Some(impl_gen.split_for_impl().0);
 
         assert_eq!(quote!(#builder), quote!(
             #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: Debug> where T: Clone {
+            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
             }
 
             #[allow(dead_code)]
-            impl<'a, T: Debug> FooBuilder<'a, T> where T: Clone {
+            impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }
@@ -197,21 +218,48 @@ mod tests {
     #[test]
     fn generic_reference() {
         let ast = syn::parse_macro_input(stringify!(
-            struct Lorem<'a, T: 'a + Default> where T: Clone{ }
+            struct Lorem<'a, T: 'a + Default> where T: PartialEq{ }
         )).expect("Couldn't parse item");
 
         let generics = ast.generics;
+        let impl_gen = clone_bound(generics.clone());
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
+        builder.impl_generics = Some(impl_gen.split_for_impl().0);
 
         assert_eq!(quote!(#builder), quote!(
             #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: 'a + Default> where T: Clone {
+            pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
                 foo: u32,
             }
 
             #[allow(dead_code)]
-            impl<'a, T: 'a + Default> FooBuilder<'a, T> where T: Clone {
+            impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+                fn bar() -> {
+                    unimplemented!()
+                }
+            }
+        ));
+    }
+    
+    #[test]
+    fn owned_generic() {
+        let ast = syn::parse_macro_input(stringify!(
+            struct Lorem<'a, T: Debug> where T: PartialEq { }
+        )).expect("Couldn't parse item");
+        let generics = ast.generics;
+        let mut builder = default_builder!();
+        builder.generics = Some(&generics);
+        builder.impl_generics = Some(generics.split_for_impl().0);
+
+        assert_eq!(quote!(#builder), quote!(
+            #[derive(Default, Clone)]
+            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
+                foo: u32,
+            }
+
+            #[allow(dead_code)]
+            impl<'a, T: Debug> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }

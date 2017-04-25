@@ -19,6 +19,14 @@ pub enum BuilderPattern {
     Immutable,
 }
 
+impl BuilderPattern {
+    /// Returns true if this style of builder needs to be able to clone its
+    /// fields during the `build` method.
+    pub fn requires_clone(&self) -> bool {
+        *self != BuilderPattern::Owned
+    }
+}
+
 /// Defaults to `Mutable`.
 impl Default for BuilderPattern {
     fn default() -> BuilderPattern {

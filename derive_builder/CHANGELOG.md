@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - perform pre-build validation via `#[builder(build_fn(validate="path::to::fn"))]`
+- builder derivation acts like `#[derive(Clone)]` for generic structs.
 
 ## [0.4.5] - 2017-04-25
 
