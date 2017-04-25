@@ -43,6 +43,8 @@ pub struct Builder<'a> {
     pub enabled: bool,
     /// Name of this builder struct.
     pub ident: &'a syn::Ident,
+    /// Traits to automatically derive on the builder type.
+    pub derives: &'a [syn::Ident],
     /// Type parameters and lifetimes attached to this builder struct.
     pub generics: Option<&'a syn::Generics>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
@@ -65,6 +67,7 @@ impl<'a> ToTokens for Builder<'a> {
             trace!("Deriving builder `{}`.", self.ident);
             let builder_vis = self.visibility;
             let builder_ident = self.ident;
+            let derives = self.derives;
             let (impl_generics, ty_generics, where_clause) = self.generics
                 .map(syn::Generics::split_for_impl)
                 .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
@@ -80,7 +83,7 @@ impl<'a> ToTokens for Builder<'a> {
                    impl_generics);
 
             tokens.append(quote!(
-                #[derive(Default, Clone)]
+                #[derive(Default, Clone #( , #derives)* )]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #impl_generics #where_clause {
                     #(#builder_fields)*
@@ -133,6 +136,7 @@ macro_rules! default_builder {
         Builder {
             enabled: true,
             ident: &syn::Ident::new("FooBuilder"),
+            derives: &vec![],
             generics: None,
             visibility: &syn::Visibility::Public,
             fields: vec![quote!(foo: u32,)],
@@ -221,5 +225,26 @@ mod tests {
         builder.enabled = false;
 
         assert_eq!(quote!(#builder), quote!());
+    }
+    
+    #[test]
+    fn add_derives() {
+        let derives = vec![syn::Ident::new("Serialize")];
+        let mut builder = default_builder!();
+        builder.derives = &derives;
+
+        assert_eq!(quote!(#builder), quote!(
+            #[derive(Default, Clone, Serialize)]
+            pub struct FooBuilder {
+                foo: u32,
+            }
+
+            #[allow(dead_code)]
+            impl FooBuilder {
+                fn bar () -> {
+                    unimplemented!()
+                }
+            }
+        ));
     }
 }

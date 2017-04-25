@@ -95,6 +95,11 @@ impl OptionsBuilderMode for FieldMode {
         panic!("Builder name can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
+    
+    fn parse_derive(&mut self, _nested: &[syn::NestedMetaItem]) {
+        panic!("Derive declarations can only be added on the struct level (but found {}).",
+               self.where_diagnostics())
+    }
 
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
         self.deprecation_notes.push(x.into());
