@@ -100,7 +100,6 @@ impl FieldOptions {
             field_type: &self.field_type,
             setter_enabled: self.setter_enabled,
             field_visibility: &self.field_visibility,
-            setter_visibility: &self.setter_visibility,
             attrs: &self.attrs,
             bindings: self.bindings,
         }

@@ -40,8 +40,6 @@ pub struct BuilderField<'a> {
     pub setter_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: &'a syn::Visibility,
-    /// Visibility of this field's setter, e.g. `syn::Visibility::Public`.
-    pub setter_visibility: &'a syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
     /// Bindings to libstd or libcore.
@@ -87,7 +85,6 @@ macro_rules! default_builder_field {
             field_type: &syn::parse_type("String").unwrap(),
             setter_enabled: true,
             field_visibility: &syn::Visibility::Public,
-            setter_visibility: &syn::Visibility::Public,
             attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()],
             bindings: Default::default(),
         }
@@ -138,13 +135,13 @@ mod tests {
             #[some_attr] foo: ::core::marker::PhantomData<String>,
         ));
     }
-    
+
     #[test]
     fn private_field() {
         let private = syn::Visibility::Inherited;
         let mut field = default_builder_field!();
         field.field_visibility = &private;
-        
+
         assert_eq!(quote!(#field), quote!(
             #[some_attr] foo: ::std::option::Option<String>,
         ));
