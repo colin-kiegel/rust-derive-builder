@@ -3,12 +3,25 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+- perform pre-build validation via `#[builder(build_fn(validate="path::to::fn"))]`
+
+## [0.4.5] - 2017-04-25
 
 ### Added
 - customize setter names via `#[builder(setter(name="..."))]`
 - customize build_fn name via `#[builder(build_fn(name="..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
-- perform pre-build validation via `#[builder(build_fn(validator="path::to::fn"))]`
+- derive additional traits via `#[builder(derive(Trait1, Trait2, ...))]`
+- set field visibility separate from setter visibility via
+  `#[builder(field(private))]` at the field or struct level
+
+### Deprecated
+- builder fields will no longer be public by default in 0.5.0; relying on this
+  will now emit a deprecation warning. Fields can be explicitly made public at
+  the struct or field level using the new `#[builder(field(public))]`
+  attribute. To squelch this warning and opt-into the new behaviour, use the
+  `private_fields` crate feature or explicitly set field visibility at the
+  struct level.
 
 ## [0.4.4] - 2017-04-12
 
@@ -109,7 +122,8 @@ Requires Rust 1.15 or newer.
  - generate setter methods
  - support for generic structs
 
-[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.4...HEAD
+[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.5...HEAD
+[0.4.5]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.4...v0.4.5
 [0.4.4]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.3...v0.4.4
 [0.4.3]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.2...v0.4.3
 [0.4.2]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.1...v0.4.2

@@ -11,6 +11,7 @@ pub struct StructMode {
     build_target_vis: syn::Visibility,
     builder_name: Option<String>,
     builder_vis: Option<syn::Visibility>,
+    derive_traits: Option<Vec<syn::Ident>>,
     deprecation_notes: DeprecationNotes,
     validator_fn: Option<syn::Path>,
     struct_size_hint: usize,
@@ -22,13 +23,14 @@ impl OptionsBuilder<StructMode> {
 
         // Note: Set `build_target_name` _before_ parsing attributes, for better diagnostics!
         let mut builder = Self::from(StructMode {
-            build_fn_name: None,
-            build_fn_enabled: None,
             build_target_name: ast.ident.as_ref().to_string(),
             build_target_generics: ast.generics.clone(),
             build_target_vis: ast.vis.clone(),
             builder_name: None,
             builder_vis: None,
+            build_fn_enabled: None,
+            build_fn_name: None,
+            derive_traits: None,
             deprecation_notes: Default::default(),
             validator_fn: None,
             struct_size_hint: 0,
@@ -63,6 +65,12 @@ impl StructMode {
         ident: validator_fn,
         desc: "validator function path",
         map: |x: syn::Path| { x },
+    }
+    
+    impl_setter!{
+        ident: derive_traits,
+        desc: "derive traits",
+        map: |x: Vec<syn::Ident>| { x },
     }
     
     #[allow(non_snake_case)]
@@ -168,6 +176,33 @@ impl OptionsBuilderMode for StructMode {
         }
     }
 
+    /// Parse the `derive` list for struct-level builder declarations.
+    fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]) {
+        let mut traits = vec![];
+        let where_diag = self.where_diagnostics();
+        for x in nested {
+            match *x {
+                // We don't allow name-value pairs or further nesting here, so
+                // only look for words.
+                syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref tr)) => {
+                    match tr.as_ref() {
+                        "Default" | "Clone" => { self.push_deprecation_note(
+                            format!("The `Default` and `Clone` traits are automatically added to all \
+                            builders; explicitly deriving them is unnecessary ({})", where_diag)); 
+                        },
+                        _ => traits.push(tr.clone())
+                    }
+                }
+                _ => {
+                    panic!("The derive(...) option should be a list of traits (at {}).",
+                           self.where_diagnostics())
+                }
+            }
+        }
+
+        self.derive_traits(traits);
+    }
+
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self {
         self.deprecation_notes.push(x.into());
         self
@@ -184,7 +219,21 @@ impl OptionsBuilderMode for StructMode {
 }
 
 impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMode>) {
-    fn from(b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+    fn from(mut b: OptionsBuilder<StructMode>) -> (StructOptions, OptionsBuilder<FieldMode>) {
+        // Check if field visibility has been expressly set at the struct level.
+        // If not, and if the crate is operating under the old public fields mode,
+        // present a compilation warning.
+        if !cfg!(feature = "private_fields") && b.field_vis.is_none() {
+            let where_diagnostics = b.where_diagnostics();
+            b.mode.push_deprecation_note(format!(
+                "Builder fields will be private by default starting in the next version. \
+                (see https://github.com/colin-kiegel/rust-derive-builder/issues/86 for \
+                more details). To squelch this message and adopt the new behavior now, \
+                compile `derive_builder` with `--features \"private_fields\"` or add \
+                `field(<vis>)` to the builder attribute on the struct. (Found {})",
+                where_diagnostics));
+        }
+        
         #[cfg(feature = "struct_default")]
         let (field_default_expression, struct_default_expression) = (None, b.default_expression);
         #[cfg(not(feature = "struct_default"))]
@@ -198,6 +247,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_vis: b.setter_vis,
             setter_into: b.setter_into,
             try_setter: b.try_setter,
+            field_vis: b.field_vis,
             default_expression: field_default_expression,
             no_std: b.no_std,
             mode: {
@@ -220,6 +270,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             builder_visibility: m.builder_vis.unwrap_or(m.build_target_vis),
             builder_pattern: b.builder_pattern.unwrap_or_default(),
             build_target_ident: syn::Ident::new(m.build_target_name),
+            derives: m.derive_traits.unwrap_or_default(),
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,

@@ -14,6 +14,8 @@ pub struct StructOptions {
     pub builder_ident: syn::Ident,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
     pub builder_visibility: syn::Visibility,
+    /// The additional traits to derive on the builder.
+    pub derives: Vec<syn::Ident>,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
     /// Target struct name.
@@ -42,6 +44,7 @@ impl StructOptions {
         Builder {
             enabled: true,
             ident: &self.builder_ident,
+            derives: &self.derives,
             generics: Some(&self.generics),
             visibility: &self.builder_visibility,
             fields: Vec::with_capacity(self.struct_size_hint),

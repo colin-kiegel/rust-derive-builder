@@ -409,15 +409,35 @@
 //! }
 //!
 //! fn main() {
-//!     // If we don't set the field `ipsum`,
-//!     let x = LoremBuilder::default().build().unwrap();
+//!     // If we're working too hard...
+//!     let x = LoremBuilder::default().ipsum(120).build().unwrap_err();
 //!
 //!     // .. the custom default will be used for `ipsum`:
-//!     assert_eq!(x, Lorem {
-//!         ipsum: 42,
-//!     });
+//!     assert_eq!(&x, "You'll tire yourself out");
 //! }
 //! ```
+//!
+//! ## Additional Trait Derivations
+//!
+//! You can derive additional traits on the builder, including traits defined by other crates:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Clone)]
+//! #[builder(derive(Debug, PartialEq, Eq))]
+//! pub struct Lorem {
+//!     foo: u8,
+//!     bar: String,
+//! }
+//! 
+//! fn main() {
+//!    assert_eq!(LoremBuilder::default(), LoremBuilder::default());
+//! }
+//! ```
+//!
+//! Attributes declared for those traits are _not_ forwarded to the fields on the builder.
 //!
 //! ## Documentation Comments and Attributes
 //!

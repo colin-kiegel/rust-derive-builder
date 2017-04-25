@@ -8,7 +8,7 @@ mod struct_default {
     //~| NOTE #[warn(deprecated)] on by default
     //~| NOTE in this expansion of #[derive(Builder)]
 
-    #[builder(default)]
+    #[builder(default, field(private))]
     struct Hello {
         world: String
     }
@@ -22,6 +22,7 @@ mod struct_default {
 mod field_default {
 
     #[derive(Debug, Default, PartialEq, Builder)]
+    #[builder(field(public))]
     struct Goodbye {
         #[builder(default)]
         world: String
