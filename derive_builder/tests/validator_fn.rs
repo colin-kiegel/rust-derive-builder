@@ -2,7 +2,7 @@
 extern crate derive_builder;
 
 #[derive(Debug, Clone, Builder, PartialEq, Eq)]
-#[builder(build_fn(validator="LoremBuilder::validate"))]
+#[builder(build_fn(validate="LoremBuilder::validate"))]
 pub struct Lorem {
     /// A percentile. Must be between 0 and 100.
     my_effort: u8,

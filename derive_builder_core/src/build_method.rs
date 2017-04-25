@@ -60,7 +60,7 @@ pub struct BuildMethod<'a> {
     pub default_struct: Option<Block>,
     /// Validation function with signature `&FooBuilder -> Result<(), String>`
     /// to call before the macro-provided struct buildout.
-    pub validation_fn: Option<&'a syn::Path>,
+    pub validate_fn: Option<&'a syn::Path>,
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
@@ -82,7 +82,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
                      let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
                      quote!(let #ident: #target_ty = #default_expr;)
                  });
-        let validation_fn = self.validation_fn
+        let validate_fn = self.validate_fn
             .as_ref()
             .map(|vfn| quote!(#vfn(&self)?;));
         let result = self.bindings.result_ty();
@@ -95,7 +95,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 #vis fn #ident(#self_param)
                     -> #result<#target_ty #target_ty_generics, #string>
                 {
-                    #validation_fn
+                    #validate_fn
                     #default_struct
                     Ok(#target_ty {
                         #(#initializers)*
@@ -141,7 +141,7 @@ macro_rules! default_build_method {
             doc_comment: None,
             bindings: Default::default(),
             default_struct: None,
-            validation_fn: None,
+            validate_fn: None,
         }
     }
 }
@@ -217,11 +217,11 @@ mod tests {
 
     #[test]
     fn validation() {
-        let validator_path = syn::parse_path("IpsumBuilder::validate")
+        let validate_path = syn::parse_path("IpsumBuilder::validate")
             .expect("Statically-entered path should be valid");
             
         let mut build_method: BuildMethod = default_build_method!();
-        build_method.validation_fn = Some(&validator_path);
+        build_method.validate_fn = Some(&validate_path);
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {

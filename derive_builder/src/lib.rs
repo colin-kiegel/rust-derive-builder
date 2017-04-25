@@ -374,7 +374,7 @@
 //!
 //! ## Pre-Build Validation
 //! If you're using the provided `build` method, you can declare 
-//! `#[builder(build_fn(validator="path::to::fn"))]` to specify a validator function which gets
+//! `#[builder(build_fn(validate="path::to::fn"))]` to specify a validator function which gets
 //! access to the builder before construction. 
 //! 
 //! The provided function must have the signature `(&FooBuilder) -> Result<_, String>`; 
@@ -387,7 +387,7 @@
 //! # extern crate derive_builder;
 //! #
 //! #[derive(Builder, Debug, PartialEq)]
-//! #[builder(build_fn(validator="LoremBuilder::validate"))]
+//! #[builder(build_fn(validate="LoremBuilder::validate"))]
 //! struct Lorem {
 //!     #[builder(default="42")]
 //!     pub ipsum: u8,

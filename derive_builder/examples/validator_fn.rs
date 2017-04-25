@@ -1,11 +1,11 @@
-//! This example illustrates the use of `validator` to add a pre-build validation
+//! This example illustrates the use of `validate` to add a pre-build validation
 //! step.
 
 #[macro_use]
 extern crate derive_builder;
 
 #[derive(Builder, Debug, PartialEq)]
-#[builder(build_fn(validator="LoremBuilder::validate"))]
+#[builder(build_fn(validate="LoremBuilder::validate"))]
 struct Lorem {
     #[builder(default="42")]
     pub ipsum: u8,

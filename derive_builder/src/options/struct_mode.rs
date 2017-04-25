@@ -13,7 +13,7 @@ pub struct StructMode {
     builder_vis: Option<syn::Visibility>,
     derive_traits: Option<Vec<syn::Ident>>,
     deprecation_notes: DeprecationNotes,
-    validator_fn: Option<syn::Path>,
+    validate_fn: Option<syn::Path>,
     struct_size_hint: usize,
 }
 
@@ -32,7 +32,7 @@ impl OptionsBuilder<StructMode> {
             build_fn_name: None,
             derive_traits: None,
             deprecation_notes: Default::default(),
-            validator_fn: None,
+            validate_fn: None,
             struct_size_hint: 0,
         });
 
@@ -62,7 +62,7 @@ impl StructMode {
     }
     
     impl_setter!{
-        ident: validator_fn,
+        ident: validate_fn,
         desc: "validator function path",
         map: |x: syn::Path| { x },
     }
@@ -99,8 +99,8 @@ impl StructMode {
             "skip" => {
                 self.parse_build_fn_skip(lit)
             },
-            "validator" => {
-                self.parse_build_fn_validator(lit)
+            "validate" => {
+                self.parse_build_fn_validate(lit)
             },
             _ => {
                 panic!("Unknown build_fn option `{}` {}.", ident.as_ref(), self.where_diagnostics())
@@ -146,10 +146,10 @@ impl StructMode {
         self.build_fn_enabled(!parse_lit_as_bool(skip).unwrap());
     }
     
-    fn parse_build_fn_validator(&mut self, lit: &syn::Lit) {
-        trace!("Parsing build function validator path `{:?}`", lit);
+    fn parse_build_fn_validate(&mut self, lit: &syn::Lit) {
+        trace!("Parsing build function validate path `{:?}`", lit);
         let value = parse_lit_as_path(lit).unwrap();
-        self.validator_fn(value);
+        self.validate_fn(value);
     }
 }
 
@@ -278,7 +278,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 no_std: b.no_std.unwrap_or(false),
             },
             default_expression: struct_default_expression,
-            validation_fn: m.validator_fn,
+            validate_fn: m.validate_fn,
         };
 
         (struct_options, field_defaults)
