@@ -5,7 +5,6 @@ authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
            "Ted Driggs <ted.driggs@outlook.com>"]
-
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://docs.rs/derive_builder"
@@ -14,34 +13,18 @@ license = "MIT/Apache-2.0"
 categories = ["development-tools", "rust-patterns"]
 keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "README.md"
-build = "build/mod.rs"
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [lib]
-proc-macro = true
+path = "src/lib.rs"
 
 [features]
-logging = [ "log", "env_logger", "derive_builder_core/logging" ]
-struct_default = []
-private_fields = []
-skeptic_tests = ["skeptic"]
-nightlytests = ["compiletest_rs"]
+default = ["derive_builder_macro"]
+logging = ["derive_builder_macro/logging"]
+struct_default = ["derive_builder_macro/struct_default"]
+private_fields = ["derive_builder_macro/private_fields"]
 
 [dependencies]
-syn = "0.11"
-quote = "0.3"
-log = { version = "0.3", optional = true }
-env_logger = { version = "0.4", optional = true }
-derive_builder_core = { version = "0.1", path = "../derive_builder_core" }
-skeptic = { version = "0.9", optional = true }
-compiletest_rs = { version = "0.2", optional = true }
-
-[build-dependencies]
-skeptic = { version = "0.9", optional = true }
-log = { version = "0.3", optional = true }
-env_logger = { version = "0.4", optional = true }
-
-[dev-dependencies]
-pretty_assertions = "0.1"
+derive_builder_macro = { path = "../derive_builder_macro/", optional = true }

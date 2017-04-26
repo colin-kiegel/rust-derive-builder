@@ -4,10 +4,14 @@ function main {
   export CARGO_TARGET_DIR="../target/__nightlytests"
 
   commands=(
-    "cd derive_builder_core && cargo clippy -- -Dclippy --color always"
-    "cd derive_builder      && cargo clippy -- -Dclippy --color always"
-    "cd derive_builder_core && cargo fmt -- --write-mode diff"
-    "cd derive_builder      && cargo fmt -- --write-mode diff"
+    "cd derive_builder_core  && cargo clippy -- -Dclippy"
+    "cd derive_builder_macro && cargo clippy -- -Dclippy"
+    "cd derive_builder       && cargo clippy -- -Dclippy"
+    "cd testsuite            && cargo clippy -- -Dclippy"
+    "cd derive_builder_core  && cargo fmt -- --write-mode diff"
+    "cd derive_builder_macro && cargo fmt -- --write-mode diff"
+    "cd derive_builder       && cargo fmt -- --write-mode diff"
+    "cd testsuite            && cargo fmt -- --write-mode diff"
   )
 
   dev/travis-run-all.sh "${commands[@]}"
