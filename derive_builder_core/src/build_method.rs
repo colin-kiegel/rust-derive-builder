@@ -7,7 +7,8 @@ use Initializer;
 use doc_comment::doc_comment_from;
 use DEFAULT_STRUCT_NAME;
 
-/// Initializer for the struct fields in the build method, implementing `quote::ToTokens`.
+/// Initializer for the struct fields in the build method, implementing
+/// `quote::ToTokens`.
 ///
 /// # Examples
 ///
@@ -115,9 +116,11 @@ impl<'a> BuildMethod<'a> {
         self
     }
 
-    /// Populate the `BuildMethod` with appropriate initializers of the underlying struct.
+    /// Populate the `BuildMethod` with appropriate initializers of the
+    /// underlying struct.
     ///
-    /// For each struct field this must be called with the appropriate initializer.
+    /// For each struct field this must be called with the appropriate
+    /// initializer.
     pub fn push_initializer(&mut self, init: Initializer) -> &mut Self {
         self.initializers.push(quote!(#init));
         self
@@ -196,14 +199,16 @@ mod tests {
     #[test]
     fn skip() {
         let mut build_method = default_build_method!();
-        build_method.enabled = false;        
+        build_method.enabled = false;
+        build_method.enabled = false;
+
         assert_eq!(quote!(#build_method), quote!());
     }
 
     #[test]
     fn rename() {
         let ident = syn::Ident::new("finish");
-        let mut build_method : BuildMethod = default_build_method!();
+        let mut build_method: BuildMethod = default_build_method!();
         build_method.ident = &ident;
 
         assert_eq!(quote!(#build_method), quote!(
@@ -219,7 +224,7 @@ mod tests {
     fn validation() {
         let validate_path = syn::parse_path("IpsumBuilder::validate")
             .expect("Statically-entered path should be valid");
-            
+
         let mut build_method: BuildMethod = default_build_method!();
         build_method.validate_fn = Some(&validate_path);
 

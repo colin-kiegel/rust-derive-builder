@@ -3,8 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-- perform pre-build validation via `#[builder(build_fn(validate="path::to::fn"))]`
 - builder derivation acts like `#[derive(Clone)]` for generic structs.
+
+## [0.4.6] - 2017-04-26
+
+### Added
+- pre-build validation via `#[builder(build_fn(validate="path::to::fn"))]`
 
 ## [0.4.5] - 2017-04-25
 
@@ -123,7 +127,8 @@ Requires Rust 1.15 or newer.
  - generate setter methods
  - support for generic structs
 
-[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.5...HEAD
+[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.6...HEAD
+[0.4.6]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.5...v0.4.6
 [0.4.5]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.4...v0.4.5
 [0.4.4]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.3...v0.4.4
 [0.4.3]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.2...v0.4.3

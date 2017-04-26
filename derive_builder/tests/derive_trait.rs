@@ -6,9 +6,9 @@ struct NotPartialEq(String);
 
 #[derive(Debug, Clone, Builder)]
 #[builder(derive(Debug, PartialEq, Eq))]
-struct Lorem { 
+struct Lorem {
     foo: u8,
-    
+
     /// This type doesn't have `PartialEq` support, but that's fine
     /// since we don't want it in the builder.
     #[builder(setter(skip))]

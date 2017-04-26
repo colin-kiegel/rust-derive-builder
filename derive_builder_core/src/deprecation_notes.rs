@@ -1,7 +1,8 @@
 use quote::{Tokens, ToTokens};
 use syn;
 
-/// Deprecation notes we want to emit to the user, implementing `quote::ToTokens`.
+/// Deprecation notes we want to emit to the user, implementing
+/// `quote::ToTokens`.
 ///
 /// Can be expanded at every place that accepts statements and item definitions
 /// (e.g. function bodys).
@@ -69,7 +70,8 @@ impl DeprecationNotes {
     }
 }
 
-/// A view of `DeprecationNotes` that can be used in any context that accept items.
+/// A view of `DeprecationNotes` that can be used in any context that accept
+/// items.
 ///
 /// Expands to a function `__deprecation_notes` which emits the notes.
 #[derive(Debug)]

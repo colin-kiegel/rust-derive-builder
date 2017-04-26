@@ -4,7 +4,8 @@ use BuilderPattern;
 use DeprecationNotes;
 use Bindings;
 
-/// Setter for the struct fields in the build method, implementing `quote::ToTokens`.
+/// Setter for the struct fields in the build method, implementing
+/// `quote::ToTokens`.
 ///
 /// # Examples
 ///
@@ -92,7 +93,7 @@ impl<'a> ToTokens for Setter<'a> {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
                     self_into_return_ty = quote!(#clone::clone(self));
-                }
+                },
             };
 
             let ty_params: Tokens;

@@ -7,7 +7,6 @@ use options::DefaultExpression;
 pub struct StructOptions {
     /// Whether or not this struct should implement its own build method.
     pub build_fn_enabled: bool,
-    
     /// The name of the emitted build method.
     pub build_fn_name: syn::Ident,
     /// Name of the builder struct, e.g. `FooBuilder`.
@@ -31,7 +30,7 @@ pub struct StructOptions {
     pub bindings: Bindings,
     /// Default expression for the whole struct, e.g. `#[builder(default)]` (default to None).
     pub default_expression: Option<DefaultExpression>,
-    /// Path to the optional validation function to invoke before the 
+    /// Path to the optional validation function to invoke before the
     /// macro-generated `build` method executes.
     pub validate_fn: Option<syn::Path>,
 }
