@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+- perform pre-build validation via
+  `#[builder(build_fn(validate="path::to::fn"))]`
+
 ## [0.4.5] - 2017-04-25
 
 ### Added

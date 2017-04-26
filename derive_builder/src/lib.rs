@@ -300,7 +300,7 @@
 //! }
 //! ```
 //!
-//! ### Tips
+//! ### Tips on Defaults
 //!
 //! * The `#[builder(default)]` annotation can be used on the struct level, too. Overrides are
 //!   still possible.
@@ -368,9 +368,58 @@
 //! ```
 //!
 //! ## Build Method Customization
-//! You can rename or suppress the auto-generated build method, leaving you free to implement 
+//!
+//! You can rename or suppress the auto-generated build method, leaving you free to implement
 //! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
 //! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
+//!
+//! ## Pre-Build Validation
+//!
+//! If you're using the provided `build` method, you can declare
+//! `#[builder(build_fn(validate="path::to::fn"))]` to specify a validator function which gets
+//! access to the builder before construction. The path does not need to be fully-qualified, and
+//! will consider `use` statements made at module level. It must be accessible from the scope
+//! where the target struct is declared.
+//!
+//! The provided function must have the signature `(&FooBuilder) -> Result<_, String>`;
+//! the `Ok` variant is not used by the `build` method.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! #[builder(build_fn(validate="Self::validate"))]
+//! struct Lorem {
+//!     pub ipsum: u8,
+//! }
+//!
+//! impl LoremBuilder {
+//!     /// Check that `Lorem` is putting in the right amount of effort.
+//!     fn validate(&self) -> Result<(), String> {
+//!         if let Some(ref ipsum) = self.ipsum {
+//!             match *ipsum {
+//!                 i if i < 20 => Err("Try harder".to_string()),
+//!                 i if i > 100 => Err("You'll tire yourself out".to_string()),
+//!                 _ => Ok(())
+//!             }
+//!         } else {
+//!             Ok(())
+//!         }
+//!     }
+//! }
+//!
+//! fn main() {
+//!     // If we're trying too hard...
+//!     let x = LoremBuilder::default().ipsum(120).build().unwrap_err();
+//!
+//!     // .. the build will fail:
+//!     assert_eq!(&x, "You'll tire yourself out");
+//! }
+//! ```
+//!
+//! Note:
+//! * Default values are applied _after_ validation, and will therefore not be validated!
 //!
 //! ## Additional Trait Derivations
 //!
@@ -386,7 +435,7 @@
 //!     foo: u8,
 //!     bar: String,
 //! }
-//! 
+//!
 //! fn main() {
 //!    assert_eq!(LoremBuilder::default(), LoremBuilder::default());
 //! }

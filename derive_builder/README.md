@@ -94,6 +94,7 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
 * **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via `=".."`. This works both on the struct and field level.
+* **Pre-build validation**: You can use `#[builder(build_fn(validate="path::to::fn"))]` to add your own validation before the target struct is generated.
 * **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 * **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate collections` to your crate. The latter requires the _nightly_ toolchain.

@@ -477,7 +477,7 @@ impl<Mode> OptionsBuilder<Mode>
         trace!("Parsing skip setter `{:?}`", skip);
         self.setter_enabled(!parse_lit_as_bool(skip).unwrap());
     }
-    
+
     /// Provide a diagnostic _where_-clause for panics.
     ///
     /// Delegete to the `OptionsBuilderMode`.
@@ -514,4 +514,9 @@ fn parse_lit_as_bool(lit: &syn::Lit) -> Result<bool, String> {
             }
         })
     }
+}
+
+fn parse_lit_as_path(lit: &syn::Lit) -> Result<syn::Path, String> {
+    syn::parse_path(parse_lit_as_string(lit)?)
+        .or_else(|_| Err(format!("Unable to interpret as path `{:?}`.", lit)))
 }

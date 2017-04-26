@@ -1,5 +1,5 @@
 use syn;
-use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool, FieldMode, StructOptions};
+use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool, parse_lit_as_path, FieldMode, StructOptions};
 use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
@@ -13,6 +13,7 @@ pub struct StructMode {
     builder_vis: Option<syn::Visibility>,
     derive_traits: Option<Vec<syn::Ident>>,
     deprecation_notes: DeprecationNotes,
+    validate_fn: Option<syn::Path>,
     struct_size_hint: usize,
 }
 
@@ -31,6 +32,7 @@ impl OptionsBuilder<StructMode> {
             build_fn_name: None,
             derive_traits: None,
             deprecation_notes: Default::default(),
+            validate_fn: None,
             struct_size_hint: 0,
         });
 
@@ -57,6 +59,12 @@ impl StructMode {
         ident: build_fn_enabled,
         desc: "build function enabled",
         map: |x: bool| { x },
+    }
+    
+    impl_setter!{
+        ident: validate_fn,
+        desc: "validator function path",
+        map: |x: syn::Path| { x },
     }
     
     impl_setter!{
@@ -90,6 +98,9 @@ impl StructMode {
             },
             "skip" => {
                 self.parse_build_fn_skip(lit)
+            },
+            "validate" => {
+                self.parse_build_fn_validate(lit)
             },
             _ => {
                 panic!("Unknown build_fn option `{}` {}.", ident.as_ref(), self.where_diagnostics())
@@ -133,6 +144,12 @@ impl StructMode {
     #[allow(dead_code,unused_variables)]
     fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
         self.build_fn_enabled(!parse_lit_as_bool(skip).unwrap());
+    }
+    
+    fn parse_build_fn_validate(&mut self, lit: &syn::Lit) {
+        trace!("Parsing build function validate path `{:?}`", lit);
+        let value = parse_lit_as_path(lit).unwrap();
+        self.validate_fn(value);
     }
 }
 
@@ -261,6 +278,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 no_std: b.no_std.unwrap_or(false),
             },
             default_expression: struct_default_expression,
+            validate_fn: m.validate_fn,
         };
 
         (struct_options, field_defaults)
