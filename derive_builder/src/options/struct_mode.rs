@@ -1,7 +1,7 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool,
               parse_lit_as_path, FieldMode, StructOptions};
-use derive_builder_core::{BuilderPattern, DeprecationNotes, Bindings};
+use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
 pub struct StructMode {
@@ -260,7 +260,6 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
         let bindings = Bindings {
             no_std: b.no_std.unwrap_or(false)
         };
-        let impl_generics = add_generic_bounds(&pattern, &bindings, m.build_target_generics.clone());
 
         let struct_options = StructOptions {
             build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
@@ -276,7 +275,6 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             derives: m.derive_traits.unwrap_or_default(),
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
-            inherent_generics: impl_generics,
             struct_size_hint: m.struct_size_hint,
             bindings: bindings,
             default_expression: struct_default_expression,
@@ -285,26 +283,4 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
 
         (struct_options, field_defaults)
     }
-}
-
-#[allow(dead_code)]
-fn add_generic_bounds(pattern: &BuilderPattern,
-                      bindings: &Bindings,
-                      mut generics: syn::Generics)
-                      -> syn::Generics {
-    if !pattern.requires_clone() {
-        return generics;
-    }
-
-    for mut typ in generics.ty_params.iter_mut() {
-        typ.bounds.push(syn::TyParamBound::Trait(
-            syn::PolyTraitRef {
-                trait_ref: syn::parse_path(bindings.clone_trait().as_str()).unwrap(),
-                bound_lifetimes: vec![],
-            },
-            syn::TraitBoundModifier::None
-        ))
-    }
-
-    generics
 }

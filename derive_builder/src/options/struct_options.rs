@@ -22,9 +22,6 @@ pub struct StructOptions {
     pub build_target_ident: syn::Ident,
     /// Represents lifetimes and type parameters attached to the declaration of items.
     pub generics: syn::Generics,
-    /// Represents lifetimes and type parameters attached to the `impl` 
-    /// block for the builder.
-    pub inherent_generics: syn::Generics,
     /// Emit deprecation notes to the user,
     /// e.g. if a deprecated attribute was used in `derive_builder`.
     pub deprecation_notes: DeprecationNotes,
@@ -45,14 +42,15 @@ impl StructOptions {
         Builder {
             enabled: true,
             ident: &self.builder_ident,
+            pattern: self.builder_pattern,
             derives: &self.derives,
             generics: Some(&self.generics),
-            impl_generics: Some(self.inherent_generics.split_for_impl().0),
             visibility: &self.builder_visibility,
             fields: Vec::with_capacity(self.struct_size_hint),
             functions: Vec::with_capacity(self.struct_size_hint),
             doc_comment: None,
             deprecation_notes: self.deprecation_notes.clone(),
+            bindings: self.bindings,
         }
     }
     /// Returns a `BuildMethod` according to the options.

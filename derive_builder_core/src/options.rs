@@ -3,7 +3,7 @@
 ///
 /// It can also be generalized to methods with different parameter sets and return types,
 /// e.g. the `build()` method.
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum BuilderPattern {
     /// E.g. `fn bar(self, bar: Bar) -> Self`.
     Owned,

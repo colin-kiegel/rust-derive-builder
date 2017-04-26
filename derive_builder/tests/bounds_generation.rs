@@ -7,49 +7,69 @@ pub struct Dolor(String);
 
 /// Notice that this type derives Builder without disallowing
 /// `Lorem<Dolor>`.
-#[derive(Debug, Clone, Builder, PartialEq, Eq)]
+#[derive(Debug, Clone, Builder, PartialEq, Eq, Default)]
 #[builder(field(private), setter(into))]
 pub struct Lorem<T> {
     ipsum: T,
 }
 
-fn make_default_lorem<T: Default>() -> Lorem<T> {
-    Lorem {
-        ipsum: Default::default()
-    }
+#[derive(Debug, Clone, Builder, PartialEq, Eq, Default)]
+#[builder(field(private))]
+pub struct VecLorem<T> {
+    ipsum: Vec<T>,
 }
 
-fn make_u16_lorem(v: u16) -> Lorem<u16> {
-    Lorem {
-        ipsum: v
-    }
-}
-
-fn make_dolor_lorem(v: Dolor) -> Lorem<Dolor> {
-    Lorem {
-        ipsum: v
-    }
-}
-
-fn build_u16_lorem(v: u16) -> Lorem<u16> {
-    LoremBuilder::default()
-        .ipsum(v)
-        .build()
-        .unwrap()
+#[derive(Debug, Clone, Builder, PartialEq, Eq)]
+#[builder(pattern="owned", field(private))]
+pub struct OwnedLorem<T> {
+    ipsum: T,
 }
 
 #[test]
-fn u16_lorems() {
-    assert_eq!(make_u16_lorem(10), build_u16_lorem(10));
+fn generic_field_with_clone_has_builder_impl() {
+    assert_eq!(LoremBuilder::default()
+                   .ipsum(10)
+                   .build()
+                   .unwrap(),
+               Lorem {
+                   ipsum: 10
+               });
+}
+
+/// The `LoremBuilder` type does not require that `T: Clone`, so we should
+/// be able to name a `LoremBuilder<Dolor>`. But all the methods are on an impl
+/// bound with `T: Clone`, so we can't do anything with it.
+#[test]
+fn builder_with_non_clone_generic_compiles() {
+    let _ : LoremBuilder<Dolor>;
+}
+
+/// In this case, we're trying to emit something that converts into a thing that
+/// implements clone.
+#[test]
+fn builder_with_into_generic_compiles() {
+    assert_eq!(LoremBuilder::<String>::default().ipsum("").build().unwrap(), 
+               Lorem::default());
 }
 
 #[test]
-fn dolor_lorems() {
-    assert_eq!(make_default_lorem(), make_dolor_lorem(Dolor::default()));
+fn builder_with_vec_t_compiles() {
+    assert_eq!(VecLoremBuilder::<String>::default()
+                   .ipsum(vec!["Hello".to_string()])
+                   .build()
+                   .unwrap(), 
+               VecLorem {
+                   ipsum: vec!["Hello".to_string()]
+               });
 }
 
 #[test]
-fn type_inference() {
-    assert_eq!(LoremBuilder::<String>::default().ipsum("".to_string()).build().unwrap(), 
-               make_default_lorem());
+fn generic_field_without_clone_has_owned_builder() {
+    assert_eq!(OwnedLoremBuilder::default()
+                   .ipsum(Dolor::default())
+                   .build()
+                   .unwrap(),
+               OwnedLorem {
+                   ipsum: Dolor::default()
+               });
 }
