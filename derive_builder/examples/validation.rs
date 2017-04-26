@@ -5,9 +5,8 @@
 extern crate derive_builder;
 
 #[derive(Builder, Debug, PartialEq)]
-#[builder(build_fn(validate="LoremBuilder::validate"))]
+#[builder(build_fn(validate="Self::validate"))]
 struct Lorem {
-    #[builder(default="42")]
     pub ipsum: u8,
 }
 
@@ -27,11 +26,9 @@ impl LoremBuilder {
 }
 
 fn main() {
-    // If we don't set the field `ipsum`,
-    let x = LoremBuilder::default().build().unwrap();
+    // If we're trying too hard...
+    let x = LoremBuilder::default().ipsum(120).build().unwrap_err();
 
-    // .. the custom default will be used for `ipsum`:
-    assert_eq!(x, Lorem {
-        ipsum: 42,
-    });
+    // .. the build will fail:
+    assert_eq!(&x, "You'll tire yourself out");
 }
