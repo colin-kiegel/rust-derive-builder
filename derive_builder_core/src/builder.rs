@@ -226,7 +226,7 @@ mod tests {
 
         assert_eq!(quote!(#builder), quote!());
     }
-    
+
     #[test]
     fn add_derives() {
         let derives = vec![syn::Ident::new("Serialize")];

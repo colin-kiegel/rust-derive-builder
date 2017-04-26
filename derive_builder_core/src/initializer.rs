@@ -105,7 +105,7 @@ impl<'a> Initializer<'a> {
                 } else {
                     MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
                 }
-            }
+            },
         }
     }
 
@@ -116,11 +116,11 @@ impl<'a> Initializer<'a> {
                 let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
                 let field_ident = self.field_ident;
                 quote!(#struct_ident.#field_ident)
-            }
+            },
             None => {
                 let default = self.bindings.default_trait();
                 quote!(#default::default())
-            }
+            },
         }
     }
 }

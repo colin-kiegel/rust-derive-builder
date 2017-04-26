@@ -44,7 +44,8 @@ impl FromStr for Block {
     /// # Errors
     ///
     /// When `expr` cannot be parsed as `Vec<syn::TokenTree>`. E.g. unbalanced
-    /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as parsing error.
+    /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
+    /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
         Ok(Block(syn::parse_token_trees(expr)?))
     }

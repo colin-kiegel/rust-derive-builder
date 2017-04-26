@@ -42,9 +42,15 @@ impl LoremBuilder {
 
 #[test]
 fn out_of_bounds() {
-    assert_eq!(&LoremBuilder::default().my_effort(120).build().unwrap_err(),
+    assert_eq!(&LoremBuilder::default()
+                    .my_effort(120)
+                    .build()
+                    .unwrap_err(),
                "Don't wear yourself out");
-    assert_eq!(&LoremBuilder::default().rivals_effort(120).build().unwrap_err(),
+    assert_eq!(&LoremBuilder::default()
+                    .rivals_effort(120)
+                    .build()
+                    .unwrap_err(),
                "Your rival is cheating");
 }
 
@@ -56,9 +62,10 @@ fn validation_pass() {
         .build()
         .expect("All validations should be passing");
 
-    assert_eq!(lorem, Lorem {
-        my_effort: 90,
-        rivals_effort: 89,
-        their_effort: 40,
-    });
+    assert_eq!(lorem,
+               Lorem {
+                   my_effort: 90,
+                   rivals_effort: 89,
+                   their_effort: 40,
+               });
 }

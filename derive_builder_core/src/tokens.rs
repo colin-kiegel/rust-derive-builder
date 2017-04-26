@@ -1,6 +1,7 @@
 use quote::{Tokens, ToTokens};
 
-/// `RawTokens` can be directly appended to a `quote::Tokens` instance without any parsing.
+/// `RawTokens` can be directly appended to a `quote::Tokens` instance without
+/// any parsing.
 #[derive(PartialEq, Debug)]
 pub struct RawTokens<T: AsRef<str>>(pub T);
 

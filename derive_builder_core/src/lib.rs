@@ -10,10 +10,11 @@
 //! ## Purpose
 //!
 //! This is an internal helper library of [`derive_builder`]. Its purpose is to
-//! allow [`derive_builder`] to use its own code generation technique, if needed.
+//! allow [`derive_builder`] to use its own code generation technique, if
+//! needed.
 //!
-//! [`derive_builder_core`] might also be used in crates that [`derive_builder`] depends on -
-//! again to break a dependency cycle.
+//! [`derive_builder_core`] might also be used in crates that
+//! [`derive_builder`] depends on - again to break a dependency cycle.
 //!
 //! If [`derive_builder`] does not itself depend on _your_ crate, then you
 //! should consider using [`derive_builder`] instead of [`derive_builder_core`].

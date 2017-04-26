@@ -36,7 +36,8 @@ pub struct BuilderField<'a> {
     /// Whether the builder implements a setter for this field.
     ///
     /// Note: We will fallback to `PhantomData` if the setter is disabled
-    ///       to hack around issues with unused generic type parameters - at least for now.
+    ///       to hack around issues with unused generic type parameters - at
+    ///       least for now.
     pub setter_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: &'a syn::Visibility,

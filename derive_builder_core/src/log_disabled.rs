@@ -6,7 +6,8 @@ macro_rules! log_enabled {
     ($( $x:tt )*) => { false }
 }
 
-// delegate to format_args and throw away the result to avoid `unused variable` lints.
+// delegate to format_args and throw away the result to avoid `unused variable`
+// lints.
 // The compiler should be able to optimize this away.
 macro_rules! debug {
     ($( $x:tt )*) => { format_args!($( $x )*); }

@@ -17,7 +17,7 @@ impl LoremBuilder {
             match *ipsum {
                 i if i < 20 => Err("Try harder".to_string()),
                 i if i > 100 => Err("You'll tire yourself out".to_string()),
-                _ => Ok(())
+                _ => Ok(()),
             }
         } else {
             Ok(())

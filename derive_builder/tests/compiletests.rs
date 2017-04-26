@@ -28,7 +28,8 @@ fn run_mode(mode: &'static str) {
     // - cargo respects the environment variable `env::var("CARGO_TARGET_DIR")`,
     //   however if this is not set and a virtual manifest is used, we will *not*
     //   know the path :-(
-    // In that case try to set `CARGO_TARGET_DIR` manually, e.g. `/path/to/my_workspace/target`.
+    // In that case try to set `CARGO_TARGET_DIR` manually, e.g.
+    // `/path/to/my_workspace/target`.
     let build_dir = env::var("CARGO_TARGET_DIR").unwrap_or(format!("{}/target", base_dir));
     let artefacts_dir = format!("{}/{}", build_dir, PROFILE);
 
