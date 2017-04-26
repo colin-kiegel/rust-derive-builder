@@ -521,6 +521,8 @@
 //! [builder pattern]: https://aturon.github.io/ownership/builders.html
 //! [`derive_builder_core`]: https://crates.io/crates/derive_builder_core
 
+#![cfg_attr(feature = "no_std", no_std)]
+
 #[allow(unused_imports)]
 #[macro_use]
 extern crate derive_builder_macro;

@@ -30,7 +30,7 @@ fn main() {
     let foo = FooBuilder::default()
         .build()
         .unwrap();
-
+    
     assert_eq!(foo, Foo {
         defaulted: 0,
         skipped: 0,

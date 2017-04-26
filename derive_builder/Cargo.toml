@@ -25,6 +25,7 @@ default = ["derive_builder_macro"]
 logging = ["derive_builder_macro/logging"]
 struct_default = ["derive_builder_macro/struct_default"]
 private_fields = ["derive_builder_macro/private_fields"]
+no_std = []
 
 [dependencies]
 derive_builder_macro = { path = "../derive_builder_macro/", optional = true }
