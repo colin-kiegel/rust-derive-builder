@@ -1,5 +1,6 @@
 use syn;
-use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool, parse_lit_as_path, FieldMode, StructOptions};
+use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool,
+              parse_lit_as_path, FieldMode, StructOptions};
 use derive_builder_core::{DeprecationNotes, Bindings};
 
 #[derive(Debug, Clone)]
@@ -48,31 +49,31 @@ impl StructMode {
         desc: "builder name",
         map: |x: String| { x },
     }
-    
+
     impl_setter!{
         ident: build_fn_name,
         desc: "build function name",
         map: |x: String| { x },
     }
-    
+
     impl_setter!{
         ident: build_fn_enabled,
         desc: "build function enabled",
         map: |x: bool| { x },
     }
-    
+
     impl_setter!{
         ident: validate_fn,
         desc: "validator function path",
         map: |x: syn::Path| { x },
     }
-    
+
     impl_setter!{
         ident: derive_traits,
         desc: "derive traits",
         map: |x: Vec<syn::Ident>| { x },
     }
-    
+
     #[allow(non_snake_case)]
     fn parse_build_fn_options_metaItem(&mut self, meta_item: &syn::MetaItem) {
         trace!("Build Method Options - Parsing MetaItem `{:?}`.", meta_item);
@@ -88,7 +89,7 @@ impl StructMode {
             }
         }
     }
-    
+
     #[allow(non_snake_case)]
     fn parse_build_fn_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Build fn Options - Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);
@@ -107,7 +108,7 @@ impl StructMode {
             }
         }
     }
-    
+
     /// e.g `private` in `#[builder(build_fn(private))]`
     fn parse_build_fn_options_word(&mut self, ident: &syn::Ident) {
         trace!("Setter Options - Parsing word `{}`", ident.as_ref());
@@ -120,13 +121,9 @@ impl StructMode {
             }
         };
     }
-    
+
     #[allow(non_snake_case)]
-    fn parse_build_fn_options_list(
-        &mut self,
-        ident: &syn::Ident,
-        nested: &[syn::NestedMetaItem]
-    ) {
+    fn parse_build_fn_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMetaItem]) {
         trace!("Build fn Options - Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             _ => {
@@ -134,18 +131,18 @@ impl StructMode {
             }
         }
     }
-    
+
     fn parse_build_fn_name(&mut self, lit: &syn::Lit) {
         trace!("Parsing build function name `{:?}`", lit);
         let value = parse_lit_as_string(lit).unwrap();
         self.build_fn_name(value.clone())
     }
-    
+
     #[allow(dead_code,unused_variables)]
     fn parse_build_fn_skip(&mut self, skip: &syn::Lit) {
         self.build_fn_enabled(!parse_lit_as_bool(skip).unwrap());
     }
-    
+
     fn parse_build_fn_validate(&mut self, lit: &syn::Lit) {
         trace!("Parsing build function validate path `{:?}`", lit);
         let value = parse_lit_as_path(lit).unwrap();
@@ -159,7 +156,7 @@ impl OptionsBuilderMode for StructMode {
         let value = parse_lit_as_string(name).unwrap();
         self.builder_name(value.clone());
     }
-    
+
     fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]) {
         for x in nested {
             match *x {
@@ -182,13 +179,13 @@ impl OptionsBuilderMode for StructMode {
         let where_diag = self.where_diagnostics();
         for x in nested {
             match *x {
-                // We don't allow name-value pairs or further nesting here, so
-                // only look for words.
+        // We don't allow name-value pairs or further nesting here, so
+        // only look for words.
                 syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref tr)) => {
                     match tr.as_ref() {
                         "Default" | "Clone" => { self.push_deprecation_note(
                             format!("The `Default` and `Clone` traits are automatically added to all \
-                            builders; explicitly deriving them is unnecessary ({})", where_diag)); 
+                            builders; explicitly deriving them is unnecessary ({})", where_diag));
                         },
                         _ => traits.push(tr.clone())
                     }
@@ -233,7 +230,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 `field(<vis>)` to the builder attribute on the struct. (Found {})",
                 where_diagnostics));
         }
-        
+
         #[cfg(feature = "struct_default")]
         let (field_default_expression, struct_default_expression) = (None, b.default_expression);
         #[cfg(not(feature = "struct_default"))]
@@ -259,6 +256,11 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
 
         let m = b.mode;
 
+        let pattern = b.builder_pattern.unwrap_or_default();
+        let bindings = Bindings {
+            no_std: b.no_std.unwrap_or(false)
+        };
+
         let struct_options = StructOptions {
             build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
             build_fn_name: syn::Ident::new(
@@ -268,15 +270,13 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 m.builder_name.unwrap_or(format!("{}Builder", m.build_target_name))
             ),
             builder_visibility: m.builder_vis.unwrap_or(m.build_target_vis),
-            builder_pattern: b.builder_pattern.unwrap_or_default(),
+            builder_pattern: pattern,
             build_target_ident: syn::Ident::new(m.build_target_name),
             derives: m.derive_traits.unwrap_or_default(),
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
-            bindings: Bindings {
-                no_std: b.no_std.unwrap_or(false),
-            },
+            bindings: bindings,
             default_expression: struct_default_expression,
             validate_fn: m.validate_fn,
         };

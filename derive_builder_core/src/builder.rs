@@ -1,7 +1,10 @@
 use quote::{Tokens, ToTokens};
 use syn;
+
+use Bindings;
 use BuildMethod;
 use BuilderField;
+use BuilderPattern;
 use Setter;
 use doc_comment::doc_comment_from;
 use DeprecationNotes;
@@ -43,9 +46,11 @@ pub struct Builder<'a> {
     pub enabled: bool,
     /// Name of this builder struct.
     pub ident: &'a syn::Ident,
+    /// Pattern of this builder struct.
+    pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [syn::Ident],
-    /// Type parameters and lifetimes attached to this builder struct.
+    /// Type parameters and lifetimes attached to this builder's struct definition.
     pub generics: Option<&'a syn::Generics>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
@@ -59,6 +64,8 @@ pub struct Builder<'a> {
     pub doc_comment: Option<syn::Attribute>,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: DeprecationNotes,
+    /// Library bindings to use in emitted builder.
+    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Builder<'a> {
@@ -68,7 +75,9 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_vis = self.visibility;
             let builder_ident = self.ident;
             let derives = self.derives;
-            let (impl_generics, ty_generics, where_clause) = self.generics
+            let bounded_generics = self.compute_impl_bounds();
+            let (impl_generics, _, _) = bounded_generics.split_for_impl();
+            let (struct_generics, ty_generics, where_clause) = self.generics
                 .map(syn::Generics::split_for_impl)
                 .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
                 .unwrap_or((None, None, None));
@@ -77,15 +86,15 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
-            debug!("ty_generics={:?}, where_clause={:?}, impl_generics={:?}",
+            debug!("ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
                    ty_generics,
                    where_clause,
-                   impl_generics);
+                   struct_generics);
 
             tokens.append(quote!(
                 #[derive(Default, Clone #( , #derives)* )]
                 #builder_doc_comment
-                #builder_vis struct #builder_ident #impl_generics #where_clause {
+                #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
 
@@ -125,6 +134,36 @@ impl<'a> Builder<'a> {
         self.functions.push(quote!(#f));
         self
     }
+
+    /// Add `Clone` trait bound to generic types for non-owned builders.
+    /// This enables target types to declare generics without requiring a `Clone`
+    /// impl. This is the same as how the built-in derives for `Clone`, `Default`,
+    /// `PartialEq`, and other traits work.
+    fn compute_impl_bounds(&self) -> syn::Generics {
+        if let Some(type_gen) = self.generics {
+            let mut generics = type_gen.clone();
+
+            if !self.pattern.requires_clone() || type_gen.ty_params.is_empty() {
+                return generics;
+            }
+            
+            let clone_bound = syn::TyParamBound::Trait(
+                syn::PolyTraitRef {
+                    trait_ref: syn::parse_path(self.bindings.clone_trait().as_str()).unwrap(),
+                    bound_lifetimes: vec![],
+                },
+                syn::TraitBoundModifier::None
+            );
+
+            for mut typ in generics.ty_params.iter_mut() {
+                typ.bounds.push(clone_bound.clone());
+            }
+
+            generics
+        } else {
+            Default::default()
+        }
+    }
 }
 
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
@@ -136,6 +175,7 @@ macro_rules! default_builder {
         Builder {
             enabled: true,
             ident: &syn::Ident::new("FooBuilder"),
+            pattern: Default::default(),
             derives: &vec![],
             generics: None,
             visibility: &syn::Visibility::Public,
@@ -143,6 +183,7 @@ macro_rules! default_builder {
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
+            bindings: Default::default(),
         }
     }
 }
@@ -151,6 +192,7 @@ macro_rules! default_builder {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+    
     #[test]
     fn simple() {
         let builder = default_builder!();
@@ -173,7 +215,7 @@ mod tests {
     #[test]
     fn generic() {
         let ast = syn::parse_macro_input(stringify!(
-            struct Lorem<'a, T: Debug> where T: Clone { }
+            struct Lorem<'a, T: Debug> where T: PartialEq { }
         )).expect("Couldn't parse item");
         let generics = ast.generics;
         let mut builder = default_builder!();
@@ -181,12 +223,12 @@ mod tests {
 
         assert_eq!(quote!(#builder), quote!(
             #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: Debug> where T: Clone {
+            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
             }
 
             #[allow(dead_code)]
-            impl<'a, T: Debug> FooBuilder<'a, T> where T: Clone {
+            impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }
@@ -197,7 +239,7 @@ mod tests {
     #[test]
     fn generic_reference() {
         let ast = syn::parse_macro_input(stringify!(
-            struct Lorem<'a, T: 'a + Default> where T: Clone{ }
+            struct Lorem<'a, T: 'a + Default> where T: PartialEq{ }
         )).expect("Couldn't parse item");
 
         let generics = ast.generics;
@@ -206,12 +248,37 @@ mod tests {
 
         assert_eq!(quote!(#builder), quote!(
             #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: 'a + Default> where T: Clone {
+            pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
                 foo: u32,
             }
 
             #[allow(dead_code)]
-            impl<'a, T: 'a + Default> FooBuilder<'a, T> where T: Clone {
+            impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+                fn bar() -> {
+                    unimplemented!()
+                }
+            }
+        ));
+    }
+    
+    #[test]
+    fn owned_generic() {
+        let ast = syn::parse_macro_input(stringify!(
+            struct Lorem<'a, T: Debug> where T: PartialEq { }
+        )).expect("Couldn't parse item");
+        let generics = ast.generics;
+        let mut builder = default_builder!();
+        builder.generics = Some(&generics);
+        builder.pattern = BuilderPattern::Owned;
+
+        assert_eq!(quote!(#builder), quote!(
+            #[derive(Default, Clone)]
+            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
+                foo: u32,
+            }
+
+            #[allow(dead_code)]
+            impl<'a, T: Debug> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }

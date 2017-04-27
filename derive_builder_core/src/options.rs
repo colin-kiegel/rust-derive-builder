@@ -1,9 +1,9 @@
 /// Controls the signature of a setter method,
 /// more specifically how `self` is passed and returned.
 ///
-/// It can also be generalized to methods with different parameter sets and
-/// return types, e.g. the `build()` method.
-#[derive(PartialEq, Debug, Clone, Copy)]
+/// It can also be generalized to methods with different parameter sets and return types,
+/// e.g. the `build()` method.
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum BuilderPattern {
     /// E.g. `fn bar(self, bar: Bar) -> Self`.
     Owned,
@@ -17,6 +17,14 @@ pub enum BuilderPattern {
     ///   optimize chained `clone` calls away in release mode.
     ///   Therefore this turns out not to be as bad as it sounds.
     Immutable,
+}
+
+impl BuilderPattern {
+    /// Returns true if this style of builder needs to be able to clone its
+    /// fields during the `build` method.
+    pub fn requires_clone(&self) -> bool {
+        *self != BuilderPattern::Owned
+    }
 }
 
 /// Defaults to `Mutable`.

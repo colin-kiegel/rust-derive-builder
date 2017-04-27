@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Fixed
+- for generic structs, apply the `T: Clone` type bound in builder impl
+  instead of struct definition #91
+- only emit the `T: Clone` type bound when it is actually needed, i.e.
+  mutable/immutable pattern, but not owned pattern.
+
 ## [0.4.6] - 2017-04-26
 
 ### Added
