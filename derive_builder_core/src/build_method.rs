@@ -25,7 +25,7 @@ use DEFAULT_STRUCT_NAME;
 /// #    let build_method = default_build_method!();
 /// #
 /// #    assert_eq!(quote!(#build_method), quote!(
-/// pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+/// pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
 ///     Ok(Foo {
 ///         foo: self.foo,
 ///     })
@@ -159,7 +159,7 @@ mod tests {
         let build_method = default_build_method!();
 
         assert_eq!(quote!(#build_method), quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+            pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
@@ -173,7 +173,7 @@ mod tests {
         build_method.bindings.no_std = true;
 
         assert_eq!(quote!(#build_method), quote!(
-            pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {
+            pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::collections::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
@@ -187,7 +187,7 @@ mod tests {
         build_method.default_struct = Some("Default::default()".parse().unwrap());
 
         assert_eq!(quote!(#build_method), quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+            pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 let __default: Foo = {Default::default()};
                 Ok(Foo {
                     foo: self.foo,
@@ -212,7 +212,7 @@ mod tests {
         build_method.ident = &ident;
 
         assert_eq!(quote!(#build_method), quote!(
-            pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+            pub fn finish(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
@@ -229,7 +229,7 @@ mod tests {
         build_method.validate_fn = Some(&validate_path);
 
         assert_eq!(quote!(#build_method), quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+            pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 IpsumBuilder::validate(&self)?;
 
                 Ok(Foo {

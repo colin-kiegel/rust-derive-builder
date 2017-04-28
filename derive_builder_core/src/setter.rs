@@ -25,7 +25,7 @@ use Bindings;
 /// #     assert_eq!(quote!(#setter), quote!(
 /// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
-///     new.foo = ::std::option::Option::Some(value);
+///     new.foo = ::derive_builder::export::Option::Some(value);
 ///     new
 /// }
 /// #     ));
@@ -180,8 +180,8 @@ mod tests {
 
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&self, value: Foo) -> Self {
-                let mut new = ::std::clone::Clone::clone(self);
-                new.foo = ::std::option::Option::Some(value);
+                let mut new = ::derive_builder::export::Clone::clone(self);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
         ));
@@ -195,7 +195,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
         ));
@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(self, value: Foo) -> Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
         ));
@@ -225,7 +225,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
         ));
@@ -237,9 +237,9 @@ mod tests {
         setter.generic_into = true;
 
         assert_eq!(quote!(#setter), quote!(
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Option::Some(value.into());
                 new
             }
         ));
@@ -261,19 +261,19 @@ mod tests {
 
         assert_eq!(quote!(#setter), quote!(
             #[some_attr]
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Option::Some(value.into());
                 new
             }
 
             #[some_attr]
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                -> ::std::result::Result<&mut Self, VALUE::Error> {
+            pub fn try_foo<VALUE: ::derive_builder::export::TryInto<Foo>>(&mut self, value: VALUE)
+                -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(converted);
+                new.foo = ::derive_builder::export::Option::Some(converted);
                 Ok(new)
             }
         ));
@@ -287,8 +287,8 @@ mod tests {
 
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&self, value: Foo) -> Self {
-                let mut new = ::core::clone::Clone::clone(self);
-                new.foo = ::core::option::Option::Some(value);
+                let mut new = ::derive_builder::export::Clone::clone(self);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
         ));
@@ -301,9 +301,9 @@ mod tests {
         setter.generic_into = true;
 
         assert_eq!(quote!(#setter), quote!(
-            pub fn foo <VALUE: ::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
-                new.foo = ::core::option::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Option::Some(value.into());
                 new
             }
         ));
@@ -326,15 +326,15 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
+                new.foo = ::derive_builder::export::Option::Some(value);
                 new
             }
 
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                -> ::std::result::Result<&mut Self, VALUE::Error> {
+            pub fn try_foo<VALUE: ::derive_builder::export::TryInto<Foo>>(&mut self, value: VALUE)
+                -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(converted);
+                new.foo = ::derive_builder::export::Option::Some(converted);
                 Ok(new)
             }
         ));

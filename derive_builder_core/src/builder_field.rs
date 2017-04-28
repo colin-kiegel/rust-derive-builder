@@ -21,7 +21,7 @@ use Bindings;
 /// #    field.attrs = attrs.as_slice();
 /// #
 /// #    assert_eq!(quote!(#field), quote!(
-/// #[some_attr] pub foo: ::std::option::Option<String>,
+/// #[some_attr] pub foo: ::derive_builder::export::Option<String>,
 /// #    ));
 /// # }
 /// ```
@@ -102,7 +102,7 @@ mod tests {
         let field = default_builder_field!();
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] pub foo: ::std::option::Option<String>,
+            #[some_attr] pub foo: ::derive_builder::export::Option<String>,
         ));
     }
 
@@ -112,7 +112,7 @@ mod tests {
         field.setter_enabled = false;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::std::marker::PhantomData<String>,
+            #[some_attr] foo: ::derive_builder::export::PhantomData<String>,
         ));
     }
 
@@ -122,7 +122,7 @@ mod tests {
         field.bindings.no_std = true;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] pub foo: ::core::option::Option<String>,
+            #[some_attr] pub foo: ::derive_builder::export::Option<String>,
         ));
     }
 
@@ -133,7 +133,7 @@ mod tests {
         field.setter_enabled = false;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::core::marker::PhantomData<String>,
+            #[some_attr] foo: ::derive_builder::export::PhantomData<String>,
         ));
     }
 
@@ -144,7 +144,7 @@ mod tests {
         field.field_visibility = &private;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::std::option::Option<String>,
+            #[some_attr] foo: ::derive_builder::export::Option<String>,
         ));
     }
 }

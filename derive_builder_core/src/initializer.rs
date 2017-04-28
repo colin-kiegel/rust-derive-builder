@@ -152,10 +152,10 @@ impl<'a> ToTokens for MatchNone<'a> {
                 ))
             },
             MatchNone::ReturnError(ref err) => tokens.append(quote!(
-                None => return ::std::result::Result::Err(::std::string::String::from(#err))
+                None => return ::derive_builder::export::Result::Err(::std::string::String::from(#err))
             )),
             MatchNone::ReturnErrorNoStd(ref err) => tokens.append(quote!(
-                None => return ::core::result::Result::Err(
+                None => return ::derive_builder::export::Result::Err(
                     ::collections::string::String::from(#err))
             )),
         }
@@ -176,10 +176,10 @@ impl<'a> ToTokens for MatchSome {
                 Some(value) => value
             )),
             MatchSome::Clone => tokens.append(quote!(
-                Some(ref value) => ::std::clone::Clone::clone(value)
+                Some(ref value) => ::derive_builder::export::Clone::clone(value)
             )),
             MatchSome::CloneNoStd => tokens.append(quote!(
-                Some(ref value) => ::core::clone::Clone::clone(value)
+                Some(ref value) => ::derive_builder::export::Clone::clone(value)
             )),
         }
     }
@@ -214,8 +214,8 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Result::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -229,8 +229,8 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Result::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -245,7 +245,7 @@ mod tests {
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
                 Some(value) => value,
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                None => return ::derive_builder::export::Result::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -259,7 +259,7 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
                 None => { 42 },
             },
         ));
@@ -272,7 +272,7 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
                 None => __default.foo,
             },
         ));
@@ -284,7 +284,7 @@ mod tests {
         initializer.setter_enabled = false;
 
         assert_eq!(quote!(#initializer), quote!(
-            foo: ::std::default::Default::default(),
+            foo: ::derive_builder::export::Default::default(),
         ));
     }
 
@@ -295,8 +295,8 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::core::clone::Clone::clone(value),
-                None => return ::core::result::Result::Err(::collections::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Result::Err(::collections::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -310,7 +310,7 @@ mod tests {
         initializer.setter_enabled = false;
 
         assert_eq!(quote!(#initializer), quote!(
-            foo: ::core::default::Default::default(),
+            foo: ::derive_builder::export::Default::default(),
         ));
     }
 }

@@ -228,7 +228,7 @@ mod tests {
             }
 
             #[allow(dead_code)]
-            impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+            impl<'a, T: Debug + ::derive_builder::export::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }
@@ -253,7 +253,7 @@ mod tests {
             }
 
             #[allow(dead_code)]
-            impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+            impl<'a, T: 'a + Default + ::derive_builder::export::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }

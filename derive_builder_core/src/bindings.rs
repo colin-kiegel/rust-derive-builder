@@ -19,65 +19,37 @@ impl Bindings {
 
     /// Result type.
     pub fn result_ty(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: result :: Result"
-                  } else {
-                      ":: std :: result :: Result"
-                  })
+        RawTokens(":: derive_builder :: export :: Result")
     }
 
     /// Option type.
     pub fn option_ty(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: option :: Option"
-                  } else {
-                      ":: std :: option :: Option"
-                  })
+        RawTokens(":: derive_builder :: export :: Option")
     }
 
     /// PhantomData type.
     pub fn phantom_data_ty(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: marker :: PhantomData"
-                  } else {
-                      ":: std :: marker :: PhantomData"
-                  })
+        RawTokens(":: derive_builder :: export :: PhantomData")
     }
 
     /// Default trait.
     pub fn default_trait(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: default :: Default"
-                  } else {
-                      ":: std :: default :: Default"
-                  })
+        RawTokens(":: derive_builder :: export :: Default")
     }
 
     /// Clone trait.
     pub fn clone_trait(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: clone :: Clone"
-                  } else {
-                      ":: std :: clone :: Clone"
-                  })
+        RawTokens(":: derive_builder :: export :: Clone")
     }
 
     /// Into trait.
     pub fn into_trait(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: convert :: Into"
-                  } else {
-                      ":: std :: convert :: Into"
-                  })
+        RawTokens(":: derive_builder :: export :: Into")
     }
 
     /// TryInto trait.
     pub fn try_into_trait(&self) -> RawTokens<&'static str> {
-        RawTokens(if self.no_std {
-                      ":: core :: convert :: TryInto"
-                  } else {
-                      ":: std :: convert :: TryInto"
-                  })
+        RawTokens(":: derive_builder :: export :: TryInto")
     }
 }
 
@@ -87,19 +59,19 @@ fn std() {
 
     assert_eq!(b.string_ty().to_tokens(), quote!(::std::string::String));
 
-    assert_eq!(b.result_ty().to_tokens(), quote!(::std::result::Result));
+    assert_eq!(b.result_ty().to_tokens(), quote!(::derive_builder::export::Result));
 
-    assert_eq!(b.option_ty().to_tokens(), quote!(::std::option::Option));
+    assert_eq!(b.option_ty().to_tokens(), quote!(::derive_builder::export::Option));
 
     assert_eq!(b.phantom_data_ty().to_tokens(),
-               quote!(::std::marker::PhantomData));
+               quote!(::derive_builder::export::PhantomData));
 
     assert_eq!(b.default_trait().to_tokens(),
-               quote!(::std::default::Default));
+               quote!(::derive_builder::export::Default));
 
-    assert_eq!(b.clone_trait().to_tokens(), quote!(::std::clone::Clone));
+    assert_eq!(b.clone_trait().to_tokens(), quote!(::derive_builder::export::Clone));
 
-    assert_eq!(b.into_trait().to_tokens(), quote!(::std::convert::Into));
+    assert_eq!(b.into_trait().to_tokens(), quote!(::derive_builder::export::Into));
 }
 
 #[test]
@@ -109,17 +81,17 @@ fn no_std() {
     assert_eq!(b.string_ty().to_tokens(),
                quote!(::collections::string::String));
 
-    assert_eq!(b.result_ty().to_tokens(), quote!(::core::result::Result));
+    assert_eq!(b.result_ty().to_tokens(), quote!(::derive_builder::export::Result));
 
-    assert_eq!(b.option_ty().to_tokens(), quote!(::core::option::Option));
+    assert_eq!(b.option_ty().to_tokens(), quote!(::derive_builder::export::Option));
 
     assert_eq!(b.phantom_data_ty().to_tokens(),
-               quote!(::core::marker::PhantomData));
+               quote!(::derive_builder::export::PhantomData));
 
     assert_eq!(b.default_trait().to_tokens(),
-               quote!(::core::default::Default));
+               quote!(::derive_builder::export::Default));
 
-    assert_eq!(b.clone_trait().to_tokens(), quote!(::core::clone::Clone));
+    assert_eq!(b.clone_trait().to_tokens(), quote!(::derive_builder::export::Clone));
 
-    assert_eq!(b.into_trait().to_tokens(), quote!(::core::convert::Into));
+    assert_eq!(b.into_trait().to_tokens(), quote!(::derive_builder::export::Into));
 }
