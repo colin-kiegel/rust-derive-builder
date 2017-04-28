@@ -25,7 +25,7 @@ use Bindings;
 /// #     assert_eq!(quote!(#setter), quote!(
 /// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
-///     new.foo = ::derive_builder::export::Option::Some(value);
+///     new.foo = ::derive_builder::export::Some(value);
 ///     new
 /// }
 /// #     ));
@@ -70,9 +70,6 @@ impl<'a> ToTokens for Setter<'a> {
             let ident = self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
-            let clone = self.bindings.clone_trait();
-            let option = self.bindings.option_ty();
-            let into = self.bindings.into_trait();
 
             let self_param: Tokens;
             let return_ty: Tokens;
@@ -92,7 +89,7 @@ impl<'a> ToTokens for Setter<'a> {
                 BuilderPattern::Immutable => {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
-                    self_into_return_ty = quote!(#clone::clone(self));
+                    self_into_return_ty = quote!(::derive_builder::export::Clone::clone(self));
                 },
             };
 
@@ -101,7 +98,7 @@ impl<'a> ToTokens for Setter<'a> {
             let into_value: Tokens;
 
             if self.generic_into {
-                ty_params = quote!(<VALUE: #into<#ty>>);
+                ty_params = quote!(<VALUE: ::derive_builder::export::Into<#ty>>);
                 param_ty = quote!(VALUE);
                 into_value = quote!(value.into());
             } else {
@@ -117,25 +114,23 @@ impl<'a> ToTokens for Setter<'a> {
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = #option::Some(#into_value);
+                    new.#field_ident = ::derive_builder::export::Some(#into_value);
                     new
             }));
 
             if self.try_setter {
-                let try_into = self.bindings.try_into_trait();
-                let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
+                let try_ty_params = quote!(<VALUE: ::derive_builder::export::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(format!("try_{}", ident));
-                let result = self.bindings.result_ty();
 
                 tokens.append(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
-                        -> #result<#return_ty, VALUE::Error>
+                        -> ::derive_builder::export::Result<#return_ty, VALUE::Error>
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
-                        new.#field_ident = #option::Some(converted);
-                        Ok(new)
+                        new.#field_ident = ::derive_builder::export::Some(converted);
+                        ::derive_builder::export::Ok(new)
                 }));
             } else {
                 trace!("Skipping try_setter for `{}`.", self.field_ident);
@@ -181,7 +176,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&self, value: Foo) -> Self {
                 let mut new = ::derive_builder::export::Clone::clone(self);
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
         ));
@@ -195,7 +190,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
         ));
@@ -209,7 +204,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(self, value: Foo) -> Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
         ));
@@ -225,7 +220,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
         ));
@@ -239,7 +234,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Some(value.into());
                 new
             }
         ));
@@ -264,7 +259,7 @@ mod tests {
             pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Some(value.into());
                 new
             }
 
@@ -273,8 +268,8 @@ mod tests {
                 -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(converted);
-                Ok(new)
+                new.foo = ::derive_builder::export::Some(converted);
+                ::derive_builder::export::Ok(new)
             }
         ));
     }
@@ -282,13 +277,13 @@ mod tests {
     #[test]
     fn no_std() {
         let mut setter = default_setter!();
-        setter.bindings.no_std = true;
+        setter.bindings = Bindings::NoStd;
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&self, value: Foo) -> Self {
                 let mut new = ::derive_builder::export::Clone::clone(self);
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
         ));
@@ -297,13 +292,13 @@ mod tests {
     #[test]
     fn no_std_generic() {
         let mut setter = default_setter!();
-        setter.bindings.no_std = true;
+        setter.bindings = Bindings::NoStd;
         setter.generic_into = true;
 
         assert_eq!(quote!(#setter), quote!(
             pub fn foo <VALUE: ::derive_builder::export::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value.into());
+                new.foo = ::derive_builder::export::Some(value.into());
                 new
             }
         ));
@@ -326,7 +321,7 @@ mod tests {
         assert_eq!(quote!(#setter), quote!(
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(value);
+                new.foo = ::derive_builder::export::Some(value);
                 new
             }
 
@@ -334,8 +329,8 @@ mod tests {
                 -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::derive_builder::export::Option::Some(converted);
-                Ok(new)
+                new.foo = ::derive_builder::export::Some(converted);
+                ::derive_builder::export::Ok(new)
             }
         ));
     }

@@ -83,10 +83,9 @@ impl<'a> Initializer<'a> {
             BuilderPattern::Owned => MatchSome::Move,
             BuilderPattern::Mutable |
             BuilderPattern::Immutable => {
-                if self.bindings.no_std {
-                    MatchSome::CloneNoStd
-                } else {
-                    MatchSome::Clone
+                match self.bindings {
+                    Bindings::Std => MatchSome::Clone,
+                    Bindings::NoStd => MatchSome::CloneNoStd,
                 }
             },
         }
@@ -99,11 +98,12 @@ impl<'a> Initializer<'a> {
             None => {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
-                } else if self.bindings.no_std {
-                    MatchNone::ReturnErrorNoStd(format!("`{}` must be initialized",
-                                                        self.field_ident))
                 } else {
-                    MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+                    let err_msg = format!("`{}` must be initialized", self.field_ident);
+                    match self.bindings {
+                        Bindings::Std => MatchNone::ReturnError(err_msg),
+                        Bindings::NoStd => MatchNone::ReturnErrorNoStd(err_msg),
+                    }
                 }
             },
         }
@@ -118,8 +118,7 @@ impl<'a> Initializer<'a> {
                 quote!(#struct_ident.#field_ident)
             },
             None => {
-                let default = self.bindings.default_trait();
-                quote!(#default::default())
+                quote!(::derive_builder::export::Default::default())
             },
         }
     }
@@ -291,7 +290,7 @@ mod tests {
     #[test]
     fn no_std() {
         let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
+        initializer.bindings = Bindings::NoStd;
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
@@ -306,7 +305,7 @@ mod tests {
     #[test]
     fn no_std_setter_disabled() {
         let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
+        initializer.bindings = Bindings::NoStd;
         initializer.setter_enabled = false;
 
         assert_eq!(quote!(#initializer), quote!(

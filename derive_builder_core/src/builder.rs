@@ -149,7 +149,7 @@ impl<'a> Builder<'a> {
             
             let clone_bound = syn::TyParamBound::Trait(
                 syn::PolyTraitRef {
-                    trait_ref: syn::parse_path(self.bindings.clone_trait().as_str()).unwrap(),
+                    trait_ref: syn::parse_path("::derive_builder::export::Clone").unwrap(),
                     bound_lifetimes: vec![],
                 },
                 syn::TraitBoundModifier::None

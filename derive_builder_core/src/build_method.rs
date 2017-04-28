@@ -26,7 +26,7 @@ use DEFAULT_STRUCT_NAME;
 /// #
 /// #    assert_eq!(quote!(#build_method), quote!(
 /// pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
-///     Ok(Foo {
+///     ::derive_builder::export::Ok(Foo {
 ///         foo: self.foo,
 ///     })
 /// }
@@ -86,7 +86,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let validate_fn = self.validate_fn
             .as_ref()
             .map(|vfn| quote!(#vfn(&self)?;));
-        let result = self.bindings.result_ty();
         let string = self.bindings.string_ty();
 
         if self.enabled {
@@ -94,11 +93,11 @@ impl<'a> ToTokens for BuildMethod<'a> {
             tokens.append(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
-                    -> #result<#target_ty #target_ty_generics, #string>
+                    -> ::derive_builder::export::Result<#target_ty #target_ty_generics, #string>
                 {
                     #validate_fn
                     #default_struct
-                    Ok(#target_ty {
+                    ::derive_builder::export::Ok(#target_ty {
                         #(#initializers)*
                     })
                 }
@@ -160,7 +159,7 @@ mod tests {
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
-                Ok(Foo {
+                ::derive_builder::export::Ok(Foo {
                     foo: self.foo,
                 })
             }
@@ -170,11 +169,11 @@ mod tests {
     #[test]
     fn no_std() {
         let mut build_method = default_build_method!();
-        build_method.bindings.no_std = true;
+        build_method.bindings = Bindings::NoStd;
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::collections::string::String> {
-                Ok(Foo {
+                ::derive_builder::export::Ok(Foo {
                     foo: self.foo,
                 })
             }
@@ -189,7 +188,7 @@ mod tests {
         assert_eq!(quote!(#build_method), quote!(
             pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 let __default: Foo = {Default::default()};
-                Ok(Foo {
+                ::derive_builder::export::Ok(Foo {
                     foo: self.foo,
                 })
             }
@@ -213,7 +212,7 @@ mod tests {
 
         assert_eq!(quote!(#build_method), quote!(
             pub fn finish(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
-                Ok(Foo {
+                ::derive_builder::export::Ok(Foo {
                     foo: self.foo,
                 })
             }
@@ -232,7 +231,7 @@ mod tests {
             pub fn build(&self) -> ::derive_builder::export::Result<Foo, ::std::string::String> {
                 IpsumBuilder::validate(&self)?;
 
-                Ok(Foo {
+                ::derive_builder::export::Ok(Foo {
                     foo: self.foo,
                 })
             }
