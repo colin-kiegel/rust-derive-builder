@@ -67,7 +67,7 @@ impl StructOptions {
             bindings: self.bindings,
             default_struct: self.default_expression
                 .as_ref()
-                .map(|x| { x.parse_block(self.bindings.no_std) }),
+                .map(DefaultExpression::parse_block),
             validate_fn: self.validate_fn.as_ref(),
         }
     }

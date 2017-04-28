@@ -38,7 +38,7 @@ pub struct FieldOptions {
 }
 
 impl DefaultExpression {
-    pub fn parse_block(&self, no_std: bool) -> Block {
+    pub fn parse_block(&self) -> Block {
         let expr = match *self {
             DefaultExpression::Explicit(ref s) => {
                 if s.is_empty() {
@@ -46,11 +46,7 @@ impl DefaultExpression {
                 }
                 s
             },
-            DefaultExpression::Trait => if no_std {
-                "::core::default::Default::default()"
-            } else {
-                "::std::default::Default::default()"
-            },
+            DefaultExpression::Trait => "::derive_builder::export::Default::default()",
         };
 
         expr.parse().expect(&format!("Couldn't parse default expression `{:?}`", self))
@@ -87,7 +83,7 @@ impl FieldOptions {
             builder_pattern: self.builder_pattern,
             default_value: self.default_expression
                 .as_ref()
-                .map(|x| { x.parse_block(self.bindings.no_std) }),
+                .map(DefaultExpression::parse_block),
             use_default_struct: self.use_default_struct,
             bindings: self.bindings,
         }

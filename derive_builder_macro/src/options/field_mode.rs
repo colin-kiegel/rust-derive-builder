@@ -1,6 +1,6 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, FieldOptions};
-use derive_builder_core::{DeprecationNotes, Bindings};
+use derive_builder_core::DeprecationNotes;
 
 #[derive(Clone, Debug)]
 pub struct FieldMode {
@@ -58,7 +58,8 @@ impl OptionsBuilder<FieldMode> {
         let mut deprecation_notes = self.mode.deprecation_notes;
         deprecation_notes.extend(&defaults.mode.deprecation_notes);
 
-        // move a nested field out of `self`, if it is `Some(_)` or else clone it from `defaults`
+        // move a nested field out of `self`, if it is `Some(_)` or else clone it from
+        // `defaults`
         macro_rules! f {
             ($($field:ident).*) => {
                 self.$($field).*.or_else(|| defaults.$($field).*.clone())
@@ -83,7 +84,7 @@ impl OptionsBuilder<FieldMode> {
             default_expression: f!(default_expression),
             setter_into: f!(setter_into),
             try_setter: f!(try_setter),
-            no_std: f!(no_std),
+            bindings: f!(bindings),
             mode: mode,
         }
     }
@@ -95,7 +96,7 @@ impl OptionsBuilderMode for FieldMode {
         panic!("Builder name can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
-    
+
     fn parse_derive(&mut self, _nested: &[syn::NestedMetaItem]) {
         panic!("Derive declarations can only be added on the struct level (but found {}).",
                self.where_diagnostics())
@@ -114,9 +115,9 @@ impl OptionsBuilderMode for FieldMode {
     fn struct_mode(&self) -> bool {
         false
     }
-    
+
     fn parse_build_fn_options(&mut self, _: &[syn::NestedMetaItem]) {
-        panic!("Build function options can only be set on the struct level (but found {}).", 
+        panic!("Build function options can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
 }
@@ -136,7 +137,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
                     },
                     _ => syn::Ident::new(field_ident.clone()),
                 }});
-                
+
         let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
 
         let field_vis = b.field_vis.unwrap_or_else(|| if cfg!(feature = "private_fields") {
@@ -158,9 +159,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
             deprecation_notes: b.mode.deprecation_notes,
             default_expression: b.default_expression,
             use_default_struct: b.mode.use_default_struct,
-            bindings: Bindings {
-                no_std: b.no_std.unwrap_or(false),
-            },
+            bindings: b.bindings.unwrap_or_default(),
             attrs: b.mode.setter_attrs.unwrap_or_default(),
         }
     }
@@ -173,16 +172,18 @@ fn filter_attr(attr: &&syn::Attribute) -> bool {
 
     if attr.is_sugared_doc == true {
         if let syn::MetaItem::NameValue(ref ident, _) = attr.value {
-            // example:
-            // Attribute { style: Outer, value: NameValue(Ident("doc"), Str("/// This is a doc comment for a field", Cooked)), is_sugared_doc: true }
+    // example:
+    // Attribute { style: Outer, value: NameValue(Ident("doc"), Str("/// This is a
+    // doc comment for a field", Cooked)), is_sugared_doc: true }
             if ident == "doc" {
                 return true
             }
         }
     } else {
         if let syn::MetaItem::List(ref ident, _) = attr.value {
-            // example:
-            // Attribute { style: Outer, value: List(Ident("allow"), [MetaItem(Word(Ident("non_snake_case")))]), is_sugared_doc: false }
+    // example:
+    // Attribute { style: Outer, value: List(Ident("allow"),
+    // [MetaItem(Word(Ident("non_snake_case")))]), is_sugared_doc: false }
             return match ident.as_ref() {
                 "cfg" => true,
                 "allow" => true,

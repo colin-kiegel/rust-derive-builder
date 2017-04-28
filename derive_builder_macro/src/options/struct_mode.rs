@@ -1,7 +1,7 @@
 use syn;
 use options::{OptionsBuilder, OptionsBuilderMode, parse_lit_as_string, parse_lit_as_bool,
               parse_lit_as_path, FieldMode, StructOptions};
-use derive_builder_core::{DeprecationNotes, Bindings};
+use derive_builder_core::DeprecationNotes;
 
 #[derive(Debug, Clone)]
 pub struct StructMode {
@@ -246,7 +246,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             try_setter: b.try_setter,
             field_vis: b.field_vis,
             default_expression: field_default_expression,
-            no_std: b.no_std,
+            bindings: b.bindings,
             mode: {
                 let mut mode = FieldMode::default();
                 mode.use_default_struct = struct_default_expression.is_some();
@@ -257,9 +257,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
         let m = b.mode;
 
         let pattern = b.builder_pattern.unwrap_or_default();
-        let bindings = Bindings {
-            no_std: b.no_std.unwrap_or(false)
-        };
+        let bindings = b.bindings.unwrap_or_default();
 
         let struct_options = StructOptions {
             build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
