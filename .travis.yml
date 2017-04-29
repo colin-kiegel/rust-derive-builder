@@ -75,3 +75,13 @@ after_success: |
   # upload the documentation from the build with stable (automatically only
   # runs on the master branch, not individual PRs)
   travis-cargo --only stable doc-upload -- --features "$CARGO_FEATURES"
+
+deploy:
+  on:
+    tags: true
+    branch: master
+    rust: nightly
+    condition: "$JOB == build"
+  provider: script
+  script: dev/deploy.sh
+  skip_cleanup: true
