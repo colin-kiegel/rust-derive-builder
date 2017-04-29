@@ -119,7 +119,8 @@ impl<'a> ToTokens for Setter<'a> {
             }));
 
             if self.try_setter {
-                let try_ty_params = quote!(<VALUE: ::derive_builder::export::TryInto<#ty>>);
+                let try_into_trait = self.bindings.try_into_trait();
+                let try_ty_params = quote!(<VALUE: #try_into_trait<#ty>>);
                 let try_ident = syn::Ident::new(format!("try_{}", ident));
 
                 tokens.append(quote!(
@@ -264,7 +265,7 @@ mod tests {
             }
 
             #[some_attr]
-            pub fn try_foo<VALUE: ::derive_builder::export::TryInto<Foo>>(&mut self, value: VALUE)
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
                 -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
@@ -325,7 +326,7 @@ mod tests {
                 new
             }
 
-            pub fn try_foo<VALUE: ::derive_builder::export::TryInto<Foo>>(&mut self, value: VALUE)
+            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
                 -> ::derive_builder::export::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
