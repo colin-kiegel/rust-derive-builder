@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder"
-version = "0.4.6"
+version = "0.4.7"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
@@ -44,4 +44,4 @@ log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "0.1"
+pretty_assertions = "0.2"

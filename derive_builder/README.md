@@ -9,8 +9,6 @@
 
 [Rust][rust] macro to automatically implement the **builder pattern** for arbitrary structs. A simple `#[derive(Builder)]` will generate a `FooBuilder` for your struct `Foo` with all setter-methods and a build method.
 
-**This requires Rust 1.15, due to the usage of Macros 1.1.**
-
 ## How it Works
 
 ```rust

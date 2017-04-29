@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder_core"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
@@ -25,4 +25,4 @@ quote = "0.3"
 log = { version = "0.3", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "0.1"
+pretty_assertions = "0.2"
