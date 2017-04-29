@@ -10,4 +10,4 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
-derive_builder = { path = "../../" }
+derive_builder = { path = "../../derive_builder/" }

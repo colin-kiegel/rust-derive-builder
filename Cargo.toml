@@ -1,2 +1,3 @@
 [workspace]
-members = ["derive_builder", "derive_builder_core"]
+members = ["derive_builder", "derive_builder_core", "derive_builder_macro",
+           "testsuite"]

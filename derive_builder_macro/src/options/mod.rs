@@ -12,7 +12,7 @@
 //!    `FieldOptions` instances.
 
 use syn;
-use derive_builder_core::BuilderPattern;
+use derive_builder_core::{Bindings, BuilderPattern};
 
 #[macro_use]
 mod macros;
@@ -58,7 +58,7 @@ pub struct OptionsBuilder<Mode> {
     default_expression: Option<DefaultExpression>,
     setter_into: Option<bool>,
     try_setter: Option<bool>,
-    no_std: Option<bool>,
+    bindings: Option<Bindings>,
     mode: Mode,
 }
 
@@ -86,7 +86,7 @@ impl<Mode> From<Mode> for OptionsBuilder<Mode> {
             field_vis: None,
             default_expression: None,
             setter_into: None,
-            no_std: None,
+            bindings: None,
             mode: mode,
         }
     }
@@ -138,9 +138,9 @@ impl<Mode> OptionsBuilder<Mode>
     }
 
     impl_setter!{
-        ident: no_std,
-        desc: "no_std support",
-        map: |x: bool| { x },
+        ident: bindings,
+        desc: "bindings library",
+        map: |x: Bindings| { x },
     }
 
     impl_setter!{
@@ -259,7 +259,7 @@ impl<Mode> OptionsBuilder<Mode>
             },
             "no_std" => {
                 if self.mode.struct_mode() {
-                    self.no_std(true)
+                    self.bindings(Bindings::NoStd)
                 } else {
                     panic!("Support for `#![no_std]` can only be set on the struct level \
                             (but found {}).", self.where_diagnostics())

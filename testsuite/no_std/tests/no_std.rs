@@ -1,6 +1,7 @@
 // requires nightly toolchain!
 //
 // compile-flags:-C panic=abort
+#![cfg(feature = "nightlytests")]
 #![no_std]
 #![feature(collections, lang_items, start, core_intrinsics)]
 #![allow(dead_code)]

@@ -21,7 +21,7 @@ use Bindings;
 /// #    field.attrs = attrs.as_slice();
 /// #
 /// #    assert_eq!(quote!(#field), quote!(
-/// #[some_attr] pub foo: ::std::option::Option<String>,
+/// #[some_attr] pub foo: ::derive_builder::export::Option<String>,
 /// #    ));
 /// # }
 /// ```
@@ -55,10 +55,9 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-            let option = self.bindings.option_ty();
 
             tokens.append(quote!(
-                #(#attrs)* #vis #ident: #option<#ty>,
+                #(#attrs)* #vis #ident: ::derive_builder::export::Option<#ty>,
             ));
         } else {
             trace!("Skipping builder field for `{}`, fallback to PhantomData.",
@@ -66,10 +65,9 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-            let phantom_data = self.bindings.phantom_data_ty();
 
             tokens.append(quote!(
-                #(#attrs)* #ident: #phantom_data<#ty>,
+                #(#attrs)* #ident: ::derive_builder::export::PhantomData<#ty>,
             ));
         }
     }
@@ -102,7 +100,7 @@ mod tests {
         let field = default_builder_field!();
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] pub foo: ::std::option::Option<String>,
+            #[some_attr] pub foo: ::derive_builder::export::Option<String>,
         ));
     }
 
@@ -112,28 +110,28 @@ mod tests {
         field.setter_enabled = false;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::std::marker::PhantomData<String>,
+            #[some_attr] foo: ::derive_builder::export::PhantomData<String>,
         ));
     }
 
     #[test]
     fn no_std_setter_enabled() {
         let mut field = default_builder_field!();
-        field.bindings.no_std = true;
+        field.bindings = Bindings::NoStd;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] pub foo: ::core::option::Option<String>,
+            #[some_attr] pub foo: ::derive_builder::export::Option<String>,
         ));
     }
 
     #[test]
     fn no_std_setter_disabled() {
         let mut field = default_builder_field!();
-        field.bindings.no_std = true;
+        field.bindings = Bindings::NoStd;
         field.setter_enabled = false;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::core::marker::PhantomData<String>,
+            #[some_attr] foo: ::derive_builder::export::PhantomData<String>,
         ));
     }
 
@@ -144,7 +142,7 @@ mod tests {
         field.field_visibility = &private;
 
         assert_eq!(quote!(#field), quote!(
-            #[some_attr] foo: ::std::option::Option<String>,
+            #[some_attr] foo: ::derive_builder::export::Option<String>,
         ));
     }
 }

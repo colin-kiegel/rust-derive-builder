@@ -149,7 +149,7 @@ impl<'a> Builder<'a> {
             
             let clone_bound = syn::TyParamBound::Trait(
                 syn::PolyTraitRef {
-                    trait_ref: syn::parse_path(self.bindings.clone_trait().as_str()).unwrap(),
+                    trait_ref: syn::parse_path("::derive_builder::export::Clone").unwrap(),
                     bound_lifetimes: vec![],
                 },
                 syn::TraitBoundModifier::None
@@ -228,7 +228,7 @@ mod tests {
             }
 
             #[allow(dead_code)]
-            impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+            impl<'a, T: Debug + ::derive_builder::export::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }
@@ -253,7 +253,7 @@ mod tests {
             }
 
             #[allow(dead_code)]
-            impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+            impl<'a, T: 'a + Default + ::derive_builder::export::Clone> FooBuilder<'a, T> where T: PartialEq {
                 fn bar() -> {
                     unimplemented!()
                 }

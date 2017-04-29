@@ -10,7 +10,7 @@ matrix:
     - rust: 1.15.0
       env: JOB=build CARGO_FEATURES="skeptic_tests struct_default private_fields"
     - rust: nightly
-      env: JOB=build CARGO_FEATURES="skeptic_tests nightlytests logging"
+      env: JOB=build CARGO_FEATURES="skeptic_tests nightlytests"
     - rust: nightly
       env: JOB=style_check
   allow_failures:
@@ -53,17 +53,21 @@ script: |
       #   `derive_builder` crate will implicitly build/doc the
       #   `derive_builder_core` crate too.
       commands=(
-        "cd derive_builder && travis-cargo build -- --features \"$CARGO_FEATURES\""
-        "cd derive_builder && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
+        "cd testsuite && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd testsuite && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
         "cd derive_builder && travis-cargo doc"
       )
       ;;
     style_check)
       commands=(
-        "cd derive_builder_core && cargo clippy -- -Dclippy"
-        "cd derive_builder      && cargo clippy -- -Dclippy"
-        "cd derive_builder_core && cargo fmt -- --write-mode diff"
-        "cd derive_builder      && cargo fmt -- --write-mode diff"
+        "cd derive_builder_core  && cargo clippy -- -Dclippy"
+        "cd derive_builder_macro && cargo clippy -- -Dclippy"
+        "cd derive_builder       && cargo clippy -- -Dclippy"
+        "cd testsuite            && cargo clippy -- -Dclippy"
+        "cd derive_builder_core  && cargo fmt -- --write-mode diff"
+        "cd derive_builder_macro && cargo fmt -- --write-mode diff"
+        "cd derive_builder       && cargo fmt -- --write-mode diff"
+        "cd testsuite            && cargo fmt -- --write-mode diff"
       )
       ;;
     *)

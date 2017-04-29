@@ -1,0 +1,15 @@
+[package]
+name = "derive_builder_testsuite_no_std"
+version = "0.1.0"
+authors = ["Colin Kiegel <kiegel@gmx.de>"]
+license = "MIT/Apache-2.0"
+publish = false
+
+[features]
+nightlytests = ["derive_builder/no_std"]
+
+[dependencies]
+derive_builder = { path = "../../derive_builder/", optional = true }
+
+[profile]
+panic = "abort"

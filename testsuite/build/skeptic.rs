@@ -8,7 +8,7 @@ extern crate skeptic;
 #[cfg(not(feature = "logging"))]
 #[macro_use]
 mod log_disabled {
-    include!("../src/log_disabled.rs");
+    include!("log_disabled.rs");
 }
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     env_logger::init().unwrap();
 
     let mut files = generate_doc_tpl_tests().unwrap();
-    files.push("README.md".to_string());
+    files.push("../derive_builder/README.md".to_string());
 
     let files_ref: Vec<&str> = files.iter().map(|x| x.as_str()).collect();
 
@@ -59,7 +59,7 @@ use std::fs::{File, DirBuilder};
 use std::ffi::OsStr;
 use std::io::{Write, Read};
 
-const DOC_TPL_DIR: &'static str = "src/doc_tpl/";
+const DOC_TPL_DIR: &'static str = "../derive_builder_macro/src/doc_tpl/";
 const DOC_TPL_OUT_DIR: &'static str = "doc_tpl/";
 
 fn generate_doc_tpl_tests() -> Result<Vec<String>, Box<Error>> {

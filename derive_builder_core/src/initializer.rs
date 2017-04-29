@@ -83,10 +83,9 @@ impl<'a> Initializer<'a> {
             BuilderPattern::Owned => MatchSome::Move,
             BuilderPattern::Mutable |
             BuilderPattern::Immutable => {
-                if self.bindings.no_std {
-                    MatchSome::CloneNoStd
-                } else {
-                    MatchSome::Clone
+                match self.bindings {
+                    Bindings::Std => MatchSome::Clone,
+                    Bindings::NoStd => MatchSome::CloneNoStd,
                 }
             },
         }
@@ -99,11 +98,12 @@ impl<'a> Initializer<'a> {
             None => {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
-                } else if self.bindings.no_std {
-                    MatchNone::ReturnErrorNoStd(format!("`{}` must be initialized",
-                                                        self.field_ident))
                 } else {
-                    MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+                    let err_msg = format!("`{}` must be initialized", self.field_ident);
+                    match self.bindings {
+                        Bindings::Std => MatchNone::ReturnError(err_msg),
+                        Bindings::NoStd => MatchNone::ReturnErrorNoStd(err_msg),
+                    }
                 }
             },
         }
@@ -118,8 +118,7 @@ impl<'a> Initializer<'a> {
                 quote!(#struct_ident.#field_ident)
             },
             None => {
-                let default = self.bindings.default_trait();
-                quote!(#default::default())
+                quote!(::derive_builder::export::Default::default())
             },
         }
     }
@@ -152,10 +151,10 @@ impl<'a> ToTokens for MatchNone<'a> {
                 ))
             },
             MatchNone::ReturnError(ref err) => tokens.append(quote!(
-                None => return ::std::result::Result::Err(::std::string::String::from(#err))
+                None => return ::derive_builder::export::Err(::std::string::String::from(#err))
             )),
             MatchNone::ReturnErrorNoStd(ref err) => tokens.append(quote!(
-                None => return ::core::result::Result::Err(
+                None => return ::derive_builder::export::Err(
                     ::collections::string::String::from(#err))
             )),
         }
@@ -176,10 +175,10 @@ impl<'a> ToTokens for MatchSome {
                 Some(value) => value
             )),
             MatchSome::Clone => tokens.append(quote!(
-                Some(ref value) => ::std::clone::Clone::clone(value)
+                Some(ref value) => ::derive_builder::export::Clone::clone(value)
             )),
             MatchSome::CloneNoStd => tokens.append(quote!(
-                Some(ref value) => ::core::clone::Clone::clone(value)
+                Some(ref value) => ::derive_builder::export::Clone::clone(value)
             )),
         }
     }
@@ -214,8 +213,8 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -229,8 +228,8 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -245,7 +244,7 @@ mod tests {
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
                 Some(value) => value,
-                None => return ::std::result::Result::Err(::std::string::String::from(
+                None => return ::derive_builder::export::Err(::std::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -259,7 +258,7 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
                 None => { 42 },
             },
         ));
@@ -272,7 +271,7 @@ mod tests {
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
                 None => __default.foo,
             },
         ));
@@ -284,19 +283,19 @@ mod tests {
         initializer.setter_enabled = false;
 
         assert_eq!(quote!(#initializer), quote!(
-            foo: ::std::default::Default::default(),
+            foo: ::derive_builder::export::Default::default(),
         ));
     }
 
     #[test]
     fn no_std() {
         let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
+        initializer.bindings = Bindings::NoStd;
 
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
-                Some(ref value) => ::core::clone::Clone::clone(value),
-                None => return ::core::result::Result::Err(::collections::string::String::from(
+                Some(ref value) => ::derive_builder::export::Clone::clone(value),
+                None => return ::derive_builder::export::Err(::collections::string::String::from(
                     "`foo` must be initialized"
                 )),
             },
@@ -306,11 +305,11 @@ mod tests {
     #[test]
     fn no_std_setter_disabled() {
         let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
+        initializer.bindings = Bindings::NoStd;
         initializer.setter_enabled = false;
 
         assert_eq!(quote!(#initializer), quote!(
-            foo: ::core::default::Default::default(),
+            foo: ::derive_builder::export::Default::default(),
         ));
     }
 }
