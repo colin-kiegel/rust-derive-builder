@@ -43,6 +43,25 @@ struct SetterOptInStructDefault {
     setter_skipped_with_type_default: u32,
 }
 
+#[cfg(feature = "struct_default")]
+#[derive(Debug, PartialEq, Eq, Builder, Clone)]
+#[builder(default)]
+struct SetterOptOutStructDefaultCustom {
+    #[builder(setter(skip))]
+    foo: u8,
+    bar: String,
+}
+
+#[cfg(feature = "struct_default")]
+impl Default for SetterOptOutStructDefaultCustom {
+    fn default() -> Self {
+        SetterOptOutStructDefaultCustom {
+            foo: 10,
+            bar: Default::default(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Builder, Clone)]
 #[builder(setter(into))]
 struct SetterOptInFieldDefault {
@@ -131,5 +150,20 @@ fn setter_skipped_with_field_default() {
                SetterOptInFieldDefault {
                    setter_skipped_with_field_default: new_notdefaultable(),
                    setter_present_by_default: Default::default(),
+               });
+}
+
+#[test]
+#[cfg(feature = "struct_default")]
+fn setter_skipped_with_custom_struct_default() {
+    let x = SetterOptOutStructDefaultCustomBuilder::default()
+        .bar("hello".to_string())
+        .build()
+        .expect("All allowed fields were set");
+
+    assert_eq!(x, 
+               SetterOptOutStructDefaultCustom {
+                   foo: 10,
+                   bar: "hello".to_string(),
                });
 }
