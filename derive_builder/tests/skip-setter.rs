@@ -116,6 +116,7 @@ fn setter_skipped_with_struct_default() {
     let x = SetterOptInStructDefaultBuilder::default()
         .build()
         .unwrap();
+
     assert_eq!(x, SetterOptInStructDefault::default());
 }
 
@@ -124,6 +125,7 @@ fn setter_skipped_with_field_default() {
     let x = SetterOptInFieldDefaultBuilder::default()
         .build()
         .expect("All fields were defaulted");
+
     assert_eq!(x,
                SetterOptInFieldDefault {
                    setter_skipped_with_field_default: new_notdefaultable(),

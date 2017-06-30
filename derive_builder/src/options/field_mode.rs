@@ -95,7 +95,7 @@ impl OptionsBuilderMode for FieldMode {
         panic!("Builder name can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
-    
+
     fn parse_derive(&mut self, _nested: &[syn::NestedMetaItem]) {
         panic!("Derive declarations can only be added on the struct level (but found {}).",
                self.where_diagnostics())
@@ -114,7 +114,7 @@ impl OptionsBuilderMode for FieldMode {
     fn struct_mode(&self) -> bool {
         false
     }
-    
+
     fn parse_build_fn_options(&mut self, _: &[syn::NestedMetaItem]) {
         panic!("Build function options can only be set on the struct level (but found {}).",
                self.where_diagnostics())
@@ -136,7 +136,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
                     },
                     _ => syn::Ident::new(field_ident.clone()),
                 }});
-                
+
         let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
 
         let field_vis = b.field_vis.unwrap_or(syn::Visibility::Inherited);

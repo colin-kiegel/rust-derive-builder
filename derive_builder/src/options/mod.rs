@@ -70,7 +70,7 @@ pub trait OptionsBuilderMode: ::std::fmt::Debug {
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
     fn struct_mode(&self) -> bool;
-    
+
     fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]);
 }
 
