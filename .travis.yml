@@ -14,6 +14,7 @@ matrix:
     - rust: nightly
       env: JOB=style_check
   allow_failures:
+    - rust: nightly # workaround for https://github.com/laumann/compiletest-rs/pull/68
     - env: JOB=style_check
   fast_finish: true
 env:
