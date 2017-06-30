@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `#[builder(default)]` and `#[builder(default="...")]` at the struct level
   change their behaviour and construct a default value for the struct,
   instead of all fields individually.
+- builder fields are no longer public by default; Fields can be explicitly
+  made public at the struct or field level using the new attribute:
+  `#[builder(field(public))]`
 
 ### Removed
 - removed previously deprecated syntax `#[builder(setter_prefix="with")]`,

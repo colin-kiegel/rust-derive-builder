@@ -116,7 +116,7 @@ impl OptionsBuilderMode for FieldMode {
     }
     
     fn parse_build_fn_options(&mut self, _: &[syn::NestedMetaItem]) {
-        panic!("Build function options can only be set on the struct level (but found {}).", 
+        panic!("Build function options can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
 }
@@ -139,11 +139,7 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
                 
         let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
 
-        let field_vis = b.field_vis.unwrap_or_else(|| if cfg!(feature = "private_fields") {
-            syn::Visibility::Inherited
-        } else {
-            setter_vis.clone()
-        });
+        let field_vis = b.field_vis.unwrap_or(syn::Visibility::Inherited);
 
         FieldOptions {
             setter_enabled: b.setter_enabled.unwrap_or(true),

@@ -8,7 +8,7 @@ rust:
 matrix:
   include:
     - rust: 1.15.0
-      env: JOB=build CARGO_FEATURES="skeptic_tests private_fields"
+      env: JOB=build CARGO_FEATURES="skeptic_tests"
     - rust: nightly
       env: JOB=build CARGO_FEATURES="skeptic_tests nightlytests logging"
     - rust: nightly
