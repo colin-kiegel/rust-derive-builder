@@ -231,11 +231,6 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
                 where_diagnostics));
         }
 
-        #[cfg(feature = "struct_default")]
-        let (field_default_expression, struct_default_expression) = (None, b.default_expression);
-        #[cfg(not(feature = "struct_default"))]
-        let (field_default_expression, struct_default_expression) = (b.default_expression, None);
-
         let field_defaults = OptionsBuilder::<FieldMode> {
             setter_enabled: b.setter_enabled,
             builder_pattern: b.builder_pattern,
@@ -245,11 +240,11 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             setter_into: b.setter_into,
             try_setter: b.try_setter,
             field_vis: b.field_vis,
-            default_expression: field_default_expression,
+            default_expression: None,
             no_std: b.no_std,
             mode: {
                 let mut mode = FieldMode::default();
-                mode.use_default_struct = struct_default_expression.is_some();
+                mode.use_default_struct = b.default_expression.is_some();
                 mode
             },
         };
@@ -277,7 +272,7 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
             generics: m.build_target_generics,
             struct_size_hint: m.struct_size_hint,
             bindings: bindings,
-            default_expression: struct_default_expression,
+            default_expression: b.default_expression,
             validate_fn: m.validate_fn,
         };
 

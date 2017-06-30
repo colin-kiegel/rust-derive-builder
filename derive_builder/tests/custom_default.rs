@@ -76,17 +76,11 @@ mod struct_level {
         not_type_default: Option<&'static str>,
     }
 
-    #[cfg(feature = "struct_default")]
     fn explicit_default() -> Lorem {
         Lorem {
             overwritten: false,
             not_type_default: Some("defined on struct-level"),
         }
-    }
-
-    #[cfg(not(feature = "struct_default"))]
-    fn explicit_default() -> Option<&'static str> {
-        Some("defined on field-level")
     }
 
     #[derive(Debug, Clone, PartialEq, Eq, Builder)]
@@ -111,20 +105,10 @@ mod struct_level {
     fn explicit_defaults_are_equal() {
         let lorem = LoremBuilder::default().build().unwrap();
 
-        // new behaviour starting with 0.5.x:
-        #[cfg(feature = "struct_default")]
         assert_eq!(lorem,
                    Lorem {
                        overwritten: true,
                        ..explicit_default()
-                   });
-
-        // old behaviour since 0.4.x:
-        #[cfg(not(feature = "struct_default"))]
-        assert_eq!(lorem,
-                   Lorem {
-                       overwritten: true,
-                       not_type_default: explicit_default(),
                    });
     }
 
@@ -132,18 +116,7 @@ mod struct_level {
     fn implicit_defaults_are_equal() {
         let ipsum = IpsumBuilder::default().build().unwrap();
 
-        // new behaviour starting with 0.5.x:
-        #[cfg(feature = "struct_default")]
         assert_eq!(ipsum, Ipsum::default());
-
-        // old behaviour since 0.4.x:
-        #[cfg(not(feature = "struct_default"))]
-        assert_eq!(ipsum,
-                   Ipsum {
-                       not_type_default: Default::default(),
-                       also_custom: Default::default(),
-                       is_type_default: Default::default(),
-                   });
     }
 
     #[test]

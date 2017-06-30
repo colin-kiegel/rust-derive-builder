@@ -4,6 +4,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `#[builder(default)]` and `#[builder(default="...")]` at the struct level
+  change their behaviour and construct a default value for the struct,
+  instead of all fields individually.
+
 ### Removed
 - removed previously deprecated syntax `#[builder(setter_prefix="with")]`,
   please use `#[builder(setter(prefix="with"))]` instead
