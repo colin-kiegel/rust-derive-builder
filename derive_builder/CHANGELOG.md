@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Removed
+- removed previously deprecated syntax `#[builder(setter_prefix="with")]`,
+  please use `#[builder(setter(prefix="with"))]` instead
+
 ## [0.4.7] - 2017-04-29
 
 ### Fixed

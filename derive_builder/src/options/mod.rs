@@ -271,20 +271,11 @@ impl<Mode> OptionsBuilder<Mode>
         }
     }
 
-    /// e.g `setter_prefix="with"` in `#[builder(setter_prefix="with")]`
+    /// e.g `name="FooBuilder"` in `#[builder(name="FooBuilder")]`
     #[allow(non_snake_case)]
     fn parse_builder_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);
         match ident.as_ref() {
-            "setter_prefix" => {
-                let val = quote!(#lit);
-                let where_diagnostics = self.where_diagnostics();
-                self.mode.push_deprecation_note(format!(
-                    "warning: deprecated syntax `#[builder(setter_prefix={})]`, \
-                     please use `#[builder(setter(prefix={}))]` instead {}.",
-                    val, val, where_diagnostics));
-                self.parse_setter_prefix(lit)
-            },
             "pattern" => {
                 self.parse_builder_pattern(lit)
             },
