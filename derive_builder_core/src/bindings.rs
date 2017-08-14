@@ -63,6 +63,7 @@ impl Bindings {
     }
 
     /// Into trait.
+    #[cfg_attr(feature = "cargo-clippy", allow(wrong_self_convention))]
     pub fn into_trait(&self) -> RawTokens<&'static str> {
         RawTokens(if self.no_std {
                       ":: core :: convert :: Into"

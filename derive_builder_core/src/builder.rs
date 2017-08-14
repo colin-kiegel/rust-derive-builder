@@ -155,7 +155,7 @@ impl<'a> Builder<'a> {
                 syn::TraitBoundModifier::None
             );
 
-            for typ in generics.ty_params.iter_mut() {
+            for typ in &mut generics.ty_params {
                 typ.bounds.push(clone_bound.clone());
             }
 
