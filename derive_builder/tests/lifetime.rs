@@ -9,7 +9,7 @@ struct Lorem<'a> {
 }
 
 #[test]
-#[should_panic(expected="`ipsum` must be initialized")]
+#[should_panic(expected = "`ipsum` must be initialized")]
 fn panic_if_uninitialized() {
     LoremBuilder::default().build().unwrap();
 }

@@ -1,8 +1,8 @@
 /// Controls the signature of a setter method,
 /// more specifically how `self` is passed and returned.
 ///
-/// It can also be generalized to methods with different parameter sets and return types,
-/// e.g. the `build()` method.
+/// It can also be generalized to methods with different parameter sets and
+/// return types, e.g. the `build()` method.
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum BuilderPattern {
     /// E.g. `fn bar(self, bar: Bar) -> Self`.

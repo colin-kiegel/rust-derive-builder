@@ -5,7 +5,7 @@
 extern crate derive_builder;
 
 #[derive(Builder, Debug, PartialEq)]
-#[builder(build_fn(validate="Self::validate"))]
+#[builder(build_fn(validate = "Self::validate"))]
 struct Lorem {
     pub ipsum: u8,
 }

@@ -2,13 +2,13 @@
 extern crate derive_builder;
 
 #[derive(Debug, Clone, Builder, PartialEq, Eq)]
-#[builder(build_fn(validate="LoremBuilder::validate"))]
+#[builder(build_fn(validate = "LoremBuilder::validate"))]
 pub struct Lorem {
     /// A percentile. Must be between 0 and 100.
     my_effort: u8,
 
     /// A percentile. Must be less than or equal to `Lorem::my_effort`.
-    #[builder(default="40")]
+    #[builder(default = "40")]
     their_effort: u8,
 
     /// A percentile. Must be between 0 and 100.
@@ -42,16 +42,17 @@ impl LoremBuilder {
 
 #[test]
 fn out_of_bounds() {
-    assert_eq!(&LoremBuilder::default()
-                    .my_effort(120)
-                    .build()
-                    .unwrap_err(),
-               "Don't wear yourself out");
-    assert_eq!(&LoremBuilder::default()
-                    .rivals_effort(120)
-                    .build()
-                    .unwrap_err(),
-               "Your rival is cheating");
+    assert_eq!(
+        &LoremBuilder::default().my_effort(120).build().unwrap_err(),
+        "Don't wear yourself out"
+    );
+    assert_eq!(
+        &LoremBuilder::default()
+            .rivals_effort(120)
+            .build()
+            .unwrap_err(),
+        "Your rival is cheating"
+    );
 }
 
 #[test]
@@ -62,10 +63,12 @@ fn validation_pass() {
         .build()
         .expect("All validations should be passing");
 
-    assert_eq!(lorem,
-               Lorem {
-                   my_effort: 90,
-                   rivals_effort: 89,
-                   their_effort: 40,
-               });
+    assert_eq!(
+        lorem,
+        Lorem {
+            my_effort: 90,
+            rivals_effort: 89,
+            their_effort: 40,
+        }
+    );
 }

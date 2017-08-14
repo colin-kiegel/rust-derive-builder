@@ -16,7 +16,7 @@ pub struct FieldOptions {
     pub setter_visibility: syn::Visibility,
     /// Visibility of the field, e.g. `syn::Visibility::Public`.
     pub field_visibility: syn::Visibility,
-    /// Default expression for the field, e.g. `#[builder(default="42u32")]` (default to None).
+    /// Default expression for the field, e.g. `#[builder(default = "42u32")]` (default to None).
     pub default_expression: Option<DefaultExpression>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
@@ -42,7 +42,7 @@ impl DefaultExpression {
         let expr = match *self {
             DefaultExpression::Explicit(ref s) => {
                 if s.is_empty() {
-                    panic!(r#"Empty default expressions `default=""` are not supported."#);
+                    panic!(r#"Empty default expressions `default = ""` are not supported."#);
                 }
                 s
             },

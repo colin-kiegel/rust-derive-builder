@@ -21,7 +21,7 @@ use syn;
 /// #    note.push("Some Warning".to_string());
 /// #    assert_eq!(quote!(#note), quote!(
 ///         {
-///             #[deprecated(note="Some Warning")]
+///             #[deprecated(note = "Some Warning")]
 ///             fn derive_builder_core_deprecation_note() { }
 ///             derive_builder_core_deprecation_note();
 ///         }
@@ -98,7 +98,7 @@ fn deprecation_note() {
     note.push("Some Warning".to_string());
     assert_eq!(quote!(#note), quote!(
         {
-            #[deprecated(note="Some Warning")]
+            #[deprecated(note = "Some Warning")]
             fn derive_builder_core_deprecation_note() { }
             derive_builder_core_deprecation_note();
         }

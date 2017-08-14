@@ -50,7 +50,8 @@ pub struct Builder<'a> {
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [syn::Ident],
-    /// Type parameters and lifetimes attached to this builder's struct definition.
+    /// Type parameters and lifetimes attached to this builder's struct
+    /// definition.
     pub generics: Option<&'a syn::Generics>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
     pub visibility: &'a syn::Visibility,
@@ -86,10 +87,12 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
-            debug!("ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
-                   ty_generics,
-                   where_clause,
-                   struct_generics);
+            debug!(
+                "ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
+                ty_generics,
+                where_clause,
+                struct_generics
+            );
 
             tokens.append(quote!(
                 #[derive(Default, Clone #( , #derives)* )]
@@ -136,9 +139,9 @@ impl<'a> Builder<'a> {
     }
 
     /// Add `Clone` trait bound to generic types for non-owned builders.
-    /// This enables target types to declare generics without requiring a `Clone`
-    /// impl. This is the same as how the built-in derives for `Clone`, `Default`,
-    /// `PartialEq`, and other traits work.
+    /// This enables target types to declare generics without requiring a
+    /// `Clone` impl. This is the same as how the built-in derives for
+    /// `Clone`, `Default`, `PartialEq`, and other traits work.
     fn compute_impl_bounds(&self) -> syn::Generics {
         if let Some(type_gen) = self.generics {
             let mut generics = type_gen.clone();
@@ -146,13 +149,13 @@ impl<'a> Builder<'a> {
             if !self.pattern.requires_clone() || type_gen.ty_params.is_empty() {
                 return generics;
             }
-            
+
             let clone_bound = syn::TyParamBound::Trait(
                 syn::PolyTraitRef {
                     trait_ref: syn::parse_path(self.bindings.clone_trait().as_str()).unwrap(),
                     bound_lifetimes: vec![],
                 },
-                syn::TraitBoundModifier::None
+                syn::TraitBoundModifier::None,
             );
 
             for typ in &mut generics.ty_params {
@@ -192,12 +195,14 @@ macro_rules! default_builder {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
-    
+
     #[test]
     fn simple() {
         let builder = default_builder!();
 
-        assert_eq!(quote!(#builder), quote!(
+        assert_eq!(
+            quote!(#builder),
+            quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder {
                 foo: u32,
@@ -209,7 +214,8 @@ mod tests {
                     unimplemented!()
                 }
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -221,7 +227,9 @@ mod tests {
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
 
-        assert_eq!(quote!(#builder), quote!(
+        assert_eq!(
+            quote!(#builder),
+            quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
@@ -233,7 +241,8 @@ mod tests {
                     unimplemented!()
                 }
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -246,7 +255,9 @@ mod tests {
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
 
-        assert_eq!(quote!(#builder), quote!(
+        assert_eq!(
+            quote!(#builder),
+            quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
                 foo: u32,
@@ -258,9 +269,10 @@ mod tests {
                     unimplemented!()
                 }
             }
-        ));
+        )
+        );
     }
-    
+
     #[test]
     fn owned_generic() {
         let ast = syn::parse_macro_input(stringify!(
@@ -271,7 +283,9 @@ mod tests {
         builder.generics = Some(&generics);
         builder.pattern = BuilderPattern::Owned;
 
-        assert_eq!(quote!(#builder), quote!(
+        assert_eq!(
+            quote!(#builder),
+            quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
@@ -283,7 +297,8 @@ mod tests {
                     unimplemented!()
                 }
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -300,7 +315,9 @@ mod tests {
         let mut builder = default_builder!();
         builder.derives = &derives;
 
-        assert_eq!(quote!(#builder), quote!(
+        assert_eq!(
+            quote!(#builder),
+            quote!(
             #[derive(Default, Clone, Serialize)]
             pub struct FooBuilder {
                 foo: u32,
@@ -312,6 +329,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        ));
+        )
+        );
     }
 }

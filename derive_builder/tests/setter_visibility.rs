@@ -28,11 +28,13 @@ pub mod foo {
             .build()
             .unwrap();
 
-        assert_eq!(x,
-                   Lorem {
-                       public: "Hello".into(),
-                       private: "world!".into(),
-                   });
+        assert_eq!(
+            x,
+            Lorem {
+                public: "Hello".into(),
+                private: "world!".into(),
+            }
+        );
 
         let y = IpsumBuilder::default()
             .public("Hello")
@@ -40,16 +42,18 @@ pub mod foo {
             .build()
             .unwrap();
 
-        assert_eq!(y,
-                   Ipsum {
-                       public: "Hello".into(),
-                       private: "world!".into(),
-                   });
+        assert_eq!(
+            y,
+            Ipsum {
+                public: "Hello".into(),
+                private: "world!".into(),
+            }
+        );
     }
 }
 
 #[test]
-#[should_panic(expected="`private` must be initialized")]
+#[should_panic(expected = "`private` must be initialized")]
 fn public_setters_override_foreign_module() {
     let x = foo::LoremBuilder::default()
         .public("Hello")
@@ -60,7 +64,7 @@ fn public_setters_override_foreign_module() {
 }
 
 #[test]
-#[should_panic(expected="`private` must be initialized")]
+#[should_panic(expected = "`private` must be initialized")]
 fn public_setters_foreign_module() {
     let y = foo::IpsumBuilder::default()
         .public("Hello")

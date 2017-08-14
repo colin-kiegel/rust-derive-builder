@@ -61,8 +61,10 @@ impl<'a> ToTokens for BuilderField<'a> {
                 #(#attrs)* #vis #ident: #option<#ty>,
             ));
         } else {
-            trace!("Skipping builder field for `{}`, fallback to PhantomData.",
-                   self.field_ident);
+            trace!(
+                "Skipping builder field for `{}`, fallback to PhantomData.",
+                self.field_ident
+            );
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
@@ -101,9 +103,12 @@ mod tests {
     fn setter_enabled() {
         let field = default_builder_field!();
 
-        assert_eq!(quote!(#field), quote!(
+        assert_eq!(
+            quote!(#field),
+            quote!(
             #[some_attr] pub foo: ::std::option::Option<String>,
-        ));
+        )
+        );
     }
 
     #[test]
@@ -111,9 +116,12 @@ mod tests {
         let mut field = default_builder_field!();
         field.setter_enabled = false;
 
-        assert_eq!(quote!(#field), quote!(
+        assert_eq!(
+            quote!(#field),
+            quote!(
             #[some_attr] foo: ::std::marker::PhantomData<String>,
-        ));
+        )
+        );
     }
 
     #[test]
@@ -121,9 +129,12 @@ mod tests {
         let mut field = default_builder_field!();
         field.bindings.no_std = true;
 
-        assert_eq!(quote!(#field), quote!(
+        assert_eq!(
+            quote!(#field),
+            quote!(
             #[some_attr] pub foo: ::core::option::Option<String>,
-        ));
+        )
+        );
     }
 
     #[test]
@@ -132,9 +143,12 @@ mod tests {
         field.bindings.no_std = true;
         field.setter_enabled = false;
 
-        assert_eq!(quote!(#field), quote!(
+        assert_eq!(
+            quote!(#field),
+            quote!(
             #[some_attr] foo: ::core::marker::PhantomData<String>,
-        ));
+        )
+        );
     }
 
     #[test]
@@ -143,8 +157,11 @@ mod tests {
         let mut field = default_builder_field!();
         field.field_visibility = &private;
 
-        assert_eq!(quote!(#field), quote!(
+        assert_eq!(
+            quote!(#field),
+            quote!(
             #[some_attr] foo: ::std::option::Option<String>,
-        ));
+        )
+        );
     }
 }

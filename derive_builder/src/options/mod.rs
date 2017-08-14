@@ -260,7 +260,7 @@ impl<Mode> OptionsBuilder<Mode>
         }
     }
 
-    /// e.g `name="FooBuilder"` in `#[builder(name="FooBuilder")]`
+    /// e.g `name = "FooBuilder"` in `#[builder(name = "FooBuilder")]`
     #[allow(non_snake_case)]
     fn parse_builder_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);
@@ -380,7 +380,7 @@ impl<Mode> OptionsBuilder<Mode>
         };
     }
 
-    /// e.g `prefix="with"` in `#[builder(setter(prefix="with"))]`
+    /// e.g `prefix = "with"` in `#[builder(setter(prefix = "with"))]`
     #[allow(non_snake_case)]
     fn parse_setter_options_nameValue(&mut self, ident: &syn::Ident, lit: &syn::Lit) {
         trace!("Setter Options - Parsing named value `{}` = `{:?}`", ident.as_ref(), lit);

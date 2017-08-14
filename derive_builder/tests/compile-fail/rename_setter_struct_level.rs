@@ -5,7 +5,7 @@ extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 //~^ ERROR proc-macro derive panicked
-#[builder(setter(name="foo"))]
+#[builder(setter(name = "foo"))]
 struct Lorem {
     ipsum: &'static str,
     pub dolor: &'static str,

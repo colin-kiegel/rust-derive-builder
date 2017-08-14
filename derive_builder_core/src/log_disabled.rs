@@ -1,7 +1,6 @@
 /// Overrides for https://docs.rs/log/#macros
 ///
 /// Source shared by `derive_builder_core` and `derive_builder` via symlink.
-
 #[allow(unknown_lints, unused_macros)]
 macro_rules! log_enabled {
     ($( $x:tt )*) => { false }

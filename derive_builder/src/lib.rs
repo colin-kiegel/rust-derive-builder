@@ -109,7 +109,7 @@
 //!
 //! ## Owned, aka Consuming
 //!
-//! Precede your struct (or field) with `#[builder(pattern="owned")]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern = "owned")]` to opt into this pattern.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -119,7 +119,7 @@
 //! ## Mutable, aka Non-Comsuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
-//! You can precede your struct (or field) with `#[builder(pattern="mutable")]`
+//! You can precede your struct (or field) with `#[builder(pattern = "mutable")]`
 //! to make this choice explicit.
 //!
 //! * Setters take and return `&mut self`.
@@ -129,7 +129,7 @@
 //!
 //! ## Immutable
 //!
-//! Precede your struct (or field) with `#[builder(pattern="immutable")]` to opt into this pattern.
+//! Precede your struct (or field) with `#[builder(pattern = "immutable")]` to opt into this pattern.
 //!
 //! * Setters take and return `&self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -172,8 +172,8 @@
 //!
 //! Alternatively, you can use the more verbose form:
 //!
-//! - `#[builder(setter(skip="true"))]`
-//! - `#[builder(setter(skip="false"))]`
+//! - `#[builder(setter(skip = "true"))]`
+//! - `#[builder(setter(skip = "false"))]`
 //!
 //! ## Setter Visibility
 //!
@@ -187,8 +187,8 @@
 //!
 //! Setter methods are named after their corresponding field by default.
 //!
-//! - You can customize the setter name via `#[builder(setter(name="foo"))`.
-//! - Alternatively you can set a prefix via `#[builder(setter(prefix="xyz"))`, which will change
+//! - You can customize the setter name via `#[builder(setter(name = "foo"))`.
+//! - Alternatively you can set a prefix via `#[builder(setter(prefix = "xyz"))`, which will change
 //!   the method name to `xyz_foo` if the field is named `foo`. Note that an underscore is
 //!   inserted, since Rust favors snake case here.
 //!
@@ -271,10 +271,10 @@
 //!
 //! ## Default Values
 //!
-//! You can define default values for each field via annotation by `#[builder(default="...")]`,
+//! You can define default values for each field via annotation by `#[builder(default = "...")]`,
 //! where `...` stands for any Rust expression and must be string-escaped, e.g.
 //!
-//! * `#[builder(default="42")]`
+//! * `#[builder(default = "42")]`
 //! * `#[builder(default)]` delegates to the [`Default`] trait of the base type.
 //!
 //! The expression will be evaluated with each call to `build`.
@@ -285,7 +285,7 @@
 //! #
 //! #[derive(Builder, Debug, PartialEq)]
 //! struct Lorem {
-//!     #[builder(default="42")]
+//!     #[builder(default = "42")]
 //!     pub ipsum: u32,
 //! }
 //!
@@ -319,7 +319,7 @@
 //!     ipsum: String,
 //!     // Custom defaults can delegate to helper methods
 //!     // and pass errors to the enclosing `build()` method via `?`.
-//!     #[builder(default="self.default_dolor()?")]
+//!     #[builder(default = "self.default_dolor()?")]
 //!     dolor: String,
 //! }
 //!
@@ -376,7 +376,7 @@
 //! ## Pre-Build Validation
 //!
 //! If you're using the provided `build` method, you can declare
-//! `#[builder(build_fn(validate="path::to::fn"))]` to specify a validator function which gets
+//! `#[builder(build_fn(validate = "path::to::fn"))]` to specify a validator function which gets
 //! access to the builder before construction. The path does not need to be fully-qualified, and
 //! will consider `use` statements made at module level. It must be accessible from the scope
 //! where the target struct is declared.
@@ -389,7 +389,7 @@
 //! # extern crate derive_builder;
 //! #
 //! #[derive(Builder, Debug, PartialEq)]
-//! #[builder(build_fn(validate="Self::validate"))]
+//! #[builder(build_fn(validate = "Self::validate"))]
 //! struct Lorem {
 //!     pub ipsum: u8,
 //! }

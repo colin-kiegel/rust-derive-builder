@@ -84,7 +84,7 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 ## Usage and Features
 
 * **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
-* **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern="owned")]` or `#[builder(pattern="immutable")]`.
+* **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern = "owned")]` or `#[builder(pattern = "immutable")]`.
 * **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
 * **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
 * **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
@@ -92,8 +92,8 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
 * **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
 * **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
-* **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via `=".."`. This works both on the struct and field level.
-* **Pre-build validation**: You can use `#[builder(build_fn(validate="path::to::fn"))]` to add your own validation before the target struct is generated.
+* **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via ` = ".."`. This works both on the struct and field level.
+* **Pre-build validation**: You can use `#[builder(build_fn(validate = "path::to::fn"))]` to add your own validation before the target struct is generated.
 * **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 * **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate collections` to your crate. The latter requires the _nightly_ toolchain.

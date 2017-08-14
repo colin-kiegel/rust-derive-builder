@@ -4,25 +4,25 @@ extern crate pretty_assertions;
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(pattern="immutable")]
+#[builder(pattern = "immutable")]
 struct Lorem {
     immutable: u32,
-    #[builder(pattern="mutable")]
+    #[builder(pattern = "mutable")]
     mutable_override: u32,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(pattern="mutable")]
+#[builder(pattern = "mutable")]
 struct Ipsum {
     mutable: u32,
-    #[builder(pattern="owned")]
+    #[builder(pattern = "owned")]
     owned_override: u32,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(pattern="owned")]
+#[builder(pattern = "owned")]
 struct Dolor {
-    #[builder(pattern="immutable")]
+    #[builder(pattern = "immutable")]
     immutable_override: u32,
     owned: u32,
 }

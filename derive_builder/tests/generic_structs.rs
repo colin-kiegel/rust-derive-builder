@@ -8,7 +8,8 @@ use std::clone::Clone;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 struct Generic<T: Display>
-    where T: Clone
+where
+    T: Clone,
 {
     ipsum: &'static str,
     pub dolor: T,
@@ -16,13 +17,14 @@ struct Generic<T: Display>
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 pub struct GenericReference<'a, T: 'a + Default>
-    where T: Display
+where
+    T: Display,
 {
     pub bar: Option<&'a T>,
 }
 
 #[test]
-#[should_panic(expected="`ipsum` must be initialized")]
+#[should_panic(expected = "`ipsum` must be initialized")]
 fn panic_if_uninitialized() {
     GenericBuilder::<String>::default().build().unwrap();
 }
@@ -35,11 +37,13 @@ fn generic_builder() {
         .build()
         .unwrap();
 
-    assert_eq!(x,
-               Generic {
-                   ipsum: "Generic".into(),
-                   dolor: true,
-               });
+    assert_eq!(
+        x,
+        Generic {
+            ipsum: "Generic".into(),
+            dolor: true,
+        }
+    );
 }
 
 #[test]

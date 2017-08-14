@@ -4,7 +4,7 @@ extern crate pretty_assertions;
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(name="MyBuilder")]
+#[builder(name = "MyBuilder")]
 struct Lorem {
     ipsum: &'static str,
     pub dolor: Option<&'static str>,
@@ -13,7 +13,7 @@ struct Lorem {
 }
 
 #[test]
-#[should_panic(expected="`ipsum` must be initialized")]
+#[should_panic(expected = "`ipsum` must be initialized")]
 fn panic_if_uninitialized() {
     MyBuilder::default().build().unwrap();
 }
@@ -28,11 +28,13 @@ fn builder() {
         .build()
         .unwrap();
 
-    assert_eq!(x,
-               Lorem {
-                   ipsum: "lorem",
-                   dolor: Some("dolor"),
-                   sit: 42,
-                   amet: true,
-               });
+    assert_eq!(
+        x,
+        Lorem {
+            ipsum: "lorem",
+            dolor: Some("dolor"),
+            sit: 42,
+            amet: true,
+        }
+    );
 }

@@ -57,7 +57,7 @@ mod test {
     use super::*;
 
     #[test]
-    #[should_panic(expected="called `Result::unwrap()` on an `Err` value: \
+    #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: \
     \"unparsed tokens after token trees: \\\"{ x+1\\\"")]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();

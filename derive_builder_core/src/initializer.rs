@@ -100,8 +100,9 @@ impl<'a> Initializer<'a> {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
                 } else if self.bindings.no_std {
-                    MatchNone::ReturnErrorNoStd(format!("`{}` must be initialized",
-                                                        self.field_ident))
+                    MatchNone::ReturnErrorNoStd(
+                        format!("`{}` must be initialized", self.field_ident),
+                    )
                 } else {
                     MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
                 }
@@ -142,22 +143,28 @@ enum MatchNone<'a> {
 impl<'a> ToTokens for MatchNone<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
-            MatchNone::DefaultTo(expr) => tokens.append(quote!(
+            MatchNone::DefaultTo(expr) => {
+                tokens.append(quote!(
                 None => #expr
-            )),
+            ))
+            },
             MatchNone::UseDefaultStructField(field_ident) => {
                 let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
                 tokens.append(quote!(
                     None => #struct_ident.#field_ident
                 ))
             },
-            MatchNone::ReturnError(ref err) => tokens.append(quote!(
+            MatchNone::ReturnError(ref err) => {
+                tokens.append(quote!(
                 None => return ::std::result::Result::Err(::std::string::String::from(#err))
-            )),
-            MatchNone::ReturnErrorNoStd(ref err) => tokens.append(quote!(
+            ))
+            },
+            MatchNone::ReturnErrorNoStd(ref err) => {
+                tokens.append(quote!(
                 None => return ::core::result::Result::Err(
                     ::collections::string::String::from(#err))
-            )),
+            ))
+            },
         }
     }
 }
@@ -172,15 +179,21 @@ enum MatchSome {
 impl<'a> ToTokens for MatchSome {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
-            MatchSome::Move => tokens.append(quote!(
+            MatchSome::Move => {
+                tokens.append(quote!(
                 Some(value) => value
-            )),
-            MatchSome::Clone => tokens.append(quote!(
+            ))
+            },
+            MatchSome::Clone => {
+                tokens.append(quote!(
                 Some(ref value) => ::std::clone::Clone::clone(value)
-            )),
-            MatchSome::CloneNoStd => tokens.append(quote!(
+            ))
+            },
+            MatchSome::CloneNoStd => {
+                tokens.append(quote!(
                 Some(ref value) => ::core::clone::Clone::clone(value)
-            )),
+            ))
+            },
         }
     }
 }

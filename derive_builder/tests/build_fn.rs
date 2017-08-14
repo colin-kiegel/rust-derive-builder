@@ -55,18 +55,12 @@ fn uninitialized() {
 
 #[test]
 fn out_of_range() {
-    let lorem_err = LoremBuilder::default()
-        .percentile(120)
-        .build()
-        .unwrap_err();
+    let lorem_err = LoremBuilder::default().percentile(120).build().unwrap_err();
     assert_eq!("Percentile must be between 0 and 100; was 120", &lorem_err);
 }
 
 #[test]
 fn rename() {
-    let ipsum = IpsumBuilder::default()
-        .percentile(110)
-        .finish()
-        .unwrap();
+    let ipsum = IpsumBuilder::default().percentile(110).finish().unwrap();
     assert_eq!(Ipsum { percentile: 110 }, ipsum);
 }

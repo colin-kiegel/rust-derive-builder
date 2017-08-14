@@ -4,10 +4,10 @@ extern crate pretty_assertions;
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(setter(prefix="with"))]
+#[builder(setter(prefix = "with"))]
 struct Lorem {
     ipsum: &'static str,
-    #[builder(setter(prefix="set"))]
+    #[builder(setter(prefix = "set"))]
     pub dolor: &'static str,
 }
 
@@ -19,9 +19,11 @@ fn prefixed_setters() {
         .build()
         .unwrap();
 
-    assert_eq!(x,
-               Lorem {
-                   ipsum: "ipsum",
-                   dolor: "dolor",
-               });
+    assert_eq!(
+        x,
+        Lorem {
+            ipsum: "ipsum",
+            dolor: "dolor",
+        }
+    );
 }

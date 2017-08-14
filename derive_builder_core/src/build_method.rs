@@ -77,15 +77,11 @@ impl<'a> ToTokens for BuildMethod<'a> {
             BuilderPattern::Immutable => quote!(&self),
         };
         let doc_comment = &self.doc_comment;
-        let default_struct = self.default_struct
-            .as_ref()
-            .map(|default_expr| {
-                     let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
-                     quote!(let #ident: #target_ty = #default_expr;)
-                 });
-        let validate_fn = self.validate_fn
-            .as_ref()
-            .map(|vfn| quote!(#vfn(&self)?;));
+        let default_struct = self.default_struct.as_ref().map(|default_expr| {
+            let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+            quote!(let #ident: #target_ty = #default_expr;)
+        });
+        let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
         let result = self.bindings.result_ty();
         let string = self.bindings.string_ty();
 
@@ -158,13 +154,16 @@ mod tests {
     fn std() {
         let build_method = default_build_method!();
 
-        assert_eq!(quote!(#build_method), quote!(
+        assert_eq!(
+            quote!(#build_method),
+            quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -172,13 +171,16 @@ mod tests {
         let mut build_method = default_build_method!();
         build_method.bindings.no_std = true;
 
-        assert_eq!(quote!(#build_method), quote!(
+        assert_eq!(
+            quote!(#build_method),
+            quote!(
             pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -186,14 +188,17 @@ mod tests {
         let mut build_method = default_build_method!();
         build_method.default_struct = Some("Default::default()".parse().unwrap());
 
-        assert_eq!(quote!(#build_method), quote!(
+        assert_eq!(
+            quote!(#build_method),
+            quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 let __default: Foo = {Default::default()};
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -211,24 +216,30 @@ mod tests {
         let mut build_method: BuildMethod = default_build_method!();
         build_method.ident = &ident;
 
-        assert_eq!(quote!(#build_method), quote!(
+        assert_eq!(
+            quote!(#build_method),
+            quote!(
             pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        ))
+        )
+        )
     }
 
     #[test]
     fn validation() {
-        let validate_path = syn::parse_path("IpsumBuilder::validate")
-            .expect("Statically-entered path should be valid");
+        let validate_path = syn::parse_path("IpsumBuilder::validate").expect(
+            "Statically-entered path should be valid",
+        );
 
         let mut build_method: BuildMethod = default_build_method!();
         build_method.validate_fn = Some(&validate_path);
 
-        assert_eq!(quote!(#build_method), quote!(
+        assert_eq!(
+            quote!(#build_method),
+            quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 IpsumBuilder::validate(&self)?;
 
@@ -236,6 +247,7 @@ mod tests {
                     foo: self.foo,
                 })
             }
-        ));
+        )
+        );
     }
 }

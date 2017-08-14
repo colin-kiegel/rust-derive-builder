@@ -50,8 +50,10 @@ fn exact_helper() -> Result<Lorem, String> {
 #[cfg(feature = "nightlytests")]
 fn try_helper() -> Result<Lorem, String> {
     LoremBuilder::default()
-        .try_source("1.2.3.4").map_err(|e| e.to_string())?
-        .try_dest("0.0.0.0").map_err(|e| e.to_string())?
+        .try_source("1.2.3.4")
+        .map_err(|e| e.to_string())?
+        .try_dest("0.0.0.0")
+        .map_err(|e| e.to_string())?
         .build()
 }
 

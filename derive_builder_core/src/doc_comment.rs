@@ -23,8 +23,10 @@ use syn;
 pub fn doc_comment_from(s: String) -> syn::Attribute {
     syn::Attribute {
         style: syn::AttrStyle::Outer,
-        value: syn::MetaItem::NameValue(syn::Ident::new("doc"),
-                                        syn::Lit::Str(s, syn::StrStyle::Raw(2))),
+        value: syn::MetaItem::NameValue(
+            syn::Ident::new("doc"),
+            syn::Lit::Str(s, syn::StrStyle::Raw(2)),
+        ),
         is_sugared_doc: false,
     }
 }

@@ -9,11 +9,11 @@ mod field_level {
         required: String,
         #[builder(default)]
         explicit_default: String,
-        #[builder(default="\"foo\".to_string()")]
+        #[builder(default = "\"foo\".to_string()")]
         escaped_default: String,
-        #[builder(default=r#"format!("Hello {}!", "World")"#)]
+        #[builder(default = r#"format!("Hello {}!", "World")"#)]
         raw_default: String,
-        #[builder(default=r#"format!("{}-{}-{}-{}",
+        #[builder(default = r#"format!("{}-{}-{}-{}",
                              Clone::clone(self.required
                                 .as_ref()
                                 .ok_or("required must be initialized")?),
@@ -24,7 +24,7 @@ mod field_level {
     }
 
     #[test]
-    #[should_panic(expected="`required` must be initialized")]
+    #[should_panic(expected = "`required` must be initialized")]
     fn panic_if_uninitialized() {
         LoremBuilder::default().build().unwrap();
     }
@@ -36,14 +36,16 @@ mod field_level {
             .build()
             .unwrap();
 
-        assert_eq!(x,
-                   Lorem {
-                       required: "ipsum".to_string(),
-                       explicit_default: "".to_string(),
-                       escaped_default: "foo".to_string(),
-                       raw_default: "Hello World!".to_string(),
-                       computed_default: "ipsum-EMPTY-EMPTY-EMPTY".to_string(),
-                   });
+        assert_eq!(
+            x,
+            Lorem {
+                required: "ipsum".to_string(),
+                explicit_default: "".to_string(),
+                escaped_default: "foo".to_string(),
+                raw_default: "Hello World!".to_string(),
+                computed_default: "ipsum-EMPTY-EMPTY-EMPTY".to_string(),
+            }
+        );
     }
 
     #[test]
@@ -56,22 +58,24 @@ mod field_level {
             .build()
             .unwrap();
 
-        assert_eq!(x,
-                   Lorem {
-                       required: "ipsum".to_string(),
-                       explicit_default: "lorem".to_string(),
-                       escaped_default: "dolor".to_string(),
-                       raw_default: "sit".to_string(),
-                       computed_default: "ipsum-lorem-dolor-sit".to_string(),
-                   });
+        assert_eq!(
+            x,
+            Lorem {
+                required: "ipsum".to_string(),
+                explicit_default: "lorem".to_string(),
+                escaped_default: "dolor".to_string(),
+                raw_default: "sit".to_string(),
+                computed_default: "ipsum-lorem-dolor-sit".to_string(),
+            }
+        );
     }
 }
 
 mod struct_level {
     #[derive(Debug, Clone, PartialEq, Eq, Builder)]
-    #[builder(default="explicit_default()")]
+    #[builder(default = "explicit_default()")]
     struct Lorem {
-        #[builder(default="true")]
+        #[builder(default = "true")]
         overwritten: bool,
         not_type_default: Option<&'static str>,
     }
@@ -105,11 +109,13 @@ mod struct_level {
     fn explicit_defaults_are_equal() {
         let lorem = LoremBuilder::default().build().unwrap();
 
-        assert_eq!(lorem,
-                   Lorem {
-                       overwritten: true,
-                       ..explicit_default()
-                   });
+        assert_eq!(
+            lorem,
+            Lorem {
+                overwritten: true,
+                ..explicit_default()
+            }
+        );
     }
 
     #[test]
