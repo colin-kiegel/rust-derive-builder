@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.5.1] - 2017-12-16
 
 ### Changed
 - The standard library `collections` crate was merged into `alloc`
@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   Correspondingly when using this crate within a crate with `#![no_std]` you must
   use `#![feature(alloc)] extern crate alloc` in your crate,
   was `#![feature(collections)] extern crate collections`.
+
+### Fixed
+- `unused_mut` lint (variable does not need to be mutable) #104
 
 ## [0.5.0] - 2017-06-30
 
@@ -156,7 +159,8 @@ Requires Rust 1.15 or newer.
  - generate setter methods
  - support for generic structs
 
-[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.7...HEAD
+[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.5.1...HEAD
+[0.5.1]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.5.0...v0.5.1
 [0.5.0]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.7...v0.5.0
 [0.4.7]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.6...v0.4.7
 [0.4.6]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.5...v0.4.6
