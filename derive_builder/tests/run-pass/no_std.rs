@@ -2,7 +2,7 @@
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(collections, lang_items, start, core_intrinsics)]
+#![feature(alloc, lang_items, start, core_intrinsics)]
 #![allow(dead_code)]
 use core::intrinsics;
 
@@ -11,7 +11,7 @@ use core::intrinsics;
 
 #[macro_use]
 extern crate derive_builder;
-extern crate collections;
+extern crate alloc;
 
 #[derive(Builder)]
 #[builder(no_std)]

@@ -174,7 +174,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method),
             quote!(
-            pub fn build(&self) -> ::core::result::Result<Foo, ::collections::string::String> {
+            pub fn build(&self) -> ::core::result::Result<Foo, ::alloc::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })

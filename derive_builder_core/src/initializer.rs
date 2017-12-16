@@ -162,7 +162,7 @@ impl<'a> ToTokens for MatchNone<'a> {
             MatchNone::ReturnErrorNoStd(ref err) => {
                 tokens.append(quote!(
                 None => return ::core::result::Result::Err(
-                    ::collections::string::String::from(#err))
+                    ::alloc::string::String::from(#err))
             ))
             },
         }
@@ -309,7 +309,7 @@ mod tests {
         assert_eq!(quote!(#initializer), quote!(
             foo: match self.foo {
                 Some(ref value) => ::core::clone::Clone::clone(value),
-                None => return ::core::result::Result::Err(::collections::string::String::from(
+                None => return ::core::result::Result::Err(::alloc::string::String::from(
                     "`foo` must be initialized"
                 )),
             },

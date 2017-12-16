@@ -11,7 +11,7 @@ impl Bindings {
     /// String type.
     pub fn string_ty(&self) -> RawTokens<&'static str> {
         RawTokens(if self.no_std {
-            ":: collections :: string :: String"
+            ":: alloc :: string :: String"
         } else {
             ":: std :: string :: String"
         })
@@ -113,7 +113,7 @@ fn no_std() {
 
     assert_eq!(
         b.string_ty().to_tokens(),
-        quote!(::collections::string::String)
+        quote!(::alloc::string::String)
     );
 
     assert_eq!(b.result_ty().to_tokens(), quote!(::core::result::Result));
