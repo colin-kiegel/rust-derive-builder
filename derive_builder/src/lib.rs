@@ -478,7 +478,7 @@
 //! # **`#![no_std]`** Support (on Nightly)
 //!
 //! You can activate support for `#![no_std]` by adding `#[builder(no_std)]` to your struct
-//! and `#![feature(collections)] extern crate collections` to your crate.
+//! and `#![feature(alloc)] extern crate alloc` to your crate.
 //!
 //! The latter requires the _nightly_ toolchain.
 //!
