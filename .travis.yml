@@ -20,7 +20,7 @@ env:
   matrix:
     - JOB=test
   global:
-  - CARGO_FEATURES="skeptic_tests"
+  - CARGO_FEATURES=""
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder
