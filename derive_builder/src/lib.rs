@@ -110,6 +110,8 @@
 //! ## Owned, aka Consuming
 //!
 //! Precede your struct (or field) with `#[builder(pattern = "owned")]` to opt into this pattern.
+//! Builders generated with this pattern do not automatically derive `Clone`, which allows builders
+//! to be generated for structs with fields that do not derive `Clone`.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
