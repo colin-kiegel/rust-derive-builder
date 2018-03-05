@@ -61,6 +61,11 @@ pub struct Builder<'a> {
     pub fields: Vec<Tokens>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<Tokens>,
+    /// Whether this builder must derive `Clone`.
+    ///
+    /// This is true even for a builder using the `owned` pattern if there is a field whose setter
+    /// uses a different pattern.
+    pub initializer_requires_clone: bool,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Emit deprecation notes to the user.
@@ -76,6 +81,11 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_vis = self.visibility;
             let builder_ident = self.ident;
             let derives = self.derives;
+            let clone_derive = if self.pattern.requires_clone() || self.initializer_requires_clone {
+                Some(syn::Ident::from("Clone"))
+            } else {
+                None
+            };
             let bounded_generics = self.compute_impl_bounds();
             let (impl_generics, _, _) = bounded_generics.split_for_impl();
             let (struct_generics, ty_generics, where_clause) = self.generics
@@ -95,7 +105,7 @@ impl<'a> ToTokens for Builder<'a> {
             );
 
             tokens.append(quote!(
-                #[derive(Default, Clone #( , #derives)* )]
+                #[derive(Default#( , #clone_derive)* #( , #derives)* )]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
@@ -135,6 +145,15 @@ impl<'a> Builder<'a> {
     /// Add final build function to the builder
     pub fn push_build_fn(&mut self, f: BuildMethod) -> &mut Self {
         self.functions.push(quote!(#f));
+        self
+    }
+
+    /// Marks that this builder has to derive `Clone`.
+    ///
+    /// If the builder or any of its fields are not using the `Owned` pattern, then it must derive
+    /// `Clone`.
+    pub fn mark_initializer_requires_clone(&mut self) -> &mut Self {
+        self.initializer_requires_clone = true;
         self
     }
 
@@ -184,6 +203,7 @@ macro_rules! default_builder {
             visibility: &syn::Visibility::Public,
             fields: vec![quote!(foo: u32,)],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
+            initializer_requires_clone: false,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
             bindings: Default::default(),
@@ -286,7 +306,7 @@ mod tests {
         assert_eq!(
             quote!(#builder),
             quote!(
-            #[derive(Default, Clone)]
+            #[derive(Default)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
             }
