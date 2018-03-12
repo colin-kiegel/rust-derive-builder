@@ -29,7 +29,7 @@ II: Running tests on stable... ✓
 II: Running tests on beta... ✓
 II: Running tests on nightly... ✓
 II: Running dev/compiletests.sh... ✓
-II: Running dev/checkfeatures.sh... ✓
+II: Running dev/checkminimumrust.sh... ✓
 OK: All checks passed!
 ```
 
@@ -53,5 +53,5 @@ git config hooks.checkstable true
 git config hooks.checkbeta true
 git config hooks.checknightly true
 git config hooks.compiletests true
-git config hooks.checkfeatures true
+git config hooks.checkminimumrust true
 ```

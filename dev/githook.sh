@@ -19,7 +19,7 @@
 #       git config hooks.checkbeta true
 #       git config hooks.checknightly true
 #       git config hooks.nightlytests true
-#       git config hooks.checkfeatures true
+#       git config hooks.checkminimumrust true
 #
 # Note this will stash all local changes.
 set -u
@@ -36,7 +36,7 @@ function main {
 	[ "$checkbeta" == true ] && run_tests_on "beta"
 	[ "$checknightly" == true ] && run_tests_on "nightly"
 	[ "$nightlytests" == true ] && run_script "dev/nightlytests.sh"
-	[ "$checkfeatures" == true ] && run_script "dev/checkfeatures.sh"
+	[ "$checkminimumrust" == true ] && run_script "dev/checkminimumrust.sh"
 
 	if [ "$errors" != 0 ]; then
 		echo -e "${FMT_ERR}EE${FMT_RESET}: Some checks failed!"
@@ -100,7 +100,7 @@ function load_config {
 	lookup_git_flag checkbeta
 	lookup_git_flag checknightly
 	lookup_git_flag nightlytests
-	lookup_git_flag checkfeatures
+	lookup_git_flag checkminimumrust
 
   if [ $config_status -ne 0 ]; then
 		echo -e "${FMT_ERR}EE${FMT_RESET}: Invalid git configuration. Aborting checks."
