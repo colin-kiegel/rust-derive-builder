@@ -39,6 +39,15 @@ OK: All checks passed!
   e.g. `git push --no-verify`.
 * You can also run `dev/githook.sh` manually at any time, without
   registering it as a git hook. But you still have to do the configuration.
+* If the nightly tests fail with any of the following errors, your target directory may contain
+  stale artifacts:
+
+    ```
+    error[E0463]: can't find crate for `derive_builder`
+    error[E0464]: multiple matching crates for `derive_builder`
+    ```
+
+    Running `cargo clean` should remedy the issue.
 
 ## Configuration
 
