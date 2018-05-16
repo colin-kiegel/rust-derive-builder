@@ -40,13 +40,13 @@ pub struct Setter<'a> {
     /// Enables code generation for the `try_` variant of this setter fn.
     pub try_setter: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
-    pub visibility: &'a syn::Visibility,
+    pub visibility: syn::Visibility,
     /// How the setter method takes and returns `self` (e.g. mutably).
     pub pattern: BuilderPattern,
     /// Attributes which will be attached to this setter fn.
     pub attrs: &'a [syn::Attribute],
     /// Name of this setter fn.
-    pub ident: &'a syn::Ident,
+    pub ident: syn::Ident,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Type of the target field.
@@ -67,9 +67,9 @@ impl<'a> ToTokens for Setter<'a> {
             trace!("Deriving setter for `{}`.", self.field_ident);
             let ty = self.field_type;
             let pattern = self.pattern;
-            let vis = self.visibility;
+            let vis = &self.visibility;
             let field_ident = self.field_ident;
-            let ident = self.ident;
+            let ident = &self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
             let clone = self.bindings.clone_trait();
@@ -158,10 +158,10 @@ macro_rules! default_setter {
         Setter {
             enabled: true,
             try_setter: false,
-            visibility: &syn::parse_str("pub").unwrap(),
+            visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
-            ident: &syn::Ident::from("foo"),
+            ident: syn::Ident::from("foo"),
             field_ident: &syn::Ident::from("foo"),
             field_type: &syn::parse_str("Foo").unwrap(),
             generic_into: false,
@@ -235,7 +235,7 @@ mod tests {
         let vis = syn::Visibility::Inherited;
 
         let mut setter = default_setter!();
-        setter.visibility = &vis;
+        setter.visibility = vis;
 
         assert_eq!(
             quote!(#setter),

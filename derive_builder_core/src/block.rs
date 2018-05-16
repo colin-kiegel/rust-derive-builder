@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
-use proc_macro2::TokenStream;
 use quote::{ToTokens, Tokens};
+use syn;
+use syn::synom::Parser;
 
 /// A permissive wrapper for expressions/blocks, implementing `quote::ToTokens`.
 ///
@@ -26,11 +27,11 @@ use quote::{ToTokens, Tokens};
 /// # }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Block(TokenStream);
+pub struct Block(Vec<syn::Stmt>);
 
 impl Default for Block {
     fn default() -> Self {
-        Block(TokenStream::empty())
+        "".parse().unwrap()
     }
 }
 
@@ -38,7 +39,7 @@ impl ToTokens for Block {
     fn to_tokens(&self, tokens: &mut Tokens) {
         let inner = &self.0;
         tokens.append_all(quote!(
-            { #inner }
+            { #( #inner )* }
         ));
     }
 }
@@ -54,8 +55,10 @@ impl FromStr for Block {
     /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
     /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
-        let stream = TokenStream::from_str(expr).map_err(|e| format!("{:?}", e))?;
-        Ok(Block(stream))
+        named!(block_contents -> Vec<syn::Stmt>, call!(syn::Block::parse_within));
+        Ok(Block(block_contents
+            .parse_str(expr)
+            .map_err(|e| format!("{}", e))?))
     }
 }
 
@@ -66,8 +69,7 @@ mod test {
 
     #[test]
     #[should_panic(
-        expected = "called `Result::unwrap()` on an `Err` value: \
-                    \"unparsed tokens after token trees: \\\"{ x+1\\\""
+        expected = r#"called `Result::unwrap()` on an `Err` value: "error while lexing input string""#
     )]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();

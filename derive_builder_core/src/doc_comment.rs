@@ -17,7 +17,7 @@ use syn::synom::Parser;
 /// #    let doc_comment = doc_comment_from("foo".to_string());
 /// #
 /// #    assert_eq!(quote!(#doc_comment), quote!(
-/// #[doc = r##"foo"##]
+/// #[doc = "foo"]
 /// #    ));
 /// # }
 /// ```

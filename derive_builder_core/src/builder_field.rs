@@ -11,12 +11,15 @@ use Bindings;
 /// ```rust
 /// # #[macro_use]
 /// # extern crate quote;
+/// # #[macro_use]
 /// # extern crate syn;
 /// # #[macro_use]
 /// # extern crate derive_builder_core;
 /// # use derive_builder_core::{BuilderField, BuilderPattern};
+/// # use syn::synom::Parser;
 /// # fn main() {
-/// #    let attrs = vec![syn::parse_outer_attr("#[some_attr]").unwrap()];
+/// #    named!(outer_attr -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
+/// #    let attrs = outer_attr.parse_str("#[some_attr]").unwrap();
 /// #    let mut field = default_builder_field!();
 /// #    field.attrs = attrs.as_slice();
 /// #
@@ -40,7 +43,7 @@ pub struct BuilderField<'a> {
     ///       least for now.
     pub setter_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
-    pub field_visibility: &'a syn::Visibility,
+    pub field_visibility: syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
     /// Bindings to libstd or libcore.
@@ -51,7 +54,7 @@ impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         if self.setter_enabled {
             trace!("Deriving builder field for `{}`.", self.field_ident);
-            let vis = self.field_visibility;
+            let vis = &self.field_visibility;
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
@@ -90,7 +93,7 @@ macro_rules! default_builder_field {
                 field_ident: &syn::Ident::from("foo"),
                 field_type: &syn::parse_str("String").unwrap(),
                 setter_enabled: true,
-                field_visibility: &syn::parse_str("pub").unwrap(),
+                field_visibility: syn::parse_str("pub").unwrap(),
                 attrs: &outer_attrs.parse_str("#[some_attr]").unwrap(),
                 bindings: Default::default(),
             }
@@ -159,7 +162,7 @@ mod tests {
     fn private_field() {
         let private = syn::Visibility::Inherited;
         let mut field = default_builder_field!();
-        field.field_visibility = &private;
+        field.field_visibility = private;
 
         assert_eq!(
             quote!(#field),

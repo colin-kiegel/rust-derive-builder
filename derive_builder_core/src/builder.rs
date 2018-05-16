@@ -45,7 +45,7 @@ pub struct Builder<'a> {
     /// Enables code generation for this builder struct.
     pub enabled: bool,
     /// Name of this builder struct.
-    pub ident: &'a syn::Ident,
+    pub ident: syn::Ident,
     /// Pattern of this builder struct.
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
@@ -54,7 +54,7 @@ pub struct Builder<'a> {
     /// definition.
     pub generics: Option<&'a syn::Generics>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
-    pub visibility: &'a syn::Visibility,
+    pub visibility: syn::Visibility,
     /// Fields of the builder struct, e.g. `foo: u32,`
     ///
     /// Expects each entry to be terminated by a comma.
@@ -73,7 +73,7 @@ impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         if self.enabled {
             trace!("Deriving builder `{}`.", self.ident);
-            let builder_vis = self.visibility;
+            let builder_vis = &self.visibility;
             let builder_ident = self.ident;
             let derives = self.derives;
             let bounded_generics = self.compute_impl_bounds();
@@ -176,11 +176,11 @@ macro_rules! default_builder {
     () => {
         Builder {
             enabled: true,
-            ident: &syn::Ident::from("FooBuilder"),
+            ident: syn::Ident::from("FooBuilder"),
             pattern: Default::default(),
             derives: &vec![],
             generics: None,
-            visibility: &syn::parse_str("pub").unwrap(),
+            visibility: syn::parse_str("pub").unwrap(),
             fields: vec![quote!(foo: u32,)],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             doc_comment: None,

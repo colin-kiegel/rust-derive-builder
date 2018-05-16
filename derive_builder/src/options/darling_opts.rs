@@ -1,11 +1,15 @@
-use derive_builder_core::BuildMethod;
+use std::ops;
 use std::vec::IntoIter;
 
-use darling;
+use derive_builder_core::BuildMethod;
+
 use darling::util::{Flag, IdentList};
+use darling::{self, FromMeta};
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 
-use derive_builder_core::{Bindings, Builder, BuilderField, BuilderPattern, Initializer, Setter};
+use derive_builder_core::{
+    Bindings, Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter,
+};
 use options::DefaultExpression;
 
 trait FlagVisibility {
@@ -24,6 +28,7 @@ trait FlagVisibility {
 
 /// Options for the `build_fn` property in struct-level builder options.
 #[derive(Debug, Clone, FromMeta)]
+#[darling(default)]
 pub struct BuildFn {
     skip: bool,
     name: Ident,
@@ -42,6 +47,7 @@ impl Default for BuildFn {
 
 /// Contents of the `field` meta in `builder` attributes.
 #[derive(Debug, Clone, Default, FromMeta)]
+#[darling(default)]
 pub struct FieldMeta {
     public: Flag,
     private: Flag,
@@ -58,17 +64,81 @@ impl FlagVisibility for FieldMeta {
 }
 
 #[derive(Debug, Clone, Default, FromMeta)]
+#[darling(default)]
 pub struct StructLevelSetter {
     prefix: Option<Ident>,
     into: Option<bool>,
     skip: Option<bool>,
 }
 
+impl StructLevelSetter {
+    /// Check if setters are explicitly enabled or disabled at
+    /// the struct level.
+    pub fn enabled(&self) -> Option<bool> {
+        self.skip.map(ops::Not::not)
+    }
+}
+
 #[derive(Debug, Clone, Default, FromMeta)]
+#[darling(default)]
 pub struct FieldLevelSetter {
+    prefix: Option<Ident>,
     name: Option<Ident>,
     into: Option<bool>,
     skip: Option<bool>,
+}
+
+impl FieldLevelSetter {
+    /// Get whether or not this field-level setter indicates a setter should
+    /// be emitted. The setter shorthand rules are that the presence of a
+    /// `setter` with _any_ properties set forces the setter to be emitted.
+    pub fn enabled(&self) -> Option<bool> {
+        if self.skip.is_some() {
+            return self.skip.map(ops::Not::not);
+        }
+
+        if self.prefix.is_some() || self.name.is_some() || self.into.is_some() {
+            return Some(true);
+        }
+
+        None
+    }
+}
+
+#[derive(Debug, Clone)]
+enum FieldSetterMeta {
+    Shorthand,
+    Longhand(FieldLevelSetter),
+}
+
+impl From<FieldSetterMeta> for FieldLevelSetter {
+    fn from(v: FieldSetterMeta) -> Self {
+        match v {
+            FieldSetterMeta::Shorthand => FieldLevelSetter {
+                skip: Some(false),
+                ..Default::default()
+            },
+            FieldSetterMeta::Longhand(val) => val,
+        }
+    }
+}
+
+impl FromMeta for FieldSetterMeta {
+    fn from_word() -> darling::Result<Self> {
+        Ok(FieldSetterMeta::Shorthand)
+    }
+
+    fn from_nested_meta(value: &syn::NestedMeta) -> darling::Result<Self> {
+        Ok(FieldSetterMeta::Longhand(
+            FieldLevelSetter::from_nested_meta(value)?,
+        ))
+    }
+
+    fn from_list(value: &[syn::NestedMeta]) -> darling::Result<Self> {
+        Ok(FieldSetterMeta::Longhand(FieldLevelSetter::from_list(
+            value,
+        )?))
+    }
 }
 
 #[derive(Debug, Clone, FromField)]
@@ -79,10 +149,12 @@ pub struct Field {
     vis: syn::Visibility,
     ty: syn::Type,
     #[darling(default)]
+    pattern: Option<BuilderPattern>,
+    #[darling(default)]
     public: Flag,
     #[darling(default)]
     private: Flag,
-    #[darling(default)]
+    #[darling(default, map = "FieldSetterMeta::into")]
     setter: FieldLevelSetter,
     #[darling(default)]
     default: Option<DefaultExpression>,
@@ -132,6 +204,7 @@ pub struct Options {
     setter: StructLevelSetter,
 
     /// Struct-level value to use in place of any unfilled fields
+    #[darling(default)]
     default: Option<DefaultExpression>,
 
     #[darling(default)]
@@ -153,6 +226,9 @@ pub struct Options {
 
     #[darling(default)]
     field: FieldMeta,
+
+    #[darling(skip, default)]
+    deprecation_notes: DeprecationNotes,
 }
 
 impl FlagVisibility for Options {
@@ -210,11 +286,11 @@ impl Options {
     pub fn as_builder<'a>(&'a self) -> Builder<'a> {
         Builder {
             enabled: true,
-            ident: &self.builder_ident(),
+            ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
             generics: Some(&self.generics),
-            visibility: &self.builder_vis(),
+            visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
             doc_comment: None,
@@ -228,7 +304,7 @@ impl Options {
         BuildMethod {
             enabled: !self.build_fn.skip,
             ident: &self.build_fn.name,
-            visibility: &self.builder_vis(),
+            visibility: self.builder_vis(),
             pattern: self.pattern,
             target_ty: &self.ident,
             target_ty_generics: Some(ty_generics),
@@ -257,9 +333,9 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn enabled(&self) -> bool {
         self.field
             .setter
-            .skip
-            .or(self.parent.setter.skip)
-            .unwrap_or_default()
+            .enabled()
+            .or(self.parent.setter.enabled())
+            .unwrap_or(true)
     }
 
     pub fn try_setter(&self) -> bool {
@@ -267,6 +343,16 @@ impl<'a> FieldWithDefaults<'a> {
             .try_setter
             .or(self.parent.try_setter)
             .unwrap_or_default()
+    }
+
+    /// Get the prefix that should be applied to the field name to produce
+    /// the setter ident, if any.
+    pub fn setter_prefix(&self) -> Option<&Ident> {
+        self.field
+            .setter
+            .prefix
+            .as_ref()
+            .or(self.parent.setter.prefix.as_ref())
     }
 
     /// Get the ident of the emitted setter method
@@ -277,7 +363,7 @@ impl<'a> FieldWithDefaults<'a> {
 
         let ident = self.field.ident;
 
-        if let Some(ref prefix) = self.parent.setter.prefix {
+        if let Some(ref prefix) = self.setter_prefix() {
             return syn::parse_str(&format!("{}_{}", prefix, ident.as_ref().unwrap())).unwrap();
         }
 
@@ -319,8 +405,16 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(Visibility::Inherited)
     }
 
+    pub fn pattern(&self) -> BuilderPattern {
+        self.field.pattern.unwrap_or(self.parent.pattern)
+    }
+
     pub fn use_parent_default(&self) -> bool {
         self.field.default.is_none() && self.parent.default.is_some()
+    }
+
+    pub fn deprecation_notes(&self) -> &DeprecationNotes {
+        &self.parent.deprecation_notes
     }
 
     fn bindings(&self) -> Bindings {
@@ -335,14 +429,14 @@ impl<'a> FieldWithDefaults<'a> {
         Setter {
             enabled: self.enabled(),
             try_setter: self.try_setter(),
-            visibility: &self.setter_vis(),
-            pattern: self.parent.pattern,
+            visibility: self.setter_vis(),
+            pattern: self.pattern(),
             attrs: &self.field.attrs,
-            ident: &self.setter_ident(),
+            ident: self.setter_ident(),
             field_ident: &self.field_ident(),
             field_type: &self.field.ty,
             generic_into: self.setter_into(),
-            deprecation_notes: &Default::default(),
+            deprecation_notes: self.deprecation_notes(),
             bindings: self.bindings(),
         }
     }
@@ -356,7 +450,7 @@ impl<'a> FieldWithDefaults<'a> {
         Initializer {
             setter_enabled: self.enabled(),
             field_ident: self.field_ident(),
-            builder_pattern: self.parent.pattern,
+            builder_pattern: self.pattern(),
             default_value: self.field
                 .default
                 .as_ref()
@@ -371,7 +465,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_ident: self.field_ident(),
             field_type: &self.field.ty,
             setter_enabled: self.enabled(),
-            field_visibility: &self.field_vis(),
+            field_visibility: self.field_vis(),
             attrs: &self.field.attrs,
             bindings: self.bindings(),
         }

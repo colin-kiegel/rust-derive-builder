@@ -40,7 +40,7 @@ pub struct BuildMethod<'a> {
     /// Name of this build fn.
     pub ident: &'a syn::Ident,
     /// Visibility of the build method, e.g. `syn::Visibility::Public`.
-    pub visibility: &'a syn::Visibility,
+    pub visibility: syn::Visibility,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub pattern: BuilderPattern,
     /// Type of the target field.
@@ -67,7 +67,7 @@ pub struct BuildMethod<'a> {
 impl<'a> ToTokens for BuildMethod<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         let ident = &self.ident;
-        let vis = self.visibility;
+        let vis = &self.visibility;
         let target_ty = &self.target_ty;
         let target_ty_generics = &self.target_ty_generics;
         let initializers = &self.initializers;
@@ -132,7 +132,7 @@ macro_rules! default_build_method {
         BuildMethod {
             enabled: true,
             ident: &syn::Ident::from("build"),
-            visibility: &syn::parse_str("pub").unwrap(),
+            visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::from("Foo"),
             target_ty_generics: None,
