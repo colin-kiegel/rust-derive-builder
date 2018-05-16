@@ -27,6 +27,7 @@ pub use self::field_mode::FieldMode;
 pub use self::field_options::FieldOptions;
 pub use self::struct_mode::StructMode;
 pub use self::struct_options::StructOptions;
+pub use self::darling_opts::Options;
 
 /// A `DefaultExpression` can be either explicit or refer to the canonical trait.
 #[derive(Debug, Clone)]
