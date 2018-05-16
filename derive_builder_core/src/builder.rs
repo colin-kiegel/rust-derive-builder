@@ -1,5 +1,5 @@
 use quote::{Tokens, ToTokens};
-use syn;
+use syn::{self, TypeParamBound, TraitBound, TraitBoundModifier};
 
 use Bindings;
 use BuildMethod;
@@ -94,7 +94,7 @@ impl<'a> ToTokens for Builder<'a> {
                 struct_generics
             );
 
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #[derive(Default, Clone #( , #derives)* )]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
@@ -146,19 +146,18 @@ impl<'a> Builder<'a> {
         if let Some(type_gen) = self.generics {
             let mut generics = type_gen.clone();
 
-            if !self.pattern.requires_clone() || type_gen.ty_params.is_empty() {
+            if !self.pattern.requires_clone() || type_gen.type_params().next().is_none() {
                 return generics;
             }
 
-            let clone_bound = syn::TyParamBound::Trait(
-                syn::PolyTraitRef {
-                    trait_ref: syn::parse_path(self.bindings.clone_trait().as_str()).unwrap(),
-                    bound_lifetimes: vec![],
-                },
-                syn::TraitBoundModifier::None,
-            );
+            let clone_bound = TypeParamBound::Trait(TraitBound {
+                paren_token: None,
+                modifier: TraitBoundModifier::None,
+                lifetimes: None,
+                path: self.bindings.clone_trait(),
+            });
 
-            for typ in &mut generics.ty_params {
+            for typ in generics.type_params_mut() {
                 typ.bounds.push(clone_bound.clone());
             }
 
@@ -177,11 +176,11 @@ macro_rules! default_builder {
     () => {
         Builder {
             enabled: true,
-            ident: &syn::Ident::new("FooBuilder"),
+            ident: &syn::Ident::from("FooBuilder"),
             pattern: Default::default(),
             derives: &vec![],
             generics: None,
-            visibility: &syn::Visibility::Public,
+            visibility: &syn::parse_str("pub").unwrap(),
             fields: vec![quote!(foo: u32,)],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             doc_comment: None,
@@ -220,7 +219,7 @@ mod tests {
 
     #[test]
     fn generic() {
-        let ast = syn::parse_macro_input(stringify!(
+        let ast: syn::DeriveInput = syn::parse_str(stringify!(
             struct Lorem<'a, T: Debug> where T: PartialEq { }
         )).expect("Couldn't parse item");
         let generics = ast.generics;
@@ -247,7 +246,7 @@ mod tests {
 
     #[test]
     fn generic_reference() {
-        let ast = syn::parse_macro_input(stringify!(
+        let ast: syn::DeriveInput = syn::parse_str(stringify!(
             struct Lorem<'a, T: 'a + Default> where T: PartialEq{ }
         )).expect("Couldn't parse item");
 
@@ -275,7 +274,7 @@ mod tests {
 
     #[test]
     fn owned_generic() {
-        let ast = syn::parse_macro_input(stringify!(
+        let ast: syn::DeriveInput = syn::parse_str(stringify!(
             struct Lorem<'a, T: Debug> where T: PartialEq { }
         )).expect("Couldn't parse item");
         let generics = ast.generics;
@@ -311,7 +310,7 @@ mod tests {
 
     #[test]
     fn add_derives() {
-        let derives = vec![syn::Ident::new("Serialize")];
+        let derives = vec![syn::Ident::from("Serialize")];
         let mut builder = default_builder!();
         builder.derives = &derives;
 

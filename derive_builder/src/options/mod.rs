@@ -65,13 +65,13 @@ pub struct OptionsBuilder<Mode> {
 /// Certain attributes need to be handled differently for `StructOptions` and `FieldOptions`.
 pub trait OptionsBuilderMode: ::std::fmt::Debug {
     fn parse_builder_name(&mut self, lit: &syn::Lit);
-    fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]);
+    fn parse_derive(&mut self, nested: &[syn::NestedMeta]);
     fn push_deprecation_note<T: Into<String>>(&mut self, x: T) -> &mut Self;
     /// Provide a diagnostic _where_-clause for panics.
     fn where_diagnostics(&self) -> String;
     fn struct_mode(&self) -> bool;
 
-    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]);
+    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMeta]);
 }
 
 impl<Mode> From<Mode> for OptionsBuilder<Mode> {
@@ -110,13 +110,13 @@ impl<Mode> OptionsBuilder<Mode>
     impl_setter!{
         ident: field_public for field_vis,
         desc: "field visibility",
-        map: |x: bool| { if x { syn::Visibility::Public } else { syn::Visibility::Inherited } },
+        map: |x: bool| { if x { syn::parse_str("pub").unwrap() } else { syn::Visibility::Inherited } },
     }
 
     impl_setter!{
         ident: setter_public for setter_vis,
         desc: "setter visibility",
-        map: |x: bool| { if x { syn::Visibility::Public } else { syn::Visibility::Inherited } },
+        map: |x: bool| { if x { syn::parse_str("pub").unwrap() } else { syn::Visibility::Inherited } },
     }
 
     impl_setter!{
@@ -193,15 +193,15 @@ impl<Mode> OptionsBuilder<Mode>
         }
     }
 
-    fn parse_builder_options(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_builder_options(&mut self, nested: &[syn::NestedMeta]) {
         trace!("Parsing builder options.");
         for x in nested {
             match *x {
-                syn::NestedMetaItem::MetaItem(ref meta_item) => {
+                syn::NestedMeta::MetaItem(ref meta_item) => {
                     self.parse_builder_options_metaItem(meta_item)
                 },
-                syn::NestedMetaItem::Literal(ref lit) => {
-                    error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
+                syn::NestedMeta::Literal(ref lit) => {
+                    error!("Expected NestedMeta::MetaItem, found `{:?}`.", x);
                     panic!("Could not parse builder option `{:?}` {}.",
                            lit,
                            self.where_diagnostics());
@@ -282,7 +282,7 @@ impl<Mode> OptionsBuilder<Mode>
 
     /// e.g `setter(skip)` in `#[builder(setter(skip))]`
     #[allow(non_snake_case)]
-    fn parse_builder_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMetaItem]) {
+    fn parse_builder_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMeta]) {
         trace!("Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             "setter" => {
@@ -307,11 +307,11 @@ impl<Mode> OptionsBuilder<Mode>
         }
     }
 
-    fn parse_field_options(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_field_options(&mut self, nested: &[syn::NestedMeta]) {
         trace!("Parsing field options.");
         for x in nested {
             match *x {
-                syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref ident)) => {
+                syn::NestedMeta::MetaItem(syn::MetaItem::Word(ref ident)) => {
                     match ident.as_ref() {
                         "private" => self.field_public(false),
                         "public" => self.field_public(true),
@@ -325,15 +325,15 @@ impl<Mode> OptionsBuilder<Mode>
 
     /// e.g `skip` in `#[builder(setter(skip))]`
     #[allow(non_snake_case)]
-    fn parse_setter_options(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_setter_options(&mut self, nested: &[syn::NestedMeta]) {
         trace!("Parsing setter options.");
         for x in nested {
             match *x {
-                syn::NestedMetaItem::MetaItem(ref meta_item) => {
+                syn::NestedMeta::MetaItem(ref meta_item) => {
                     self.parse_setter_options_metaItem(meta_item);
                 },
-                syn::NestedMetaItem::Literal(ref lit) => {
-                    error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
+                syn::NestedMeta::Literal(ref lit) => {
+                    error!("Expected NestedMeta::MetaItem, found `{:?}`.", x);
                     panic!("Could not parse builder option `{:?}` {}.",
                            lit,
                            self.where_diagnostics());
@@ -402,7 +402,7 @@ impl<Mode> OptionsBuilder<Mode>
 
     /// e.g `setter(skip)` in `#[builder(setter(skip))]`
     #[allow(non_snake_case)]
-    fn parse_setter_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMetaItem]) {
+    fn parse_setter_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMeta]) {
         trace!("Setter Options - Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             _ => {
@@ -497,6 +497,6 @@ fn parse_lit_as_bool(lit: &syn::Lit) -> Result<bool, String> {
 }
 
 fn parse_lit_as_path(lit: &syn::Lit) -> Result<syn::Path, String> {
-    syn::parse_path(parse_lit_as_string(lit)?)
+    syn::parse_str(parse_lit_as_string(lit)?)
         .or_else(|_| Err(format!("Unable to interpret as path `{:?}`.", lit)))
 }

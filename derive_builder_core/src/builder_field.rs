@@ -32,7 +32,7 @@ pub struct BuilderField<'a> {
     /// Type of the target field.
     ///
     /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Ty,
+    pub field_type: &'a syn::Type,
     /// Whether the builder implements a setter for this field.
     ///
     /// Note: We will fallback to `PhantomData` if the setter is disabled
@@ -57,7 +57,7 @@ impl<'a> ToTokens for BuilderField<'a> {
             let attrs = self.attrs;
             let option = self.bindings.option_ty();
 
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #(#attrs)* #vis #ident: #option<#ty>,
             ));
         } else {
@@ -70,7 +70,7 @@ impl<'a> ToTokens for BuilderField<'a> {
             let attrs = self.attrs;
             let phantom_data = self.bindings.phantom_data_ty();
 
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #(#attrs)* #ident: #phantom_data<#ty>,
             ));
         }
@@ -83,13 +83,17 @@ impl<'a> ToTokens for BuilderField<'a> {
 #[macro_export]
 macro_rules! default_builder_field {
     () => {
-        BuilderField {
-            field_ident: &syn::Ident::new("foo"),
-            field_type: &syn::parse_type("String").unwrap(),
-            setter_enabled: true,
-            field_visibility: &syn::Visibility::Public,
-            attrs: &vec![syn::parse_outer_attr("#[some_attr]").unwrap()],
-            bindings: Default::default(),
+        {
+            use syn::synom::Parser;
+            named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
+            BuilderField {
+                field_ident: &syn::Ident::from("foo"),
+                field_type: &syn::parse_str("String").unwrap(),
+                setter_enabled: true,
+                field_visibility: &syn::parse_str("pub").unwrap(),
+                attrs: &outer_attrs.parse_str("#[some_attr]").unwrap(),
+                bindings: Default::default(),
+            }
         }
     }
 }

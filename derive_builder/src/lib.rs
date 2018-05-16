@@ -523,6 +523,7 @@
 #![deny(warnings)]
 
 extern crate proc_macro;
+extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -556,7 +557,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let input = input.to_string();
 
-    let ast = syn::parse_macro_input(&input).expect("Couldn't parse item");
+    let ast: syn::DeriveInput = syn::parse_str(&input).expect("Couldn't parse item");
 
     let result = builder_for_struct(ast).to_string();
     debug!("generated tokens: {}", result);

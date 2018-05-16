@@ -48,7 +48,7 @@ pub struct BuildMethod<'a> {
     /// The corresonding builder field will be `Option<field_type>`.
     pub target_ty: &'a syn::Ident,
     /// Type parameters and lifetimes attached to this builder struct.
-    pub target_ty_generics: Option<syn::TyGenerics<'a>>,
+    pub target_ty_generics: Option<syn::TypeGenerics<'a>>,
     /// Field initializers for the target type.
     pub initializers: Vec<Tokens>,
     /// Doc-comment of the builder struct.
@@ -78,7 +78,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         };
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct.as_ref().map(|default_expr| {
-            let ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+            let ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
             quote!(let #ident: #target_ty = #default_expr;)
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
@@ -87,7 +87,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
 
         if self.enabled {
             trace!("Deriving build method `{}`.", self.ident.as_ref());
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
                     -> #result<#target_ty #target_ty_generics, #string>
@@ -131,10 +131,10 @@ macro_rules! default_build_method {
     () => {
         BuildMethod {
             enabled: true,
-            ident: &syn::Ident::new("build"),
-            visibility: &syn::Visibility::Public,
+            ident: &syn::Ident::from("build"),
+            visibility: &syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
-            target_ty: &syn::Ident::new("Foo"),
+            target_ty: &syn::Ident::from("Foo"),
             target_ty_generics: None,
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn rename() {
-        let ident = syn::Ident::new("finish");
+        let ident = syn::Ident::from("finish");
         let mut build_method: BuildMethod = default_build_method!();
         build_method.ident = &ident;
 
@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn validation() {
-        let validate_path = syn::parse_path("IpsumBuilder::validate").expect(
+        let validate_path: syn::Path = syn::parse_str("IpsumBuilder::validate").expect(
             "Statically-entered path should be valid",
         );
 

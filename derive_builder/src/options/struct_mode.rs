@@ -123,7 +123,7 @@ impl StructMode {
     }
 
     #[allow(non_snake_case)]
-    fn parse_build_fn_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMetaItem]) {
+    fn parse_build_fn_options_list(&mut self, ident: &syn::Ident, nested: &[syn::NestedMeta]) {
         trace!("Build fn Options - Parsing list `{}({:?})`", ident.as_ref(), nested);
         match ident.as_ref() {
             _ => {
@@ -157,14 +157,14 @@ impl OptionsBuilderMode for StructMode {
         self.builder_name(value.clone());
     }
 
-    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_build_fn_options(&mut self, nested: &[syn::NestedMeta]) {
         for x in nested {
             match *x {
-                syn::NestedMetaItem::MetaItem(ref meta_item) => {
+                syn::NestedMeta::MetaItem(ref meta_item) => {
                     self.parse_build_fn_options_metaItem(meta_item);
                 },
-                syn::NestedMetaItem::Literal(ref lit) => {
-                    error!("Expected NestedMetaItem::MetaItem, found `{:?}`.", x);
+                syn::NestedMeta::Literal(ref lit) => {
+                    error!("Expected NestedMeta::MetaItem, found `{:?}`.", x);
                     panic!("Could not parse builder option `{:?}` {}.",
                            lit,
                            self.where_diagnostics());
@@ -174,14 +174,14 @@ impl OptionsBuilderMode for StructMode {
     }
 
     /// Parse the `derive` list for struct-level builder declarations.
-    fn parse_derive(&mut self, nested: &[syn::NestedMetaItem]) {
+    fn parse_derive(&mut self, nested: &[syn::NestedMeta]) {
         let mut traits = vec![];
         let where_diag = self.where_diagnostics();
         for x in nested {
             match *x {
         // We don't allow name-value pairs or further nesting here, so
         // only look for words.
-                syn::NestedMetaItem::MetaItem(syn::MetaItem::Word(ref tr)) => {
+                syn::NestedMeta::MetaItem(syn::MetaItem::Word(ref tr)) => {
                     match tr.as_ref() {
                         "Default" | "Clone" => { self.push_deprecation_note(
                             format!("The `Default` and `Clone` traits are automatically added to all \
@@ -244,15 +244,15 @@ impl From<OptionsBuilder<StructMode>> for (StructOptions, OptionsBuilder<FieldMo
 
         let struct_options = StructOptions {
             build_fn_enabled: m.build_fn_enabled.unwrap_or(true),
-            build_fn_name: syn::Ident::new(
+            build_fn_name: syn::Ident::from(
                 m.build_fn_name.unwrap_or("build".to_string())
             ),
-            builder_ident: syn::Ident::new(
+            builder_ident: syn::Ident::from(
                 m.builder_name.unwrap_or(format!("{}Builder", m.build_target_name))
             ),
             builder_visibility: m.builder_vis.unwrap_or(m.build_target_vis),
             builder_pattern: pattern,
-            build_target_ident: syn::Ident::new(m.build_target_name),
+            build_target_ident: syn::Ident::from(m.build_target_name),
             derives: m.derive_traits.unwrap_or_default(),
             deprecation_notes: m.deprecation_notes,
             generics: m.build_target_generics,

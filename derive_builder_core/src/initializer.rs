@@ -61,7 +61,7 @@ impl<'a> ToTokens for Initializer<'a> {
             let match_some = self.match_some();
             let match_none = self.match_none();
             let builder_field = &*struct_field;
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #struct_field: match self.#builder_field {
                     #match_some,
                     #match_none,
@@ -69,7 +69,7 @@ impl<'a> ToTokens for Initializer<'a> {
             ));
         } else {
             let default = self.default();
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #struct_field: #default,
             ));
         }
@@ -114,7 +114,7 @@ impl<'a> Initializer<'a> {
         match self.default_value {
             Some(ref expr) => quote!(#expr),
             None if self.use_default_struct => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
+                let struct_ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
                 let field_ident = self.field_ident;
                 quote!(#struct_ident.#field_ident)
             },
@@ -144,23 +144,23 @@ impl<'a> ToTokens for MatchNone<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
             MatchNone::DefaultTo(expr) => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 None => #expr
             ))
             },
             MatchNone::UseDefaultStructField(field_ident) => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME);
-                tokens.append(quote!(
+                let struct_ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
+                tokens.append_all(quote!(
                     None => #struct_ident.#field_ident
                 ))
             },
             MatchNone::ReturnError(ref err) => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 None => return ::std::result::Result::Err(::std::string::String::from(#err))
             ))
             },
             MatchNone::ReturnErrorNoStd(ref err) => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 None => return ::core::result::Result::Err(
                     ::alloc::string::String::from(#err))
             ))
@@ -180,17 +180,17 @@ impl<'a> ToTokens for MatchSome {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
             MatchSome::Move => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 Some(value) => value
             ))
             },
             MatchSome::Clone => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 Some(ref value) => ::std::clone::Clone::clone(value)
             ))
             },
             MatchSome::CloneNoStd => {
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                 Some(ref value) => ::core::clone::Clone::clone(value)
             ))
             },
@@ -205,7 +205,7 @@ impl<'a> ToTokens for MatchSome {
 macro_rules! default_initializer {
     () => {
         Initializer {
-            field_ident: &syn::Ident::new("foo"),
+            field_ident: &syn::Ident::from("foo"),
             setter_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,

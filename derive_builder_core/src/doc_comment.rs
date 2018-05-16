@@ -1,4 +1,5 @@
-use syn;
+use syn::Attribute;
+use syn::synom::Parser;
 
 /// Doc-comment, implementing `quote::ToTokens`.
 ///
@@ -20,13 +21,7 @@ use syn;
 /// #    ));
 /// # }
 /// ```
-pub fn doc_comment_from(s: String) -> syn::Attribute {
-    syn::Attribute {
-        style: syn::AttrStyle::Outer,
-        value: syn::MetaItem::NameValue(
-            syn::Ident::new("doc"),
-            syn::Lit::Str(s, syn::StrStyle::Raw(2)),
-        ),
-        is_sugared_doc: false,
-    }
+pub fn doc_comment_from(s: String) -> Attribute {
+    named!(doc_attr -> Attribute, call!(Attribute::parse_outer));
+    doc_attr.parse_str(&quote!(#[doc=#s]).to_string()).unwrap()
 }

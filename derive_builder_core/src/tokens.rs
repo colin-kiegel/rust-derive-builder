@@ -19,6 +19,6 @@ impl<T: AsRef<str>> RawTokens<T> {
 
 impl<T: AsRef<str>> ToTokens for RawTokens<T> {
     fn to_tokens(&self, tokens: &mut Tokens) {
-        tokens.append(&self.0);
+        tokens.(&self.0);
     }
 }

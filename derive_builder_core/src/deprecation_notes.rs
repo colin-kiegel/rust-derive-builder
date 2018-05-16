@@ -39,8 +39,8 @@ pub struct DeprecationNotes(Vec<String>);
 impl ToTokens for DeprecationNotes {
     fn to_tokens(&self, tokens: &mut Tokens) {
         for note in &self.0 {
-            let fn_ident = syn::Ident::new("derive_builder_core_deprecation_note");
-            tokens.append(quote!(
+            let fn_ident = syn::Ident::from("derive_builder_core_deprecation_note");
+            tokens.append_all(quote!(
                 {
                     #[deprecated(note=#note)]
                     fn #fn_ident() { }
@@ -82,7 +82,7 @@ impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
         let deprecation_notes = self.0;
 
         if !deprecation_notes.0.is_empty() {
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #[doc(hidden)]
                 fn derive_builder_core_deprecation_note() {
                     #deprecation_notes

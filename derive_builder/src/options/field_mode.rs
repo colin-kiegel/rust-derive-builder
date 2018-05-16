@@ -14,8 +14,8 @@ pub struct FieldMode {
 impl Default for FieldMode {
     fn default() -> FieldMode {
         FieldMode {
-           field_ident: syn::Ident::new(""),
-           field_type: syn::Ty::Never,
+           field_ident: syn::Ident::from(""),
+           field_type: syn::Type::Never,
            setter_attrs: None,
            deprecation_notes: Default::default(),
            use_default_struct: false,
@@ -96,7 +96,7 @@ impl OptionsBuilderMode for FieldMode {
                self.where_diagnostics())
     }
 
-    fn parse_derive(&mut self, _nested: &[syn::NestedMetaItem]) {
+    fn parse_derive(&mut self, _nested: &[syn::NestedMeta]) {
         panic!("Derive declarations can only be added on the struct level (but found {}).",
                self.where_diagnostics())
     }
@@ -115,7 +115,7 @@ impl OptionsBuilderMode for FieldMode {
         false
     }
 
-    fn parse_build_fn_options(&mut self, _: &[syn::NestedMetaItem]) {
+    fn parse_build_fn_options(&mut self, _: &[syn::NestedMeta]) {
         panic!("Build function options can only be set on the struct level (but found {}).",
                self.where_diagnostics())
     }
@@ -128,16 +128,16 @@ impl From<OptionsBuilder<FieldMode>> for FieldOptions {
         let setter_prefix = b.setter_prefix;
         let setter_ident = b.setter_name
             .as_ref()
-            .map(|name| syn::Ident::new(name.as_str()))
+            .map(|name| syn::Ident::from(name.as_str()))
             .unwrap_or_else(|| {
                 match setter_prefix {
                     Some(ref prefix) if !prefix.is_empty() => {
-                        syn::Ident::new(format!("{}_{}", prefix, field_ident))
+                        syn::Ident::from(format!("{}_{}", prefix, field_ident))
                     },
-                    _ => syn::Ident::new(field_ident.clone()),
+                    _ => syn::Ident::from(field_ident.clone()),
                 }});
 
-        let setter_vis = b.setter_vis.unwrap_or(syn::Visibility::Public);
+        let setter_vis = b.setter_vis.unwrap_or(syn::parse_str("pub").unwrap());
 
         let field_vis = b.field_vis.unwrap_or(syn::Visibility::Inherited);
 
