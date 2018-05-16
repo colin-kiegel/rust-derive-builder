@@ -11,9 +11,11 @@
 //!    struct field on the input/target type. Once complete, these get converted into
 //!    `FieldOptions` instances.
 
+use darling;
 use syn;
 use derive_builder_core::BuilderPattern;
 
+mod darling_opts;
 #[macro_use]
 mod macros;
 mod field_mode;
@@ -31,6 +33,16 @@ pub use self::struct_options::StructOptions;
 pub enum DefaultExpression {
     Explicit(String),
     Trait,
+}
+
+impl darling::FromMeta for DefaultExpression {
+    fn from_word() -> darling::Result<Self> {
+        Ok(DefaultExpression::Trait)
+    }
+
+    fn from_string(value: &str) -> darling::Result<Self> {
+        Ok(DefaultExpression::Explicit(value.into()))
+    }
 }
 
 /// Get the tuple of `StructOptions` and field defaults (`OptionsBuilder<FieldMode>`) from the AST.

@@ -20,6 +20,7 @@ logging = [ "log" ]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [dependencies]
+darling = "0.6.0"
 proc-macro2 = "0.3"
 quote = "0.5"
 log = { version = "0.3", optional = true }

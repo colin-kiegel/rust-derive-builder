@@ -25,6 +25,9 @@
 #![deny(warnings, missing_docs)]
 #![cfg_attr(test, recursion_limit = "100")]
 
+#[macro_use]
+extern crate darling;
+
 extern crate proc_macro;
 extern crate proc_macro2;
 #[macro_use]

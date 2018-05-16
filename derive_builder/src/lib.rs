@@ -522,6 +522,9 @@
 #![crate_type = "proc-macro"]
 #![deny(warnings)]
 
+#[macro_use]
+extern crate darling;
+
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
