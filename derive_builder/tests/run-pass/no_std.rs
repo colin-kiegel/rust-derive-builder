@@ -63,6 +63,12 @@ pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
     unsafe { intrinsics::abort() }
 }
 
+#[lang = "oom"]
+#[no_mangle]
+pub extern fn rust_oom() {
+    unsafe { intrinsics::abort() }
+}
+
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn _Unwind_Resume() -> ! {
