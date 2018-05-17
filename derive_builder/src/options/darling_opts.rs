@@ -12,10 +12,19 @@ use derive_builder_core::{
 };
 use options::DefaultExpression;
 
+/// `derive_builder` uses separate sibling keywords to represent
+/// mutually-exclusive visibility states. This trait requires implementers to
+/// expose those flags and provides a method to compute any explicit visibility
+/// bounds.
 trait FlagVisibility {
     fn public(&self) -> &Flag;
     fn private(&self) -> &Flag;
 
+    /// Get the explicitly-expressed visibility preference from the attribute.
+    /// This returns `None` if the input didn't include either keyword.
+    ///
+    /// # Panics
+    /// This method panics if the input specifies both `public` and `private`.
     fn as_expressed_vis(&self) -> Option<Visibility> {
         match (self.public().is_some(), self.private().is_some()) {
             (true, true) => panic!("A field cannot be both public and private"),
@@ -27,6 +36,8 @@ trait FlagVisibility {
 }
 
 /// Options for the `build_fn` property in struct-level builder options.
+/// There is no inheritance for these settings from struct-level to field-level,
+/// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
 #[darling(default)]
 pub struct BuildFn {
@@ -79,6 +90,9 @@ impl StructLevelSetter {
     }
 }
 
+/// The `setter` meta item on fields in the input type.
+/// Unlike the `setter` meta item at the struct level, this allows specific
+/// name overrides.
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(default)]
 pub struct FieldLevelSetter {
@@ -105,8 +119,14 @@ impl FieldLevelSetter {
     }
 }
 
+/// `derive_builder` allows the calling code to use `setter` as a word to enable
+/// setters when they've been disabled at the struct level.
+/// `darling` doesn't provide that out of the box, so we read the user input
+/// into this enum then convert it into the `FieldLevelSetter`.
 #[derive(Debug, Clone)]
 enum FieldSetterMeta {
+    /// The keyword in isolation.
+    /// This is equivalent to `setter(skip = false)`.
     Shorthand,
     Longhand(FieldLevelSetter),
 }
@@ -128,19 +148,16 @@ impl FromMeta for FieldSetterMeta {
         Ok(FieldSetterMeta::Shorthand)
     }
 
-    fn from_nested_meta(value: &syn::NestedMeta) -> darling::Result<Self> {
-        Ok(FieldSetterMeta::Longhand(
-            FieldLevelSetter::from_nested_meta(value)?,
-        ))
-    }
-
-    fn from_list(value: &[syn::NestedMeta]) -> darling::Result<Self> {
-        Ok(FieldSetterMeta::Longhand(FieldLevelSetter::from_list(
-            value,
-        )?))
+    fn from_meta(value: &syn::Meta) -> darling::Result<Self> {
+        if let syn::Meta::Word(_) = *value {
+            FieldSetterMeta::from_word()
+        } else {
+            FieldLevelSetter::from_meta(value).map(FieldSetterMeta::Longhand)
+        }
     }
 }
 
+/// Data extracted from the fields of the input struct.
 #[derive(Debug, Clone, FromField)]
 #[darling(attributes(builder), forward_attrs(doc, cfg, allow))]
 pub struct Field {
@@ -148,18 +165,32 @@ pub struct Field {
     attrs: Vec<Attribute>,
     vis: syn::Visibility,
     ty: syn::Type,
+    /// Field-level override for builder pattern.
+    /// Note that setting this may force the builder to derive `Clone`.
     #[darling(default)]
     pattern: Option<BuilderPattern>,
     #[darling(default)]
     public: Flag,
     #[darling(default)]
     private: Flag,
+    // See the documentation for `FieldSetterMeta` to understand how `darling`
+    // is interpreting this field.
     #[darling(default, map = "FieldSetterMeta::into")]
     setter: FieldLevelSetter,
+    /// The value for this field if the setter is never invoked.
+    ///
+    /// A field can get its default one of three ways:
+    ///
+    /// 1. An explicit `default = "..."` expression
+    /// 1. An explicit `default` word, in which case the field type's `Default::default()`
+    ///    value is used
+    /// 1. Inherited from the field's value in the struct's `default` value.
+    ///
+    /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     #[darling(default)]
     default: Option<DefaultExpression>,
     #[darling(default)]
-    try_setter: Option<bool>,
+    try_setter: Flag,
     #[darling(default)]
     field: FieldMeta,
 }
@@ -175,7 +206,7 @@ impl FlagVisibility for Field {
 }
 
 #[derive(Debug, Clone, FromDeriveInput)]
-#[darling(attributes(builder), forward_attrs(doc, cfg, allow))]
+#[darling(attributes(builder), forward_attrs(doc, cfg, allow), supports(struct_named))]
 pub struct Options {
     ident: Ident,
 
@@ -222,7 +253,7 @@ pub struct Options {
     /// When present, emit additional fallible setters alongside each regular
     /// setter.
     #[darling(default)]
-    try_setter: Option<bool>,
+    try_setter: Flag,
 
     #[darling(default)]
     field: FieldMeta,
@@ -338,11 +369,10 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(true)
     }
 
+    /// Check if this field should emit a fallible setter.
+    /// This depends on the `TryFrom` trait, which hasn't yet stabilized.
     pub fn try_setter(&self) -> bool {
-        self.field
-            .try_setter
-            .or(self.parent.try_setter)
-            .unwrap_or_default()
+        self.field.try_setter.is_some() || self.parent.try_setter.is_some()
     }
 
     /// Get the prefix that should be applied to the field name to produce

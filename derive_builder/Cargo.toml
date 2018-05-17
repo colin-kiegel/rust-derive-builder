@@ -28,7 +28,7 @@ skeptic_tests = ["skeptic"]
 nightlytests = ["compiletest_rs"]
 
 [dependencies]
-darling = "0.6.0"
+darling = "0.6.1"
 proc-macro2 = "0.3"
 quote = "0.5"
 log = { version = "0.3", optional = true }
