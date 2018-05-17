@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- `Clone` is no longer derived on a builder using the owned pattern unless it
+  has a field override that uses the mutable/immutable pattern. #97
+
 ## [0.5.1] - 2017-12-16
 
 ### Changed

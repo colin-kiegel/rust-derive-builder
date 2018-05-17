@@ -110,6 +110,8 @@
 //! ## Owned, aka Consuming
 //!
 //! Precede your struct (or field) with `#[builder(pattern = "owned")]` to opt into this pattern.
+//! Builders generated with this pattern do not automatically derive `Clone`, which allows builders
+//! to be generated for structs with fields that do not derive `Clone`.
 //!
 //! * Setters take and return `self`.
 //! * PRO: Setter calls and final build method can be chained.
@@ -584,6 +586,9 @@ fn builder_for_struct(ast: syn::MacroInput) -> quote::Tokens {
     for f in fields {
         let f_opts = field_options_from(f, &field_defaults);
 
+        if f_opts.builder_pattern.requires_clone() {
+            builder.mark_initializer_requires_clone();
+        }
         builder.push_field(f_opts.as_builder_field());
         builder.push_setter_fn(f_opts.as_setter());
         build_fn.push_initializer(f_opts.as_initializer());

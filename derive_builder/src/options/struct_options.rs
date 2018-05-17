@@ -47,6 +47,7 @@ impl StructOptions {
             visibility: &self.builder_visibility,
             fields: Vec::with_capacity(self.struct_size_hint),
             functions: Vec::with_capacity(self.struct_size_hint),
+            initializer_requires_clone: false,
             doc_comment: None,
             deprecation_notes: self.deprecation_notes.clone(),
             bindings: self.bindings,
