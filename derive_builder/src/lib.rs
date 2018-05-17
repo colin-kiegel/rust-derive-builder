@@ -573,7 +573,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
 fn builder_for_struct(ast: syn::DeriveInput) -> quote::Tokens {
     debug!("Deriving Builder for `{}`.", ast.ident);
 
-    let opts = Options::from_derive_input(&ast).unwrap();
+    let opts = match Options::from_derive_input(&ast) {
+        Ok(val) => val,
+        Err(err) => panic!("{}", err.flatten()),
+    };
 
     let mut builder = opts.as_builder();
     let mut build_fn = opts.as_build_method();
