@@ -1,4 +1,3 @@
-use std::ops;
 use std::vec::IntoIter;
 
 use derive_builder_core::BuildMethod;
@@ -86,7 +85,7 @@ impl StructLevelSetter {
     /// Check if setters are explicitly enabled or disabled at
     /// the struct level.
     pub fn enabled(&self) -> Option<bool> {
-        self.skip.map(ops::Not::not)
+        self.skip.map(|x| !x)
     }
 }
 
@@ -108,7 +107,7 @@ impl FieldLevelSetter {
     /// `setter` with _any_ properties set forces the setter to be emitted.
     pub fn enabled(&self) -> Option<bool> {
         if self.skip.is_some() {
-            return self.skip.map(ops::Not::not);
+            return self.skip.map(|x| !x);
         }
 
         if self.prefix.is_some() || self.name.is_some() || self.into.is_some() {
@@ -182,9 +181,9 @@ pub struct Field {
     /// A field can get its default one of three ways:
     ///
     /// 1. An explicit `default = "..."` expression
-    /// 1. An explicit `default` word, in which case the field type's `Default::default()`
+    /// 2. An explicit `default` word, in which case the field type's `Default::default()`
     ///    value is used
-    /// 1. Inherited from the field's value in the struct's `default` value.
+    /// 3. Inherited from the field's value in the struct's `default` value.
     ///
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     #[darling(default)]
