@@ -40,19 +40,19 @@ pub struct Setter<'a> {
     /// Enables code generation for the `try_` variant of this setter fn.
     pub try_setter: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
-    pub visibility: &'a syn::Visibility,
+    pub visibility: syn::Visibility,
     /// How the setter method takes and returns `self` (e.g. mutably).
     pub pattern: BuilderPattern,
     /// Attributes which will be attached to this setter fn.
     pub attrs: &'a [syn::Attribute],
     /// Name of this setter fn.
-    pub ident: &'a syn::Ident,
+    pub ident: syn::Ident,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Type of the target field.
     ///
     /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Ty,
+    pub field_type: &'a syn::Type,
     /// Make the setter generic over `Into<T>`, where `T` is the field type.
     pub generic_into: bool,
     /// Emit deprecation notes to the user.
@@ -67,9 +67,9 @@ impl<'a> ToTokens for Setter<'a> {
             trace!("Deriving setter for `{}`.", self.field_ident);
             let ty = self.field_type;
             let pattern = self.pattern;
-            let vis = self.visibility;
+            let vis = &self.visibility;
             let field_ident = self.field_ident;
-            let ident = self.ident;
+            let ident = &self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
             let clone = self.bindings.clone_trait();
@@ -112,7 +112,7 @@ impl<'a> ToTokens for Setter<'a> {
                 into_value = quote!(value);
             }
 
-            tokens.append(quote!(
+            tokens.append_all(quote!(
                 #(#attrs)*
                 #[allow(unused_mut)]
                 #vis fn #ident #ty_params (#self_param, value: #param_ty)
@@ -127,10 +127,10 @@ impl<'a> ToTokens for Setter<'a> {
             if self.try_setter {
                 let try_into = self.bindings.try_into_trait();
                 let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
-                let try_ident = syn::Ident::new(format!("try_{}", ident));
+                let try_ident = syn::Ident::from(format!("try_{}", ident));
                 let result = self.bindings.result_ty();
 
-                tokens.append(quote!(
+                tokens.append_all(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
                         -> #result<#return_ty, VALUE::Error>
@@ -158,12 +158,12 @@ macro_rules! default_setter {
         Setter {
             enabled: true,
             try_setter: false,
-            visibility: &syn::Visibility::Public,
+            visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
-            ident: &syn::Ident::new("foo"),
-            field_ident: &syn::Ident::new("foo"),
-            field_type: &syn::parse_type("Foo").unwrap(),
+            ident: syn::Ident::from("foo"),
+            field_ident: &syn::Ident::from("foo"),
+            field_type: &syn::parse_str("Foo").unwrap(),
             generic_into: false,
             deprecation_notes: &Default::default(),
             bindings: Default::default(),
@@ -235,7 +235,7 @@ mod tests {
         let vis = syn::Visibility::Inherited;
 
         let mut setter = default_setter!();
-        setter.visibility = &vis;
+        setter.visibility = vis;
 
         assert_eq!(
             quote!(#setter),
@@ -271,7 +271,9 @@ mod tests {
     // including try_setter
     #[test]
     fn full() {
-        let attrs = vec![syn::parse_outer_attr("#[some_attr]").unwrap()];
+        use syn::synom::Parser;
+        named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
+        let attrs = outer_attrs.parse_str("#[some_attr]").unwrap();
 
         let mut deprecated = DeprecationNotes::default();
         deprecated.push("Some example.".to_string());

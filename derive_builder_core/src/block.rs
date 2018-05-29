@@ -1,6 +1,8 @@
 use std::str::FromStr;
-use quote::{Tokens, ToTokens};
-use syn::{self, TokenTree};
+
+use quote::{ToTokens, Tokens};
+use syn;
+use syn::synom::Parser;
 
 /// A permissive wrapper for expressions/blocks, implementing `quote::ToTokens`.
 ///
@@ -24,13 +26,19 @@ use syn::{self, TokenTree};
 /// #    ));
 /// # }
 /// ```
-#[derive(Debug, Default, Clone)]
-pub struct Block(Vec<TokenTree>);
+#[derive(Debug, Clone)]
+pub struct Block(Vec<syn::Stmt>);
+
+impl Default for Block {
+    fn default() -> Self {
+        "".parse().unwrap()
+    }
+}
 
 impl ToTokens for Block {
     fn to_tokens(&self, tokens: &mut Tokens) {
         let inner = &self.0;
-        tokens.append(quote!(
+        tokens.append_all(quote!(
             { #( #inner )* }
         ));
     }
@@ -47,7 +55,10 @@ impl FromStr for Block {
     /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
     /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
-        Ok(Block(syn::parse_token_trees(expr)?))
+        named!(block_contents -> Vec<syn::Stmt>, call!(syn::Block::parse_within));
+        Ok(Block(block_contents
+            .parse_str(expr)
+            .map_err(|e| format!("{}", e))?))
     }
 }
 
@@ -57,8 +68,9 @@ mod test {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: \
-    \"unparsed tokens after token trees: \\\"{ x+1\\\"")]
+    #[should_panic(
+        expected = r#"called `Result::unwrap()` on an `Err` value: "error while lexing input string""#
+    )]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();
     }
@@ -66,16 +78,20 @@ mod test {
     #[test]
     fn block_delimited_token_tree() {
         let expr = Block::from_str("let x = 2; { x+1 }").unwrap();
-        assert_eq!(quote!(#expr), quote!(
-            { let x = 2; { x+1 } }
-        ));
+        assert_eq!(
+            quote!(#expr),
+            quote!({
+                let x = 2;
+                {
+                    x + 1
+                }
+            })
+        );
     }
 
     #[test]
     fn block_single_token_tree() {
         let expr = Block::from_str("42").unwrap();
-        assert_eq!(quote!(#expr), quote!(
-            { 42 }
-        ));
+        assert_eq!(quote!(#expr), quote!({ 42 }));
     }
 }

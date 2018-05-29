@@ -2,7 +2,7 @@
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(alloc, lang_items, start, core_intrinsics)]
+#![feature(alloc, lang_items, start, core_intrinsics, oom)]
 #![allow(dead_code)]
 use core::intrinsics;
 

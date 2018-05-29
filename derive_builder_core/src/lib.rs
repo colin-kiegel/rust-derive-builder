@@ -25,7 +25,12 @@
 #![deny(warnings, missing_docs)]
 #![cfg_attr(test, recursion_limit = "100")]
 
+#[macro_use]
+extern crate darling;
+
 extern crate proc_macro;
+extern crate proc_macro2;
+#[macro_use]
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -49,7 +54,6 @@ mod setter;
 mod options;
 mod block;
 mod bindings;
-mod tokens;
 
 pub use build_method::BuildMethod;
 pub use builder_field::BuilderField;
@@ -61,6 +65,5 @@ pub use doc_comment::doc_comment_from;
 pub use options::BuilderPattern;
 pub use block::Block;
 pub use bindings::Bindings;
-pub use tokens::RawTokens;
 
 const DEFAULT_STRUCT_NAME: &'static str = "__default";
