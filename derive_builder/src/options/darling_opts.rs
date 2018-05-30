@@ -282,8 +282,11 @@ impl Options {
             .expect("Struct name with Builder suffix should be an ident")
     }
 
+    /// The visibility of the builder struct.
+    /// If a visibility was declared in attributes, that will be used;
+    /// otherwise the struct's own visibility will be used.
     pub fn builder_vis(&self) -> Visibility {
-        self.vis.clone()
+        self.as_expressed_vis().unwrap_or_else(|| self.vis.clone())
     }
 
     pub fn raw_fields<'a>(&'a self) -> Vec<&'a Field> {

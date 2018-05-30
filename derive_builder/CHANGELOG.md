@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `quote` 0.5.2 #120
 - Removed support for deprecated attributes #120
 
+### Changes
+- Using `#[builder(private)]` at the struct level will now emit a private builder. #99
+
 ### Internal Changes
 - Rewrote options parser using `darling` 0.6.3 #120
 
