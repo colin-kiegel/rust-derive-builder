@@ -5,12 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Breaking Changes
-- Increased minimum Rust version to 1.18.0 #120
-- Updated dependencies on `syn` and `quote` #120
+- Requires Rust 1.18.0 or newer (was 1.15.0) #120
+- Updated to `syn` 0.13.10. #120
+- Updated to `quote` 0.5.2 #120
 - Removed support for deprecated attributes #120
 
 ### Internal Changes
-- Rewrote options parser using `darling` #120
+- Rewrote options parser using `darling` 0.6.3 #120
 
 ## [0.5.1] - 2017-12-16
 
