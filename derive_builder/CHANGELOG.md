@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `quote` 0.5.2 #120
 - Removed support for deprecated attributes #120
 
+### Changes
+- Generated code for structs with type parameters and struct-level defaults now compiles #127
+
 ### Internal Changes
 - Rewrote options parser using `darling` 0.6.3 #120
 
