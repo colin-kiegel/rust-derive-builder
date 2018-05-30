@@ -1,5 +1,6 @@
 use quote::{Tokens, ToTokens};
-use syn::{self, TypeParamBound, TraitBound, TraitBoundModifier};
+use syn::{self, Ident, TypeParamBound, TraitBound, TraitBoundModifier};
+use syn::punctuated::Punctuated;
 
 use Bindings;
 use BuildMethod;
@@ -61,6 +62,11 @@ pub struct Builder<'a> {
     pub fields: Vec<Tokens>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<Tokens>,
+    /// Whether this builder must derive `Clone`.
+    ///
+    /// This is true even for a builder using the `owned` pattern if there is a field whose setter
+    /// uses a different pattern.
+    pub must_derive_clone: bool,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Emit deprecation notes to the user.
@@ -75,7 +81,6 @@ impl<'a> ToTokens for Builder<'a> {
             trace!("Deriving builder `{}`.", self.ident);
             let builder_vis = &self.visibility;
             let builder_ident = self.ident;
-            let derives = self.derives;
             let bounded_generics = self.compute_impl_bounds();
             let (impl_generics, _, _) = bounded_generics.split_for_impl();
             let (struct_generics, ty_generics, where_clause) = self.generics
@@ -84,6 +89,24 @@ impl<'a> ToTokens for Builder<'a> {
                 .unwrap_or((None, None, None));
             let builder_fields = &self.fields;
             let functions = &self.functions;
+
+
+            // Create the comma-separated set of derived traits for the builder
+            let derived_traits = {
+                let default_trait: Ident = parse_quote!(Default);
+                let clone_trait: Ident = parse_quote!(Clone);
+
+                let mut traits: Punctuated<&Ident, Token![,]> = Default::default();
+                traits.push(&default_trait);
+
+                if self.must_derive_clone {
+                    traits.push(&clone_trait);
+                }
+                traits.extend(self.derives);
+
+                quote!(#traits)
+            };
+
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
@@ -95,7 +118,7 @@ impl<'a> ToTokens for Builder<'a> {
             );
 
             tokens.append_all(quote!(
-                #[derive(Default, Clone #( , #derives)* )]
+                #[derive(#derived_traits)]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
@@ -183,6 +206,7 @@ macro_rules! default_builder {
             visibility: syn::parse_str("pub").unwrap(),
             fields: vec![quote!(foo: u32,)],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
+            must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
             bindings: Default::default(),
@@ -281,11 +305,12 @@ mod tests {
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
         builder.pattern = BuilderPattern::Owned;
+        builder.must_derive_clone = false;
 
         assert_eq!(
             quote!(#builder),
             quote!(
-            #[derive(Default, Clone)]
+            #[derive(Default)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                 foo: u32,
             }
