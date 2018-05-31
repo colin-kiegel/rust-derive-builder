@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
@@ -32,7 +32,7 @@ syn = "0.11"
 quote = "0.3"
 log = { version = "0.3", optional = true }
 env_logger = { version = "0.4", optional = true }
-derive_builder_core = { version = "0.2", path = "../derive_builder_core" }
+derive_builder_core = { version = "=0.2.1", path = "../derive_builder_core" }
 skeptic = { version = "0.9", optional = true }
 compiletest_rs = { version = "0.3.3", optional = true }
 
