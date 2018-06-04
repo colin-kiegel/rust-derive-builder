@@ -2,9 +2,11 @@
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(alloc, lang_items, start, core_intrinsics)]
+#![feature(alloc, lang_items, start, core_intrinsics, oom, panic_implementation)]
 #![allow(dead_code)]
 use core::intrinsics;
+use core::panic::PanicInfo;
+
 
 // Pull in the system libc library for what crt0.o likely requires.
 // extern crate libc;
@@ -55,11 +57,9 @@ pub extern  fn eh_personality() {}
 pub extern fn rust_eh_unwind_resume() {
 }
 
-#[lang = "panic_fmt"]
+#[panic_implementation]
 #[no_mangle]
-pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
-                               _file: &'static str,
-                               _line: u32) -> ! {
+fn panic(_info: &PanicInfo) -> ! {
     unsafe { intrinsics::abort() }
 }
 
