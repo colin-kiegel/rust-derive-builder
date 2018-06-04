@@ -79,7 +79,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct.as_ref().map(|default_expr| {
             let ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
-            quote!(let #ident: #target_ty = #default_expr;)
+            quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
         let result = self.bindings.result_ty();

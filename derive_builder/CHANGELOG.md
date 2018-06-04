@@ -13,6 +13,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Internal Changes
 - Rewrote options parser using `darling` 0.6.3 #120
 
+## [0.5.2] - 2018-05-31
+
+### Fixed
+- Generated code for structs with type parameters and struct-level defaults now compiles #127
+
 ## [0.5.1] - 2017-12-16
 
 ### Changed
