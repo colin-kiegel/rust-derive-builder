@@ -10,8 +10,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `quote` 0.5.2 #120
 - Removed support for deprecated attributes #120
 
-### Changes
+### Changed
 - Using `#[builder(private)]` at the struct level will now emit a private builder. #99
+
+### Added
+- Use `build_fn(private)` to generate a build method only accessible within the mod scope #89
 
 ### Internal Changes
 - Rewrote options parser using `darling` 0.6.3 #120
