@@ -54,17 +54,6 @@ pub mod foo {
 
 #[test]
 #[should_panic(expected = "`private` must be initialized")]
-fn public_setters_override_foreign_module() {
-    let x = foo::LoremBuilder::default()
-        .public("Hello")
-        .build()
-        .unwrap();
-
-    assert_eq!(x.public, "Hello".to_string());
-}
-
-#[test]
-#[should_panic(expected = "`private` must be initialized")]
 fn public_setters_foreign_module() {
     let y = foo::IpsumBuilder::default()
         .public("Hello")
@@ -73,12 +62,3 @@ fn public_setters_foreign_module() {
 
     assert_eq!(y.public, "Hello".to_string());
 }
-
-// compile-test should fail with "error: method `ipsum` is private"
-// fn setters_foreign_module() {
-//     let x = foo::Lorem::default()
-//         .ipsum("Hello world!")
-//         .clone();
-//
-//     assert_eq!(x, foo::Lorem { ipsum: "Hello world!".into() });
-// }

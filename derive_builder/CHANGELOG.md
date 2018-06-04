@@ -10,9 +10,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `quote` 0.5.2 #120
 - Removed support for deprecated attributes #120
 
-### Changes
+### Changed
 - `Clone` is no longer derived on a builder using the owned pattern unless it
   has a field override that uses the mutable/immutable pattern. #97
+- Using `#[builder(private)]` at the struct level will now emit a private builder. #99
+
+### Added
+- Use `build_fn(private)` to generate a build method only accessible within the mod scope #89
 
 ### Internal Changes
 - Rewrote options parser using `darling` 0.6.3 #120
