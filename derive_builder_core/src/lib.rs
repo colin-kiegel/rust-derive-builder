@@ -44,26 +44,26 @@ extern crate pretty_assertions;
 #[cfg(not(feature = "logging"))]
 #[macro_use]
 mod log_disabled;
+mod bindings;
+mod block;
 mod build_method;
-mod builder_field;
 mod builder;
+mod builder_field;
 mod deprecation_notes;
 mod doc_comment;
 mod initializer;
-mod setter;
 mod options;
-mod block;
-mod bindings;
+mod setter;
 
-pub use build_method::BuildMethod;
-pub use builder_field::BuilderField;
-pub use builder::Builder;
-pub use deprecation_notes::DeprecationNotes;
-pub use initializer::Initializer;
-pub use setter::Setter;
-pub use doc_comment::doc_comment_from;
-pub use options::BuilderPattern;
-pub use block::Block;
 pub use bindings::Bindings;
+pub use block::Block;
+pub use build_method::BuildMethod;
+pub use builder::Builder;
+pub use builder_field::BuilderField;
+pub use deprecation_notes::DeprecationNotes;
+pub use doc_comment::doc_comment_from;
+pub use initializer::Initializer;
+pub use options::BuilderPattern;
+pub use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &'static str = "__default";

@@ -34,7 +34,7 @@ impl DefaultExpression {
                     panic!(r#"Empty default expressions `default = ""` are not supported."#);
                 }
                 s
-            },
+            }
             DefaultExpression::Trait => if no_std {
                 "::core::default::Default::default()"
             } else {
@@ -42,7 +42,8 @@ impl DefaultExpression {
             },
         };
 
-        expr.parse().expect(&format!("Couldn't parse default expression `{:?}`", self))
+        expr.parse()
+            .expect(&format!("Couldn't parse default expression `{:?}`", self))
     }
 }
 

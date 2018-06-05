@@ -3,7 +3,9 @@
 /// Source shared by `derive_builder_core` and `derive_builder` via symlink.
 #[allow(unknown_lints, unused_macros)]
 macro_rules! log_enabled {
-    ($( $x:tt )*) => { false }
+    ($($x:tt)*) => {
+        false
+    };
 }
 
 // delegate to format_args and throw away the result to avoid `unused variable`

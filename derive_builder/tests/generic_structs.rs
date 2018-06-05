@@ -3,8 +3,8 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate derive_builder;
 
-use std::fmt::Display;
 use std::clone::Clone;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 struct Generic<T: Display>

@@ -62,7 +62,7 @@ impl Default for BuildFn {
 impl FlagVisibility for BuildFn {
     fn public(&self) -> &Flag {
         &self.public
-        }
+    }
 
     fn private(&self) -> &Flag {
         &self.private
@@ -373,7 +373,8 @@ impl Options {
             initializers: Vec::with_capacity(self.field_count()),
             doc_comment: None,
             bindings: self.bindings(),
-            default_struct: self.default
+            default_struct: self
+                .default
                 .as_ref()
                 .map(|x| x.parse_block(self.no_std.into())),
             validate_fn: self.build_fn.validate.as_ref(),
@@ -512,7 +513,8 @@ impl<'a> FieldWithDefaults<'a> {
             setter_enabled: self.enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
-            default_value: self.field
+            default_value: self
+                .field
                 .default
                 .as_ref()
                 .map(|x| x.parse_block(self.parent.no_std.into())),

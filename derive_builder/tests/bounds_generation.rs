@@ -58,7 +58,9 @@ fn builder_with_vec_t_compiles() {
             .ipsum(vec!["Hello".to_string()])
             .build()
             .unwrap(),
-        VecLorem { ipsum: vec!["Hello".to_string()] }
+        VecLorem {
+            ipsum: vec!["Hello".to_string()],
+        }
     );
 }
 
@@ -69,6 +71,8 @@ fn generic_field_without_clone_has_owned_builder() {
             .ipsum(Dolor::default())
             .build()
             .unwrap(),
-        OwnedLorem { ipsum: Dolor::default() }
+        OwnedLorem {
+            ipsum: Dolor::default()
+        }
     );
 }

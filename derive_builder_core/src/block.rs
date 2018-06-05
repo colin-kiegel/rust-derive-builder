@@ -56,9 +56,11 @@ impl FromStr for Block {
     /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
         named!(block_contents -> Vec<syn::Stmt>, call!(syn::Block::parse_within));
-        Ok(Block(block_contents
-            .parse_str(expr)
-            .map_err(|e| format!("{}", e))?))
+        Ok(Block(
+            block_contents
+                .parse_str(expr)
+                .map_err(|e| format!("{}", e))?,
+        ))
     }
 }
 

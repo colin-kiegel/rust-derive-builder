@@ -1,4 +1,4 @@
-use quote::{Tokens, ToTokens};
+use quote::{ToTokens, Tokens};
 use syn;
 
 /// Deprecation notes we want to emit to the user, implementing
@@ -96,11 +96,12 @@ impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
 fn deprecation_note() {
     let mut note = DeprecationNotes::default();
     note.push("Some Warning".to_string());
-    assert_eq!(quote!(#note), quote!(
-        {
+    assert_eq!(
+        quote!(#note),
+        quote!({
             #[deprecated(note = "Some Warning")]
-            fn derive_builder_core_deprecation_note() { }
+            fn derive_builder_core_deprecation_note() {}
             derive_builder_core_deprecation_note();
-        }
-    ));
+        })
+    );
 }

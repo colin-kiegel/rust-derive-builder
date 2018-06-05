@@ -1,14 +1,14 @@
-use quote::{Tokens, ToTokens};
-use syn::{self, Ident, TypeParamBound, TraitBound, TraitBoundModifier};
+use quote::{ToTokens, Tokens};
 use syn::punctuated::Punctuated;
+use syn::{self, Ident, TraitBound, TraitBoundModifier, TypeParamBound};
 
+use doc_comment::doc_comment_from;
 use Bindings;
 use BuildMethod;
 use BuilderField;
 use BuilderPattern;
-use Setter;
-use doc_comment::doc_comment_from;
 use DeprecationNotes;
+use Setter;
 
 /// Builder, implementing `quote::ToTokens`.
 ///
@@ -83,13 +83,13 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_ident = self.ident;
             let bounded_generics = self.compute_impl_bounds();
             let (impl_generics, _, _) = bounded_generics.split_for_impl();
-            let (struct_generics, ty_generics, where_clause) = self.generics
+            let (struct_generics, ty_generics, where_clause) = self
+                .generics
                 .map(syn::Generics::split_for_impl)
                 .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
                 .unwrap_or((None, None, None));
             let builder_fields = &self.fields;
             let functions = &self.functions;
-
 
             // Create the comma-separated set of derived traits for the builder
             let derived_traits = {
@@ -112,9 +112,7 @@ impl<'a> ToTokens for Builder<'a> {
 
             debug!(
                 "ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
-                ty_generics,
-                where_clause,
-                struct_generics
+                ty_generics, where_clause, struct_generics
             );
 
             tokens.append_all(quote!(
@@ -211,7 +209,7 @@ macro_rules! default_builder {
             deprecation_notes: DeprecationNotes::default(),
             bindings: Default::default(),
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -241,6 +239,9 @@ mod tests {
         );
     }
 
+    // This test depends on the exact formatting of the `stringify`'d code,
+    // so we don't automatically format the test
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     #[test]
     fn generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -268,6 +269,9 @@ mod tests {
         );
     }
 
+    // This test depends on the exact formatting of the `stringify`'d code,
+    // so we don't automatically format the test
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     #[test]
     fn generic_reference() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -296,6 +300,9 @@ mod tests {
         );
     }
 
+    // This test depends on the exact formatting of the `stringify`'d code,
+    // so we don't automatically format the test
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     #[test]
     fn owned_generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
