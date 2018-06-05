@@ -11,6 +11,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Removed support for deprecated attributes #120
 
 ### Changed
+- `Clone` is no longer derived on a builder using the owned pattern unless it
+  has a field override that uses the mutable/immutable pattern. #97
 - Using `#[builder(private)]` at the struct level will now emit a private builder. #99
 
 ### Added

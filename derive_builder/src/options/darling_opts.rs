@@ -319,6 +319,12 @@ impl Options {
             .fields
     }
 
+    /// A builder requires `Clone` to be derived if its build method or any of its setters
+    /// use the mutable or immutable pattern.
+    pub fn requires_clone(&self) -> bool {
+        self.pattern.requires_clone() || self.fields().any(|f| f.pattern().requires_clone())
+    }
+
     /// Get an iterator over the input struct's fields which pulls fallback
     /// values from struct-level settings.
     pub fn fields<'a>(&'a self) -> FieldIter<'a> {
@@ -348,6 +354,7 @@ impl Options {
             visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
+            must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
             bindings: self.bindings(),
