@@ -124,9 +124,9 @@ fn setter_skipped_with_struct_default() {
 
 #[test]
 fn setter_skipped_with_field_default() {
-    let x = SetterOptInFieldDefaultBuilder::default().build().expect(
-        "All fields were defaulted",
-    );
+    let x = SetterOptInFieldDefaultBuilder::default()
+        .build()
+        .expect("All fields were defaulted");
 
     assert_eq!(
         x,

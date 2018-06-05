@@ -1,9 +1,10 @@
 #![cfg_attr(feature = "cargo-clippy", allow(useless_let_if_seq))]
-use quote::{Tokens, ToTokens};
+use quote::{ToTokens, Tokens};
 use syn;
+
+use Bindings;
 use BuilderPattern;
 use DeprecationNotes;
-use Bindings;
 
 /// Setter for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -85,17 +86,17 @@ impl<'a> ToTokens for Setter<'a> {
                     self_param = quote!(self);
                     return_ty = quote!(Self);
                     self_into_return_ty = quote!(self);
-                },
+                }
                 BuilderPattern::Mutable => {
                     self_param = quote!(&mut self);
                     return_ty = quote!(&mut Self);
                     self_into_return_ty = quote!(self);
-                },
+                }
                 BuilderPattern::Immutable => {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
                     self_into_return_ty = quote!(#clone::clone(self));
-                },
+                }
             };
 
             let ty_params: Tokens;
@@ -168,7 +169,7 @@ macro_rules! default_setter {
             deprecation_notes: &Default::default(),
             bindings: Default::default(),
         };
-    }
+    };
 }
 
 #[cfg(test)]

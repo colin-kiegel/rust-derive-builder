@@ -1,10 +1,10 @@
-use quote::{Tokens, ToTokens};
+use doc_comment::doc_comment_from;
+use quote::{ToTokens, Tokens};
 use syn;
+use Bindings;
 use Block;
 use BuilderPattern;
-use Bindings;
 use Initializer;
-use doc_comment::doc_comment_from;
 use DEFAULT_STRUCT_NAME;
 
 /// Initializer for the struct fields in the build method, implementing
@@ -73,8 +73,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let initializers = &self.initializers;
         let self_param = match self.pattern {
             BuilderPattern::Owned => quote!(self),
-            BuilderPattern::Mutable |
-            BuilderPattern::Immutable => quote!(&self),
+            BuilderPattern::Mutable | BuilderPattern::Immutable => quote!(&self),
         };
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct.as_ref().map(|default_expr| {
@@ -142,7 +141,7 @@ macro_rules! default_build_method {
             default_struct: None,
             validate_fn: None,
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -230,9 +229,8 @@ mod tests {
 
     #[test]
     fn validation() {
-        let validate_path: syn::Path = syn::parse_str("IpsumBuilder::validate").expect(
-            "Statically-entered path should be valid",
-        );
+        let validate_path: syn::Path = syn::parse_str("IpsumBuilder::validate")
+            .expect("Statically-entered path should be valid");
 
         let mut build_method: BuildMethod = default_build_method!();
         build_method.validate_fn = Some(&validate_path);

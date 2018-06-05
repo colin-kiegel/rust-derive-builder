@@ -535,9 +535,9 @@ extern crate quote;
 #[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
+extern crate derive_builder_core;
 #[cfg(feature = "logging")]
 extern crate env_logger;
-extern crate derive_builder_core;
 
 #[cfg(not(feature = "logging"))]
 #[macro_use]
@@ -545,10 +545,10 @@ mod log_disabled;
 mod options;
 
 use darling::FromDeriveInput;
+use options::Options;
 use proc_macro::TokenStream;
 #[cfg(feature = "logging")]
 use std::sync::{Once, ONCE_INIT};
-use options::Options;
 
 #[cfg(feature = "logging")]
 static INIT_LOGGER: Once = ONCE_INIT;
@@ -565,11 +565,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let ast: syn::DeriveInput = syn::parse_str(&input).expect("Couldn't parse item");
 
-
     let result = builder_for_struct(ast).to_string();
     debug!("generated tokens: {}", result);
 
-    result.parse().expect(&format!("Couldn't parse `{}` to tokens", result))
+    result
+        .parse()
+        .expect(&format!("Couldn't parse `{}` to tokens", result))
 }
 
 fn builder_for_struct(ast: syn::DeriveInput) -> quote::Tokens {
@@ -583,10 +584,14 @@ fn builder_for_struct(ast: syn::DeriveInput) -> quote::Tokens {
     let mut builder = opts.as_builder();
     let mut build_fn = opts.as_build_method();
 
-    builder.doc_comment(format!(include_str!("doc_tpl/builder_struct.md"),
-                                struct_name = ast.ident.as_ref()));
-    build_fn.doc_comment(format!(include_str!("doc_tpl/builder_method.md"),
-                                struct_name = ast.ident.as_ref()));
+    builder.doc_comment(format!(
+        include_str!("doc_tpl/builder_struct.md"),
+        struct_name = ast.ident.as_ref()
+    ));
+    build_fn.doc_comment(format!(
+        include_str!("doc_tpl/builder_method.md"),
+        struct_name = ast.ident.as_ref()
+    ));
 
     for field in opts.fields() {
         builder.push_field(field.as_builder_field());

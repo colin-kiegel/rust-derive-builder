@@ -19,7 +19,12 @@ struct Ipsum {
 fn generic_field() {
     let x = LoremBuilder::default().foo("foo").build().unwrap();
 
-    assert_eq!(x, Lorem { foo: "foo".to_string() });
+    assert_eq!(
+        x,
+        Lorem {
+            foo: "foo".to_string()
+        }
+    );
 }
 
 #[test]

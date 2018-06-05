@@ -1,4 +1,4 @@
-use quote::{Tokens, ToTokens};
+use quote::{ToTokens, Tokens};
 use syn;
 use Bindings;
 
@@ -85,20 +85,18 @@ impl<'a> ToTokens for BuilderField<'a> {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! default_builder_field {
-    () => {
-        {
-            use syn::synom::Parser;
-            named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
-            BuilderField {
-                field_ident: &syn::Ident::from("foo"),
-                field_type: &syn::parse_str("String").unwrap(),
-                setter_enabled: true,
-                field_visibility: syn::parse_str("pub").unwrap(),
-                attrs: &outer_attrs.parse_str("#[some_attr]").unwrap(),
-                bindings: Default::default(),
-            }
+    () => {{
+        use syn::synom::Parser;
+        named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
+        BuilderField {
+            field_ident: &syn::Ident::from("foo"),
+            field_type: &syn::parse_str("String").unwrap(),
+            setter_enabled: true,
+            field_visibility: syn::parse_str("pub").unwrap(),
+            attrs: &outer_attrs.parse_str("#[some_attr]").unwrap(),
+            bindings: Default::default(),
         }
-    }
+    }};
 }
 
 #[cfg(test)]
@@ -126,8 +124,9 @@ mod tests {
         assert_eq!(
             quote!(#field),
             quote!(
-            #[some_attr] foo: ::std::marker::PhantomData<String>,
-        )
+                #[some_attr]
+                foo: ::std::marker::PhantomData<String>,
+            )
         );
     }
 
@@ -153,8 +152,9 @@ mod tests {
         assert_eq!(
             quote!(#field),
             quote!(
-            #[some_attr] foo: ::core::marker::PhantomData<String>,
-        )
+                #[some_attr]
+                foo: ::core::marker::PhantomData<String>,
+            )
         );
     }
 
@@ -167,8 +167,9 @@ mod tests {
         assert_eq!(
             quote!(#field),
             quote!(
-            #[some_attr] foo: ::std::option::Option<String>,
-        )
+                #[some_attr]
+                foo: ::std::option::Option<String>,
+            )
         );
     }
 }

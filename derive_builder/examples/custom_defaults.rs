@@ -14,9 +14,9 @@ struct Lorem {
 
 impl LoremBuilder {
     fn default_dolor(&self) -> Result<String, String> {
-        self.ipsum.clone().ok_or_else(|| {
-            "ipsum must be initialized to build dolor".to_string()
-        })
+        self.ipsum
+            .clone()
+            .ok_or_else(|| "ipsum must be initialized to build dolor".to_string())
     }
 
     fn default_sit(&self) -> Result<String, String> {

@@ -13,13 +13,15 @@ mod field_level {
         escaped_default: String,
         #[builder(default = r#"format!("Hello {}!", "World")"#)]
         raw_default: String,
-        #[builder(default = r#"format!("{}-{}-{}-{}",
+        #[builder(
+            default = r#"format!("{}-{}-{}-{}",
                              Clone::clone(self.required
                                 .as_ref()
                                 .ok_or("required must be initialized")?),
                              match self.explicit_default { Some(ref x) => x, None => "EMPTY" },
                              self.escaped_default.as_ref().map(|x| x.as_ref()).unwrap_or("EMPTY"),
-                             if let Some(ref x) = self.raw_default { x } else { "EMPTY" })"#)]
+                             if let Some(ref x) = self.raw_default { x } else { "EMPTY" })"#
+        )]
         computed_default: String,
     }
 

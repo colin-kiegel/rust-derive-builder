@@ -5,7 +5,7 @@
 extern crate derive_builder;
 
 use std::convert::TryFrom;
-use std::net::{IpAddr, AddrParseError};
+use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::string::ToString;
 

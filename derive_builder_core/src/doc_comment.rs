@@ -1,5 +1,5 @@
-use syn::Attribute;
 use syn::synom::Parser;
+use syn::Attribute;
 
 /// Doc-comment, implementing `quote::ToTokens`.
 ///
