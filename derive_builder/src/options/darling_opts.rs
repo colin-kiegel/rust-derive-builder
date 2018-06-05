@@ -319,14 +319,10 @@ impl Options {
             .fields
     }
 
-    /// A builder requires `Clone` to be derived if any of its fields use the mutable or immutable pattern.
-    ///
-    /// This can technically be expressed two ways:
-    ///
-    /// 1. The caller chooses the `owned` pattern at the struct level
-    /// 1. The caller chooses the `owned` pattern on every field
+    /// A builder requires `Clone` to be derived if its build method or any of its setters
+    /// use the mutable or immutable pattern.
     pub fn requires_clone(&self) -> bool {
-        self.fields().any(|f| f.pattern().requires_clone())
+        self.pattern.requires_clone() || self.fields().any(|f| f.pattern().requires_clone())
     }
 
     /// Get an iterator over the input struct's fields which pulls fallback
