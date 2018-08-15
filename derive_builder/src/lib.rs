@@ -118,7 +118,7 @@
 //! * CON: If you don't chain your calls, you have to create a reference to each return value,
 //!   e.g. `builder = builder.ipsum(42)`.
 //!
-//! ## Mutable, aka Non-Comsuming (recommended)
+//! ## Mutable, aka Non-Consuming (recommended)
 //!
 //! This pattern is recommended and active by default if you don't specify anything else.
 //! You can precede your struct (or field) with `#[builder(pattern = "mutable")]`
