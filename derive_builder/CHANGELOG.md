@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.6.0] - 2018-09-04
 
 ### Breaking Changes
 - Requires Rust 1.18.0 or newer (was 1.15.0) #120
