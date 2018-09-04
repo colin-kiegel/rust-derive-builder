@@ -51,7 +51,7 @@ mod field_level {
     }
 
     #[test]
-    fn builder() {
+    fn builder_test() {
         let x = LoremBuilder::default()
             .required("ipsum".to_string())
             .explicit_default("lorem".to_string())

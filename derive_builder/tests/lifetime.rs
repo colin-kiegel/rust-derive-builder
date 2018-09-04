@@ -15,7 +15,7 @@ fn panic_if_uninitialized() {
 }
 
 #[test]
-fn builder() {
+fn builder_test() {
     let x = LoremBuilder::default().ipsum("ipsum").build().unwrap();
 
     assert_eq!(x, Lorem { ipsum: "ipsum" });

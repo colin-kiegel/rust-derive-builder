@@ -19,7 +19,7 @@ fn panic_if_uninitialized() {
 }
 
 #[test]
-fn builder() {
+fn builder_test() {
     let x: Lorem = MyBuilder::default()
         .ipsum("lorem")
         .dolor(Some("dolor"))
