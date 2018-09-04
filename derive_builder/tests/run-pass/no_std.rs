@@ -2,7 +2,7 @@
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(alloc, lang_items, start, core_intrinsics, oom, panic_implementation)]
+#![feature(alloc, allocator_api, lang_items, start, core_intrinsics, oom, panic_implementation)]
 #![allow(dead_code)]
 use core::intrinsics;
 use core::panic::PanicInfo;
@@ -65,7 +65,7 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[lang = "oom"]
 #[no_mangle]
-pub extern fn rust_oom() {
+pub extern fn rust_oom(_: core::alloc::Layout) -> ! {
     unsafe { intrinsics::abort() }
 }
 
