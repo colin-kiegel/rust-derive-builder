@@ -4,6 +4,7 @@ language: rust
 rust:
   - beta
   - stable
+  - nightly
   - 1.18.0
 matrix:
   include:
@@ -13,6 +14,7 @@ matrix:
       env: JOB=style_check
   allow_failures:
     - env: JOB=style_check
+    - env: JOB=test CARGO_FEATURES="skeptic_tests nightlytests logging"
   fast_finish: true
 env:
   matrix:
