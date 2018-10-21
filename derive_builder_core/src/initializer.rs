@@ -1,4 +1,5 @@
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::{Span, TokenStream};
 use syn;
 use Bindings;
 use Block;
@@ -14,6 +15,7 @@ use DEFAULT_STRUCT_NAME;
 /// Will expand to something like the following (depending on settings):
 ///
 /// ```rust
+/// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate syn;
@@ -25,12 +27,12 @@ use DEFAULT_STRUCT_NAME;
 /// #    initializer.default_value = Some("42".parse().unwrap());
 /// #    initializer.builder_pattern = BuilderPattern::Owned;
 /// #
-/// #    assert_eq!(quote!(#initializer), quote!(
+/// #    assert_eq!(quote!(#initializer).to_string(), quote!(
 /// foo: match self.foo {
 ///     Some(value) => value,
 ///     None => { 42 },
 /// },
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 #[derive(Debug, Clone)]
@@ -52,7 +54,7 @@ pub struct Initializer<'a> {
 }
 
 impl<'a> ToTokens for Initializer<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         trace!("Deriving initializer for `{}`.", self.field_ident);
 
         let struct_field = &self.field_ident;
@@ -110,11 +112,11 @@ impl<'a> Initializer<'a> {
         }
     }
 
-    fn default(&'a self) -> Tokens {
+    fn default(&'a self) -> TokenStream {
         match self.default_value {
             Some(ref expr) => quote!(#expr),
             None if self.use_default_struct => {
-                let struct_ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
+                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
                 let field_ident = self.field_ident;
                 quote!(#struct_ident.#field_ident)
             }
@@ -141,13 +143,13 @@ enum MatchNone<'a> {
 }
 
 impl<'a> ToTokens for MatchNone<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         match *self {
             MatchNone::DefaultTo(expr) => tokens.append_all(quote!(
                 None => #expr
             )),
             MatchNone::UseDefaultStructField(field_ident) => {
-                let struct_ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
+                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
                 tokens.append_all(quote!(
                     None => #struct_ident.#field_ident
                 ))
@@ -171,7 +173,7 @@ enum MatchSome {
 }
 
 impl<'a> ToTokens for MatchSome {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         match *self {
             MatchSome::Move => tokens.append_all(quote!(
                 Some(value) => value
@@ -193,7 +195,7 @@ impl<'a> ToTokens for MatchSome {
 macro_rules! default_initializer {
     () => {
         Initializer {
-            field_ident: &syn::Ident::from("foo"),
+            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             setter_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
@@ -214,7 +216,7 @@ mod tests {
         initializer.builder_pattern = BuilderPattern::Immutable;
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(ref value) => ::std::clone::Clone::clone(value),
@@ -222,7 +224,7 @@ mod tests {
                     "`foo` must be initialized"
                 )),
             },
-        )
+        ).to_string()
         );
     }
 
@@ -232,7 +234,7 @@ mod tests {
         initializer.builder_pattern = BuilderPattern::Mutable;
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(ref value) => ::std::clone::Clone::clone(value),
@@ -240,7 +242,7 @@ mod tests {
                     "`foo` must be initialized"
                 )),
             },
-        )
+        ).to_string()
         );
     }
 
@@ -250,7 +252,7 @@ mod tests {
         initializer.builder_pattern = BuilderPattern::Owned;
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(value) => value,
@@ -258,7 +260,7 @@ mod tests {
                     "`foo` must be initialized"
                 )),
             },
-        )
+        ).to_string()
         );
     }
 
@@ -268,13 +270,13 @@ mod tests {
         initializer.default_value = Some("42".parse().unwrap());
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(ref value) => ::std::clone::Clone::clone(value),
                 None => { 42 },
             },
-        )
+        ).to_string()
         );
     }
 
@@ -284,13 +286,13 @@ mod tests {
         initializer.use_default_struct = true;
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(ref value) => ::std::clone::Clone::clone(value),
                 None => __default.foo,
             },
-        )
+        ).to_string()
         );
     }
 
@@ -300,8 +302,8 @@ mod tests {
         initializer.setter_enabled = false;
 
         assert_eq!(
-            quote!(#initializer),
-            quote!(foo: ::std::default::Default::default(),)
+            quote!(#initializer).to_string(),
+            quote!(foo: ::std::default::Default::default(),).to_string()
         );
     }
 
@@ -311,7 +313,7 @@ mod tests {
         initializer.bindings.no_std = true;
 
         assert_eq!(
-            quote!(#initializer),
+            quote!(#initializer).to_string(),
             quote!(
             foo: match self.foo {
                 Some(ref value) => ::core::clone::Clone::clone(value),
@@ -319,7 +321,7 @@ mod tests {
                     "`foo` must be initialized"
                 )),
             },
-        )
+        ).to_string()
         );
     }
 
@@ -330,8 +332,8 @@ mod tests {
         initializer.setter_enabled = false;
 
         assert_eq!(
-            quote!(#initializer),
-            quote!(foo: ::core::default::Default::default(),)
+            quote!(#initializer).to_string(),
+            quote!(foo: ::core::default::Default::default(),).to_string()
         );
     }
 }

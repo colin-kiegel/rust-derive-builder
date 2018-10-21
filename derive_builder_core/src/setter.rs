@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "cargo-clippy", allow(useless_let_if_seq))]
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::{Span, TokenStream};
 use syn;
 
 use Bindings;
@@ -14,6 +15,7 @@ use DeprecationNotes;
 /// Will expand to something like the following (depending on settings):
 ///
 /// ```rust
+/// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate syn;
@@ -24,14 +26,14 @@ use DeprecationNotes;
 /// #     let mut setter = default_setter!();
 /// #     setter.pattern = BuilderPattern::Mutable;
 /// #
-/// #     assert_eq!(quote!(#setter), quote!(
+/// #     assert_eq!(quote!(#setter).to_string(), quote!(
 /// # #[allow(unused_mut)]
 /// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
 ///     new.foo = ::std::option::Option::Some(value);
 ///     new
 /// }
-/// #     ));
+/// #     ).to_string());
 /// # }
 /// ```
 #[derive(Debug, Clone)]
@@ -63,7 +65,7 @@ pub struct Setter<'a> {
 }
 
 impl<'a> ToTokens for Setter<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
             trace!("Deriving setter for `{}`.", self.field_ident);
             let ty = self.field_type;
@@ -77,9 +79,9 @@ impl<'a> ToTokens for Setter<'a> {
             let option = self.bindings.option_ty();
             let into = self.bindings.into_trait();
 
-            let self_param: Tokens;
-            let return_ty: Tokens;
-            let self_into_return_ty: Tokens;
+            let self_param: TokenStream;
+            let return_ty: TokenStream;
+            let self_into_return_ty: TokenStream;
 
             match pattern {
                 BuilderPattern::Owned => {
@@ -99,9 +101,9 @@ impl<'a> ToTokens for Setter<'a> {
                 }
             };
 
-            let ty_params: Tokens;
-            let param_ty: Tokens;
-            let into_value: Tokens;
+            let ty_params: TokenStream;
+            let param_ty: TokenStream;
+            let into_value: TokenStream;
 
             if self.generic_into {
                 ty_params = quote!(<VALUE: #into<#ty>>);
@@ -128,7 +130,7 @@ impl<'a> ToTokens for Setter<'a> {
             if self.try_setter {
                 let try_into = self.bindings.try_into_trait();
                 let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
-                let try_ident = syn::Ident::from(format!("try_{}", ident));
+                let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
                 let result = self.bindings.result_ty();
 
                 tokens.append_all(quote!(
@@ -162,8 +164,8 @@ macro_rules! default_setter {
             visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
-            ident: syn::Ident::from("foo"),
-            field_ident: &syn::Ident::from("foo"),
+            ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
+            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &syn::parse_str("Foo").unwrap(),
             generic_into: false,
             deprecation_notes: &Default::default(),
@@ -183,7 +185,7 @@ mod tests {
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo(&self, value: Foo) -> Self {
@@ -191,7 +193,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -201,7 +203,7 @@ mod tests {
         setter.pattern = BuilderPattern::Mutable;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo(&mut self, value: Foo) -> &mut Self {
@@ -209,7 +211,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -219,7 +221,7 @@ mod tests {
         setter.pattern = BuilderPattern::Owned;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo(self, value: Foo) -> Self {
@@ -227,7 +229,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -239,7 +241,7 @@ mod tests {
         setter.visibility = vis;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             fn foo(&mut self, value: Foo) -> &mut Self {
@@ -247,7 +249,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -257,7 +259,7 @@ mod tests {
         setter.generic_into = true;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
@@ -265,16 +267,16 @@ mod tests {
                 new.foo = ::std::option::Option::Some(value.into());
                 new
             }
-        )
+        ).to_string()
         );
     }
 
     // including try_setter
     #[test]
     fn full() {
-        use syn::synom::Parser;
-        named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
-        let attrs = outer_attrs.parse_str("#[some_attr]").unwrap();
+        //named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
+        //let attrs = outer_attrs.parse_str("#[some_attr]").unwrap();
+        let attrs: Vec<syn::Attribute> = vec![parse_quote!(#[some_attr])];
 
         let mut deprecated = DeprecationNotes::default();
         deprecated.push("Some example.".to_string());
@@ -286,7 +288,7 @@ mod tests {
         setter.try_setter = true;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[some_attr]
             #[allow(unused_mut)]
@@ -305,7 +307,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(converted);
                 Ok(new)
             }
-        )
+        ).to_string()
         );
     }
 
@@ -316,7 +318,7 @@ mod tests {
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo(&self, value: Foo) -> Self {
@@ -324,7 +326,7 @@ mod tests {
                 new.foo = ::core::option::Option::Some(value);
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -335,7 +337,7 @@ mod tests {
         setter.generic_into = true;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo <VALUE: ::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
@@ -343,7 +345,7 @@ mod tests {
                 new.foo = ::core::option::Option::Some(value.into());
                 new
             }
-        )
+        ).to_string()
         );
     }
 
@@ -352,7 +354,7 @@ mod tests {
         let mut setter = default_setter!();
         setter.enabled = false;
 
-        assert_eq!(quote!(#setter), quote!());
+        assert_eq!(quote!(#setter).to_string(), quote!().to_string());
     }
 
     #[test]
@@ -362,7 +364,7 @@ mod tests {
         setter.try_setter = true;
 
         assert_eq!(
-            quote!(#setter),
+            quote!(#setter).to_string(),
             quote!(
             #[allow(unused_mut)]
             pub fn foo(&mut self, value: Foo) -> &mut Self {
@@ -378,7 +380,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(converted);
                 Ok(new)
             }
-        )
+        ).to_string()
         );
     }
 }

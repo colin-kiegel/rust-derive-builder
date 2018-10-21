@@ -1,5 +1,6 @@
 use doc_comment::doc_comment_from;
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::{Span, TokenStream};
 use syn;
 use Bindings;
 use Block;
@@ -15,6 +16,7 @@ use DEFAULT_STRUCT_NAME;
 /// Will expand to something like the following (depending on settings):
 ///
 /// ```rust
+/// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate syn;
@@ -24,13 +26,13 @@ use DEFAULT_STRUCT_NAME;
 /// # fn main() {
 /// #    let build_method = default_build_method!();
 /// #
-/// #    assert_eq!(quote!(#build_method), quote!(
+/// #    assert_eq!(quote!(#build_method).to_string(), quote!(
 /// pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
 ///     Ok(Foo {
 ///         foo: self.foo,
 ///     })
 /// }
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 #[derive(Debug)]
@@ -50,7 +52,7 @@ pub struct BuildMethod<'a> {
     /// Type parameters and lifetimes attached to this builder struct.
     pub target_ty_generics: Option<syn::TypeGenerics<'a>>,
     /// Field initializers for the target type.
-    pub initializers: Vec<Tokens>,
+    pub initializers: Vec<TokenStream>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Bindings to libstd or libcore.
@@ -65,7 +67,7 @@ pub struct BuildMethod<'a> {
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let vis = &self.visibility;
         let target_ty = &self.target_ty;
@@ -77,7 +79,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         };
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct.as_ref().map(|default_expr| {
-            let ident = syn::Ident::from(DEFAULT_STRUCT_NAME);
+            let ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
@@ -85,7 +87,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let string = self.bindings.string_ty();
 
         if self.enabled {
-            trace!("Deriving build method `{}`.", self.ident.as_ref());
+            trace!("Deriving build method `{}`.", self.ident);
             tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
@@ -130,10 +132,10 @@ macro_rules! default_build_method {
     () => {
         BuildMethod {
             enabled: true,
-            ident: &syn::Ident::from("build"),
+            ident: &syn::Ident::new("build", ::proc_macro2::Span::call_site()),
             visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
-            target_ty: &syn::Ident::from("Foo"),
+            target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
@@ -154,14 +156,14 @@ mod tests {
         let build_method = default_build_method!();
 
         assert_eq!(
-            quote!(#build_method),
+            quote!(#build_method).to_string(),
             quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        )
+        ).to_string()
         );
     }
 
@@ -171,14 +173,14 @@ mod tests {
         build_method.bindings.no_std = true;
 
         assert_eq!(
-            quote!(#build_method),
+            quote!(#build_method).to_string(),
             quote!(
             pub fn build(&self) -> ::core::result::Result<Foo, ::alloc::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        )
+        ).to_string()
         );
     }
 
@@ -188,7 +190,7 @@ mod tests {
         build_method.default_struct = Some("Default::default()".parse().unwrap());
 
         assert_eq!(
-            quote!(#build_method),
+            quote!(#build_method).to_string(),
             quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 let __default: Foo = {Default::default()};
@@ -196,7 +198,7 @@ mod tests {
                     foo: self.foo,
                 })
             }
-        )
+        ).to_string()
         );
     }
 
@@ -206,24 +208,24 @@ mod tests {
         build_method.enabled = false;
         build_method.enabled = false;
 
-        assert_eq!(quote!(#build_method), quote!());
+        assert_eq!(quote!(#build_method).to_string(), quote!().to_string());
     }
 
     #[test]
     fn rename() {
-        let ident = syn::Ident::from("finish");
+        let ident = syn::Ident::new("finish", Span::call_site());
         let mut build_method: BuildMethod = default_build_method!();
         build_method.ident = &ident;
 
         assert_eq!(
-            quote!(#build_method),
+            quote!(#build_method).to_string(),
             quote!(
             pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 Ok(Foo {
                     foo: self.foo,
                 })
             }
-        )
+        ).to_string()
         )
     }
 
@@ -236,7 +238,7 @@ mod tests {
         build_method.validate_fn = Some(&validate_path);
 
         assert_eq!(
-            quote!(#build_method),
+            quote!(#build_method).to_string(),
             quote!(
             pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
                 IpsumBuilder::validate(&self)?;
@@ -245,7 +247,7 @@ mod tests {
                     foo: self.foo,
                 })
             }
-        )
+        ).to_string()
         );
     }
 }

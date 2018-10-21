@@ -1,4 +1,3 @@
-use syn::synom::Parser;
 use syn::Attribute;
 
 /// Doc-comment, implementing `quote::ToTokens`.
@@ -16,12 +15,11 @@ use syn::Attribute;
 /// # fn main() {
 /// #    let doc_comment = doc_comment_from("foo".to_string());
 /// #
-/// #    assert_eq!(quote!(#doc_comment), quote!(
+/// #    assert_eq!(quote!(#doc_comment).to_string(), quote!(
 /// #[doc = "foo"]
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 pub fn doc_comment_from(s: String) -> Attribute {
-    named!(doc_attr -> Attribute, call!(Attribute::parse_outer));
-    doc_attr.parse_str(&quote!(#[doc=#s]).to_string()).unwrap()
+    parse_quote!(#[doc=#s])
 }

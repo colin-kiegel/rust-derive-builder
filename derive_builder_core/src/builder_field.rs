@@ -1,4 +1,5 @@
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::TokenStream;
 use syn;
 use Bindings;
 
@@ -9,6 +10,7 @@ use Bindings;
 /// Will expand to something like the following (depending on settings):
 ///
 /// ```rust
+/// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
 /// # #[macro_use]
@@ -16,16 +18,14 @@ use Bindings;
 /// # #[macro_use]
 /// # extern crate derive_builder_core;
 /// # use derive_builder_core::{BuilderField, BuilderPattern};
-/// # use syn::synom::Parser;
 /// # fn main() {
-/// #    named!(outer_attr -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
-/// #    let attrs = outer_attr.parse_str("#[some_attr]").unwrap();
+/// #    let attrs = vec![parse_quote!(#[some_attr])];
 /// #    let mut field = default_builder_field!();
 /// #    field.attrs = attrs.as_slice();
 /// #
-/// #    assert_eq!(quote!(#field), quote!(
+/// #    assert_eq!(quote!(#field).to_string(), quote!(
 /// #[some_attr] pub foo: ::std::option::Option<String>,
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 #[derive(Debug, Clone)]
@@ -51,7 +51,7 @@ pub struct BuilderField<'a> {
 }
 
 impl<'a> ToTokens for BuilderField<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
             trace!("Deriving builder field for `{}`.", self.field_ident);
             let vis = &self.field_visibility;
@@ -86,14 +86,12 @@ impl<'a> ToTokens for BuilderField<'a> {
 #[macro_export]
 macro_rules! default_builder_field {
     () => {{
-        use syn::synom::Parser;
-        named!(outer_attrs -> Vec<syn::Attribute>, many0!(syn::Attribute::parse_outer));
         BuilderField {
-            field_ident: &syn::Ident::from("foo"),
+            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &syn::parse_str("String").unwrap(),
             setter_enabled: true,
             field_visibility: syn::parse_str("pub").unwrap(),
-            attrs: &outer_attrs.parse_str("#[some_attr]").unwrap(),
+            attrs: &[parse_quote!(#[some_attr])],
             bindings: Default::default(),
         }
     }};
@@ -109,10 +107,10 @@ mod tests {
         let field = default_builder_field!();
 
         assert_eq!(
-            quote!(#field),
+            quote!(#field).to_string(),
             quote!(
             #[some_attr] pub foo: ::std::option::Option<String>,
-        )
+        ).to_string()
         );
     }
 
@@ -122,11 +120,11 @@ mod tests {
         field.setter_enabled = false;
 
         assert_eq!(
-            quote!(#field),
+            quote!(#field).to_string(),
             quote!(
                 #[some_attr]
                 foo: ::std::marker::PhantomData<String>,
-            )
+            ).to_string()
         );
     }
 
@@ -136,10 +134,10 @@ mod tests {
         field.bindings.no_std = true;
 
         assert_eq!(
-            quote!(#field),
+            quote!(#field).to_string(),
             quote!(
             #[some_attr] pub foo: ::core::option::Option<String>,
-        )
+        ).to_string()
         );
     }
 
@@ -150,11 +148,11 @@ mod tests {
         field.setter_enabled = false;
 
         assert_eq!(
-            quote!(#field),
+            quote!(#field).to_string(),
             quote!(
                 #[some_attr]
                 foo: ::core::marker::PhantomData<String>,
-            )
+            ).to_string()
         );
     }
 
@@ -165,11 +163,11 @@ mod tests {
         field.field_visibility = private;
 
         assert_eq!(
-            quote!(#field),
+            quote!(#field).to_string(),
             quote!(
                 #[some_attr]
                 foo: ::std::option::Option<String>,
-            )
+            ).to_string()
         );
     }
 }

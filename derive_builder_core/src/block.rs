@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
-use quote::{ToTokens, Tokens};
+use proc_macro2::TokenStream;
+use quote::{ToTokens, TokenStreamExt};
 use syn;
-use syn::synom::Parser;
 
 /// A permissive wrapper for expressions/blocks, implementing `quote::ToTokens`.
 ///
@@ -21,9 +21,9 @@ use syn::synom::Parser;
 /// # use derive_builder_core::Block;
 /// # fn main() {
 /// #    let expr = Block::from_str("x+1").unwrap();
-/// #    assert_eq!(quote!(#expr), quote!(
+/// #    assert_eq!(quote!(#expr).to_string(), quote!(
 /// { x + 1 }
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 #[derive(Debug, Clone)]
@@ -36,7 +36,7 @@ impl Default for Block {
 }
 
 impl ToTokens for Block {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         let inner = &self.0;
         tokens.append_all(quote!(
             { #( #inner )* }
@@ -55,12 +55,8 @@ impl FromStr for Block {
     /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
     /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
-        named!(block_contents -> Vec<syn::Stmt>, call!(syn::Block::parse_within));
-        Ok(Block(
-            block_contents
-                .parse_str(expr)
-                .map_err(|e| format!("{}", e))?,
-        ))
+        let b: syn::Block = syn::parse_str(&format!("{{{}}}", expr)).map_err(|e| format!("{}", e))?;
+        Ok(Block(b.stmts))
     }
 }
 
@@ -71,7 +67,7 @@ mod test {
 
     #[test]
     #[should_panic(
-        expected = r#"called `Result::unwrap()` on an `Err` value: "error while lexing input string""#
+        expected = r#"LexError"#
     )]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();
@@ -81,19 +77,19 @@ mod test {
     fn block_delimited_token_tree() {
         let expr = Block::from_str("let x = 2; { x+1 }").unwrap();
         assert_eq!(
-            quote!(#expr),
+            quote!(#expr).to_string(),
             quote!({
                 let x = 2;
                 {
                     x + 1
                 }
-            })
+            }).to_string()
         );
     }
 
     #[test]
     fn block_single_token_tree() {
         let expr = Block::from_str("42").unwrap();
-        assert_eq!(quote!(#expr), quote!({ 42 }));
+        assert_eq!(quote!(#expr).to_string(), quote!({ 42 }).to_string());
     }
 }

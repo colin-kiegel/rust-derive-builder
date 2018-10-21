@@ -573,7 +573,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .expect(&format!("Couldn't parse `{}` to tokens", result))
 }
 
-fn builder_for_struct(ast: syn::DeriveInput) -> quote::Tokens {
+fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     debug!("Deriving Builder for `{}`.", ast.ident);
 
     let opts = match Options::from_derive_input(&ast) {
@@ -586,11 +586,11 @@ fn builder_for_struct(ast: syn::DeriveInput) -> quote::Tokens {
 
     builder.doc_comment(format!(
         include_str!("doc_tpl/builder_struct.md"),
-        struct_name = ast.ident.as_ref()
+        struct_name = ast.ident
     ));
     build_fn.doc_comment(format!(
         include_str!("doc_tpl/builder_method.md"),
-        struct_name = ast.ident.as_ref()
+        struct_name = ast.ident
     ));
 
     for field in opts.fields() {
