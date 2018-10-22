@@ -5,6 +5,7 @@ use derive_builder_core::BuildMethod;
 use darling::util::{Flag, IdentList};
 use darling::{self, FromMeta};
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
+use proc_macro2::Span;
 
 use derive_builder_core::{
     Bindings, Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter,
@@ -51,7 +52,7 @@ impl Default for BuildFn {
     fn default() -> Self {
         BuildFn {
             skip: false,
-            name: Ident::from("build"),
+            name: Ident::new("build", Span::call_site()),
             validate: None,
             public: Default::default(),
             private: Default::default(),
@@ -423,7 +424,7 @@ impl<'a> FieldWithDefaults<'a> {
             return custom.clone();
         }
 
-        let ident = self.field.ident;
+        let ident = &self.field.ident;
 
         if let Some(ref prefix) = self.setter_prefix() {
             return syn::parse_str(&format!("{}_{}", prefix, ident.as_ref().unwrap())).unwrap();

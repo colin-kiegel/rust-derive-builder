@@ -1,4 +1,5 @@
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::{Span, TokenStream};
 use syn;
 
 /// Deprecation notes we want to emit to the user, implementing
@@ -19,13 +20,13 @@ use syn;
 /// # fn main() {
 /// #    let mut note = DeprecationNotes::default();
 /// #    note.push("Some Warning".to_string());
-/// #    assert_eq!(quote!(#note), quote!(
+/// #    assert_eq!(quote!(#note).to_string(), quote!(
 ///         {
 ///             #[deprecated(note = "Some Warning")]
 ///             fn derive_builder_core_deprecation_note() { }
 ///             derive_builder_core_deprecation_note();
 ///         }
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 ///
@@ -37,9 +38,9 @@ use syn;
 pub struct DeprecationNotes(Vec<String>);
 
 impl ToTokens for DeprecationNotes {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         for note in &self.0 {
-            let fn_ident = syn::Ident::from("derive_builder_core_deprecation_note");
+            let fn_ident = syn::Ident::new("derive_builder_core_deprecation_note", Span::call_site());
             tokens.append_all(quote!(
                 {
                     #[deprecated(note=#note)]
@@ -78,7 +79,7 @@ impl DeprecationNotes {
 pub struct DeprecationNotesAsItem<'a>(&'a DeprecationNotes);
 
 impl<'a> ToTokens for DeprecationNotesAsItem<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         let deprecation_notes = self.0;
 
         if !deprecation_notes.0.is_empty() {
@@ -97,11 +98,11 @@ fn deprecation_note() {
     let mut note = DeprecationNotes::default();
     note.push("Some Warning".to_string());
     assert_eq!(
-        quote!(#note),
+        quote!(#note).to_string(),
         quote!({
             #[deprecated(note = "Some Warning")]
             fn derive_builder_core_deprecation_note() {}
             derive_builder_core_deprecation_note();
-        })
+        }).to_string()
     );
 }

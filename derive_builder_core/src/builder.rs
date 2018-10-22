@@ -1,4 +1,5 @@
-use quote::{ToTokens, Tokens};
+use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::TokenStream;
 use syn::punctuated::Punctuated;
 use syn::{self, Ident, TraitBound, TraitBoundModifier, TypeParamBound};
 
@@ -17,6 +18,7 @@ use Setter;
 /// Will expand to something like the following (depending on settings):
 ///
 /// ```rust
+/// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate syn;
@@ -26,7 +28,7 @@ use Setter;
 /// # fn main() {
 /// #    let builder = default_builder!();
 /// #
-/// #    assert_eq!(quote!(#builder), quote!(
+/// #    assert_eq!(quote!(#builder).to_string(), quote!(
 /// #[derive(Default, Clone)]
 /// pub struct FooBuilder {
 ///     foo: u32,
@@ -38,7 +40,7 @@ use Setter;
 ///         unimplemented!()
 ///     }
 /// }
-/// #    ));
+/// #    ).to_string());
 /// # }
 /// ```
 #[derive(Debug)]
@@ -59,9 +61,9 @@ pub struct Builder<'a> {
     /// Fields of the builder struct, e.g. `foo: u32,`
     ///
     /// Expects each entry to be terminated by a comma.
-    pub fields: Vec<Tokens>,
+    pub fields: Vec<TokenStream>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
-    pub functions: Vec<Tokens>,
+    pub functions: Vec<TokenStream>,
     /// Whether this builder must derive `Clone`.
     ///
     /// This is true even for a builder using the `owned` pattern if there is a field whose setter
@@ -76,11 +78,11 @@ pub struct Builder<'a> {
 }
 
 impl<'a> ToTokens for Builder<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
             trace!("Deriving builder `{}`.", self.ident);
             let builder_vis = &self.visibility;
-            let builder_ident = self.ident;
+            let builder_ident = &self.ident;
             let bounded_generics = self.compute_impl_bounds();
             let (impl_generics, _, _) = bounded_generics.split_for_impl();
             let (struct_generics, ty_generics, where_clause) = self
@@ -197,7 +199,7 @@ macro_rules! default_builder {
     () => {
         Builder {
             enabled: true,
-            ident: syn::Ident::from("FooBuilder"),
+            ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),
             derives: &vec![],
             generics: None,
@@ -222,7 +224,7 @@ mod tests {
         let builder = default_builder!();
 
         assert_eq!(
-            quote!(#builder),
+            quote!(#builder).to_string(),
             quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder {
@@ -235,7 +237,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        )
+        ).to_string()
         );
     }
 
@@ -252,7 +254,7 @@ mod tests {
         builder.generics = Some(&generics);
 
         assert_eq!(
-            quote!(#builder),
+            quote!(#builder).to_string(),
             quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
@@ -265,7 +267,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        )
+        ).to_string()
         );
     }
 
@@ -283,7 +285,7 @@ mod tests {
         builder.generics = Some(&generics);
 
         assert_eq!(
-            quote!(#builder),
+            quote!(#builder).to_string(),
             quote!(
             #[derive(Default, Clone)]
             pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
@@ -296,7 +298,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        )
+        ).to_string()
         );
     }
 
@@ -315,7 +317,7 @@ mod tests {
         builder.must_derive_clone = false;
 
         assert_eq!(
-            quote!(#builder),
+            quote!(#builder).to_string(),
             quote!(
             #[derive(Default)]
             pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
@@ -328,7 +330,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        )
+        ).to_string()
         );
     }
 
@@ -337,17 +339,17 @@ mod tests {
         let mut builder = default_builder!();
         builder.enabled = false;
 
-        assert_eq!(quote!(#builder), quote!());
+        assert_eq!(quote!(#builder).to_string(), quote!().to_string());
     }
 
     #[test]
     fn add_derives() {
-        let derives = vec![syn::Ident::from("Serialize")];
+        let derives = vec![syn::Ident::new("Serialize", ::proc_macro2::Span::call_site()),];
         let mut builder = default_builder!();
         builder.derives = &derives;
 
         assert_eq!(
-            quote!(#builder),
+            quote!(#builder).to_string(),
             quote!(
             #[derive(Default, Clone, Serialize)]
             pub struct FooBuilder {
@@ -360,7 +362,7 @@ mod tests {
                     unimplemented!()
                 }
             }
-        )
+        ).to_string()
         );
     }
 }
