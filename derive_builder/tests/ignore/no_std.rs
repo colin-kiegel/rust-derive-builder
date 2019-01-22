@@ -1,8 +1,12 @@
+//! Compile behavior test for derive_builder on no_std. Unfortunately, this has broken
+//! too many times due to changes in requirements for no_std, and therefore this test
+//! is no longer part of the required nightly pass.
+
 // requires nightly toolchain!
 //
 // compile-flags:-C panic=abort
 #![no_std]
-#![feature(alloc, allocator_api, lang_items, start, core_intrinsics, oom, panic_implementation)]
+#![feature(alloc, allocator_api, lang_items, start, core_intrinsics, oom)]
 #![allow(dead_code)]
 use core::intrinsics;
 use core::panic::PanicInfo;
@@ -57,7 +61,7 @@ pub extern  fn eh_personality() {}
 pub extern fn rust_eh_unwind_resume() {
 }
 
-#[panic_implementation]
+#[panic_handler]
 #[no_mangle]
 fn panic(_info: &PanicInfo) -> ! {
     unsafe { intrinsics::abort() }

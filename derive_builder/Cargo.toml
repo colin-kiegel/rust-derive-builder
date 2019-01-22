@@ -26,16 +26,17 @@ proc-macro = true
 logging = [ "log", "env_logger", "derive_builder_core/logging" ]
 skeptic_tests = ["skeptic"]
 nightlytests = ["compiletest_rs"]
+diagnostics = ["derive_builder_core/diagnostics", "darling/diagnostics"]
 
 [dependencies]
-darling = "0.8"
+darling = "0.8.4"
 proc-macro2 = "0.4"
 quote = "0.6"
 log = { version = "0.4", optional = true }
 env_logger = { version = "0.5", optional = true }
 derive_builder_core = { version = "=0.4.0", path = "../derive_builder_core" }
 skeptic = { version = "0.13", optional = true }
-compiletest_rs = { version = "0.3.3", optional = true }
+compiletest_rs = { version = "0.3.18", optional = true }
 
 [dependencies.syn]
 version = "0.15"
