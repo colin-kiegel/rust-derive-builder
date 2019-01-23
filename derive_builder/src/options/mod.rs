@@ -30,6 +30,9 @@ impl DefaultExpression {
     pub fn parse_block(&self, no_std: bool) -> Block {
         let expr = match *self {
             DefaultExpression::Explicit(ref s) => {
+                // We shouldn't hit this point in normal operation; the implementation
+                // of `FromMeta` returns an error in this case so that the error points
+                // at the empty expression rather than at the macro call-site.
                 if s.is_empty() {
                     panic!(r#"Empty default expressions `default = ""` are not supported."#);
                 }
@@ -53,6 +56,10 @@ impl darling::FromMeta for DefaultExpression {
     }
 
     fn from_string(value: &str) -> darling::Result<Self> {
-        Ok(DefaultExpression::Explicit(value.into()))
+        if value.is_empty() {
+            Err(darling::Error::unknown_value(""))
+        } else {
+            Ok(DefaultExpression::Explicit(value.into()))
+        }
     }
 }

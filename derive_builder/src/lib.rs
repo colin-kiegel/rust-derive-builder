@@ -564,12 +564,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let ast = parse_macro_input!(input as syn::DeriveInput);
 
-    let result = builder_for_struct(ast).to_string();
-    debug!("generated tokens: {}", result);
-
-    result
-        .parse()
-        .expect(&format!("Couldn't parse `{}` to tokens", result))
+    builder_for_struct(ast).into()
 }
 
 fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
@@ -577,13 +572,9 @@ fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
 
     let opts = match Options::from_derive_input(&ast) {
         Ok(val) => val,
-        #[cfg(feature = "diagnostics")]
         Err(err) => {
-            err.emit();
-            return quote!();
+            return err.write_errors();
         },
-        #[cfg(not(feature = "diagnostics"))]
-        Err(err) => panic!("{}", err.flatten()),
     };
 
     let mut builder = opts.as_builder();
