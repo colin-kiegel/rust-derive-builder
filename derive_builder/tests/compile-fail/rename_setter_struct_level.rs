@@ -4,8 +4,8 @@ extern crate pretty_assertions;
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-//~^ ERROR proc-macro derive panicked
 #[builder(setter(name = "foo"))]
+//~^ ERROR Unexpected field `name`
 struct Lorem {
     ipsum: &'static str,
     pub dolor: &'static str,

@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.7.1] - 2019-02-04
+- Updated `darling` to `0.8.5` and switched to better errors
+
 ## [0.7.0] - 2018-10-22
 
 ### Breaking Changes

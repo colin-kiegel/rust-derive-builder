@@ -529,6 +529,7 @@ extern crate darling;
 
 extern crate proc_macro;
 extern crate proc_macro2;
+#[macro_use]
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -561,16 +562,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
         env_logger::init().unwrap();
     });
 
-    let input = input.to_string();
+    let ast = parse_macro_input!(input as syn::DeriveInput);
 
-    let ast: syn::DeriveInput = syn::parse_str(&input).expect("Couldn't parse item");
-
-    let result = builder_for_struct(ast).to_string();
-    debug!("generated tokens: {}", result);
-
-    result
-        .parse()
-        .expect(&format!("Couldn't parse `{}` to tokens", result))
+    builder_for_struct(ast).into()
 }
 
 fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
@@ -578,7 +572,9 @@ fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
 
     let opts = match Options::from_derive_input(&ast) {
         Ok(val) => val,
-        Err(err) => panic!("{}", err.flatten()),
+        Err(err) => {
+            return err.write_errors();
+        },
     };
 
     let mut builder = opts.as_builder();
