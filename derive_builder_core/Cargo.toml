@@ -15,13 +15,12 @@ readme = "README.md"
 
 [features]
 logging = [ "log" ]
-diagnostics = ["darling/diagnostics"]
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [dependencies]
-darling = "0.8.4"
+darling = "0.8.5"
 proc-macro2 = "0.4"
 quote = "0.6"
 syn = { version = "0.15", features = ["full", "extra-traits"] }
