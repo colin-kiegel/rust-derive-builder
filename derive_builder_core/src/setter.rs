@@ -166,42 +166,56 @@ impl<'a> ToTokens for Setter<'a> {
 
 // adapted from https://stackoverflow.com/a/55277337/469066
 // Note that since syn is a parser, it works with tokens.
-// We cannot know for sure that this is an Option. The user could, for example, type
-// - `std::option::Option`
-// - `type MaybeString = std::option::Option<String>`
+// We cannot know for sure that this is an Option.
+// The user could, for example, `type MaybeString = std::option::Option<String>`
 // We cannot handle those arbitrary names.
 fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
-    use syn::{GenericArgument, Path, PathArguments};
-    fn path_is_option(path: &Path) -> bool {
-        path.leading_colon.is_none()
-            && path.segments.len() == 1
-            && path.segments.iter().next().unwrap().ident == "Option"
+    use syn::punctuated::Pair;
+    use syn::token::Colon2;
+    use syn::{GenericArgument, Path, PathArguments, PathSegment};
+
+    fn extract_type_path(ty: &syn::Type) -> Option<&Path> {
+        match *ty {
+            syn::Type::Path(ref typepath) if typepath.qself.is_none() => Some(&typepath.path),
+            _ => None,
+        }
     }
 
-    match *ty {
-        syn::Type::Path(ref typepath)
-            if typepath.qself.is_none() && path_is_option(&typepath.path) =>
-        {
-            // Get the first segment of the path (there is only one, in fact: "Option"):
-            typepath
-                .path
-                .segments
-                .first()
-                .and_then(|pair_path_segment| {
-                    let type_params = &pair_path_segment.value().arguments;
-                    // It should have only on angle-bracketed param ("<String>"):
-                    match *type_params {
-                        PathArguments::AngleBracketed(ref params) => params.args.first(),
-                        _ => None,
-                    }
-                })
-                .and_then(|generic_arg| match *generic_arg.into_value() {
-                    GenericArgument::Type(ref ty) => Some(ty),
-                    _ => None,
-                })
-        }
-        _ => None,
+    // TODO store (with lazy static) precomputed parsing of Option when support of rust 1.18 will be removed (incompatible with lazy_static)
+    fn extract_option_segment(path: &Path) -> Option<Pair<&PathSegment, &Colon2>> {
+        let idents_of_path = path
+            .segments
+            .iter()
+            .into_iter()
+            .fold(String::new(), |mut acc, v| {
+                acc.push_str("::");
+                acc.push_str(&v.ident.to_string());
+                acc
+            });
+        vec![
+            "::Option",
+            "::std::option::Option",
+            "::core::option::Option",
+        ]
+        .into_iter()
+        .find(|s| &idents_of_path == *s)
+        .and_then(|_| path.segments.last())
     }
+
+    extract_type_path(ty)
+        .and_then(|path| extract_option_segment(path))
+        .and_then(|pair_path_segment| {
+            let type_params = &pair_path_segment.into_value().arguments;
+            // It should have only on angle-bracketed param ("<String>"):
+            match *type_params {
+                PathArguments::AngleBracketed(ref params) => params.args.first(),
+                _ => None,
+            }
+        })
+        .and_then(|generic_arg| match *generic_arg.into_value() {
+            GenericArgument::Type(ref ty) => Some(ty),
+            _ => None,
+        })
 }
 
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
@@ -487,8 +501,17 @@ mod tests {
     #[test]
     fn extract_type_from_option_on_simple_type() {
         let ty_foo = syn::parse_str("Foo").unwrap();
-        let ty_foo_opt = syn::parse_str("Option<Foo>").unwrap();
         assert_eq!(extract_type_from_option(&ty_foo), None);
-        assert_eq!(extract_type_from_option(&ty_foo_opt), Some(&ty_foo));
+
+        for s in vec![
+            "Option<Foo>",
+            "std::option::Option<Foo>",
+            "::std::option::Option<Foo>",
+            "core::option::Option<Foo>",
+            "::core::option::Option<Foo>",
+        ] {
+            let ty_foo_opt = syn::parse_str(s).unwrap();
+            assert_eq!(extract_type_from_option(&ty_foo_opt), Some(&ty_foo));
+        }
     }
 }
