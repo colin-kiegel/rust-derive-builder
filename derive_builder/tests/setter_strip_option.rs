@@ -24,25 +24,34 @@ struct Ipsum {
     strip_opt_with_default: Option<String>,
 }
 
-// #[test]
-// fn generic_field() {
-//     let x = LoremBuilder::default().full_opt(Some("foo".to_string())).strip_opt("bar").build().unwrap();
+#[test]
+fn generic_field() {
+    let x = LoremBuilder::default()
+        .full_opt(Some("foo".to_string()))
+        .strip_opt("bar")
+        .strip_opt_i32(32)
+        .strip_opt_vec(vec![33])
+        .build()
+        .unwrap();
 
-//     assert_eq!(
-//         x,
-//         Lorem {
-//             full_opt: Some("foo".to_string()),
-//             strip_opt: Some("bar".to_string()),
-//         }
-//     );
-// }
+    assert_eq!(
+        x,
+        Lorem {
+            full_opt: Some("foo".to_string()),
+            strip_opt: Some("bar".to_string()),
+            strip_opt_i32: Some(32),
+            strip_opt_vec: Some(vec![33]),
+        }
+    );
+}
 
-// #[test]
-// fn generic_struct() {
-//     let x = IpsumBuilder::default().foo(42u8).strip_opt("bar").build().unwrap();
+#[test]
+fn generic_struct() {
+    let x = IpsumBuilder::default().foo(42u8).strip_opt("bar").build().unwrap();
 
-//     assert_eq!(x, Ipsum {
-//         foo: 42u32,
-//         srip_opt: Some("bar".to_string()),
-//     });
-// }
+    assert_eq!(x, Ipsum {
+        foo: 42u32,
+        strip_opt: Some("bar".to_string()),
+        strip_opt_with_default: None,
+    });
+}

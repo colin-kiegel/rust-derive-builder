@@ -71,7 +71,7 @@ impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
             trace!("Deriving setter for `{}`.", self.field_ident);
-            let ty = self.field_type;
+            let field_type = self.field_type;
             let pattern = self.pattern;
             let vis = &self.visibility;
             let field_ident = self.field_ident;
@@ -81,6 +81,13 @@ impl<'a> ToTokens for Setter<'a> {
             let clone = self.bindings.clone_trait();
             let option = self.bindings.option_ty();
             let into = self.bindings.into_trait();
+            let (ty, stripped_option) = match self.strip_option {
+                false => (field_type, false),
+                true => match extract_type_from_option(field_type) {
+                    None => (field_type, false),
+                    Some(ty) => (ty, true),
+                },
+            };
 
             let self_param: TokenStream;
             let return_ty: TokenStream;
@@ -106,7 +113,7 @@ impl<'a> ToTokens for Setter<'a> {
 
             let ty_params: TokenStream;
             let param_ty: TokenStream;
-            let into_value: TokenStream;
+            let mut into_value: TokenStream;
 
             if self.generic_into {
                 ty_params = quote!(<VALUE: #into<#ty>>);
@@ -117,7 +124,9 @@ impl<'a> ToTokens for Setter<'a> {
                 param_ty = quote!(#ty);
                 into_value = quote!(value);
             }
-
+            if stripped_option {
+                into_value = quote!(#option::Some(#into_value));
+            }
             tokens.append_all(quote!(
                 #(#attrs)*
                 #[allow(unused_mut)]
@@ -152,6 +161,44 @@ impl<'a> ToTokens for Setter<'a> {
         } else {
             trace!("Skipping setter for `{}`.", self.field_ident);
         }
+    }
+}
+
+// adapted from https://stackoverflow.com/a/55277337/469066
+// Note that since syn is a parser, it works with tokens.
+// We cannot know for sure that this is an Option. The user could, for example, type
+// - `std::option::Option`
+// - `type MaybeString = std::option::Option<String>`
+// We cannot handle those arbitrary names.
+fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
+    use syn::{GenericArgument, Path, PathArguments};
+    fn path_is_option(path: &Path) -> bool {
+        path.leading_colon.is_none()
+            && path.segments.len() == 1
+            && path.segments.iter().next().unwrap().ident == "Option"
+    }
+
+    match ty {
+        syn::Type::Path(typepath) if typepath.qself.is_none() && path_is_option(&typepath.path) => {
+            // Get the first segment of the path (there is only one, in fact: "Option"):
+            typepath
+                .path
+                .segments
+                .first()
+                .and_then(|pair_path_segment| {
+                    let type_params = &pair_path_segment.value().arguments;
+                    // It should have only on angle-bracketed param ("<String>"):
+                    match type_params {
+                        PathArguments::AngleBracketed(ref params) => params.args.first(),
+                        _ => None,
+                    }
+                })
+                .and_then(|generic_arg| match generic_arg.into_value() {
+                    GenericArgument::Type(ty) => Some(ty),
+                    _ => None,
+                })
+        }
+        _ => None,
     }
 }
 
@@ -279,6 +326,47 @@ mod tests {
         );
     }
 
+    #[test]
+    fn strip_option() {
+        let ty = syn::parse_str("Option<Foo>").unwrap();
+        let mut setter = default_setter!();
+        setter.strip_option = true;
+        setter.field_type = &ty;
+        assert_eq!(
+            quote!(#setter).to_string(),
+            quote!(
+                #[allow(unused_mut)]
+                pub fn foo(&mut self, value: Foo) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(::std::option::Option::Some(value));
+                    new
+                }
+            )
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn strip_option_into() {
+        let ty = syn::parse_str("Option<Foo>").unwrap();
+        let mut setter = default_setter!();
+        setter.strip_option = true;
+        setter.generic_into = true;
+        setter.field_type = &ty;
+        assert_eq!(
+            quote!(#setter).to_string(),
+            quote!(
+                #[allow(unused_mut)]
+                pub fn foo<VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(::std::option::Option::Some(value.into()));
+                    new
+                }
+            )
+            .to_string()
+        );
+    }
+
     // including try_setter
     #[test]
     fn full() {
@@ -392,5 +480,13 @@ mod tests {
             )
             .to_string()
         );
+    }
+
+    #[test]
+    fn extract_type_from_option_on_simple_type() {
+        let ty_foo = syn::parse_str("Foo").unwrap();
+        let ty_foo_opt = syn::parse_str("Option<Foo>").unwrap();
+        assert_eq!(extract_type_from_option(&ty_foo), None);
+        assert_eq!(extract_type_from_option(&ty_foo_opt), Some(&ty_foo));
     }
 }
