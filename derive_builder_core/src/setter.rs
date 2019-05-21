@@ -178,8 +178,10 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
             && path.segments.iter().next().unwrap().ident == "Option"
     }
 
-    match ty {
-        syn::Type::Path(typepath) if typepath.qself.is_none() && path_is_option(&typepath.path) => {
+    match *ty {
+        syn::Type::Path(ref typepath)
+            if typepath.qself.is_none() && path_is_option(&typepath.path) =>
+        {
             // Get the first segment of the path (there is only one, in fact: "Option"):
             typepath
                 .path
@@ -188,13 +190,13 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
                 .and_then(|pair_path_segment| {
                     let type_params = &pair_path_segment.value().arguments;
                     // It should have only on angle-bracketed param ("<String>"):
-                    match type_params {
+                    match *type_params {
                         PathArguments::AngleBracketed(ref params) => params.args.first(),
                         _ => None,
                     }
                 })
-                .and_then(|generic_arg| match generic_arg.into_value() {
-                    GenericArgument::Type(ty) => Some(ty),
+                .and_then(|generic_arg| match *generic_arg.into_value() {
+                    GenericArgument::Type(ref ty) => Some(ty),
                     _ => None,
                 })
         }
