@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "cargo-clippy", allow(useless_let_if_seq))]
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{Span, TokenStream};
+use quote::{ToTokens, TokenStreamExt};
 use syn;
 
 use Bindings;
@@ -58,6 +58,9 @@ pub struct Setter<'a> {
     pub field_type: &'a syn::Type,
     /// Make the setter generic over `Into<T>`, where `T` is the field type.
     pub generic_into: bool,
+    /// Make the setter remove the Option wrapper from the setter, remove the need to call Some(...).
+    /// when combined with into, the into is used on the content Type of the Option.
+    pub strip_option: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
     /// Bindings to libstd or libcore.
@@ -168,6 +171,7 @@ macro_rules! default_setter {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &syn::parse_str("Foo").unwrap(),
             generic_into: false,
+            strip_option: false,
             deprecation_notes: &Default::default(),
             bindings: Default::default(),
         };
@@ -187,13 +191,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo(&self, value: Foo) -> Self {
-                let mut new = ::std::clone::Clone::clone(self);
-                new.foo = ::std::option::Option::Some(value);
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo(&self, value: Foo) -> Self {
+                    let mut new = ::std::clone::Clone::clone(self);
+                    new.foo = ::std::option::Option::Some(value);
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -205,13 +210,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo(&mut self, value: Foo) -> &mut Self {
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo(&mut self, value: Foo) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(value);
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -223,13 +229,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo(self, value: Foo) -> Self {
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo(self, value: Foo) -> Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(value);
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -243,13 +250,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            fn foo(&mut self, value: Foo) -> &mut Self {
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                fn foo(&mut self, value: Foo) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(value);
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -320,13 +328,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo(&self, value: Foo) -> Self {
-                let mut new = ::core::clone::Clone::clone(self);
-                new.foo = ::core::option::Option::Some(value);
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo(&self, value: Foo) -> Self {
+                    let mut new = ::core::clone::Clone::clone(self);
+                    new.foo = ::core::option::Option::Some(value);
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -366,21 +375,22 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo(&mut self, value: Foo) -> &mut Self {
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value);
-                new
-            }
+                #[allow(unused_mut)]
+                pub fn foo(&mut self, value: Foo) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(value);
+                    new
+                }
 
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                -> ::std::result::Result<&mut Self, VALUE::Error> {
-                let converted : Foo = value.try_into()?;
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(converted);
-                Ok(new)
-            }
-        ).to_string()
+                pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
+                    -> ::std::result::Result<&mut Self, VALUE::Error> {
+                    let converted : Foo = value.try_into()?;
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(converted);
+                    Ok(new)
+                }
+            )
+            .to_string()
         );
     }
 }
