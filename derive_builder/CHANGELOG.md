@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.7.2] - 2019-05-22
 - Add `strip_option` flag for setter #116
 
 ## [0.7.1] - 2019-02-05
