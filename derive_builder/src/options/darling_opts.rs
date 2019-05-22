@@ -93,6 +93,7 @@ impl FlagVisibility for FieldMeta {
 pub struct StructLevelSetter {
     prefix: Option<Ident>,
     into: Option<bool>,
+    strip_option: Option<bool>,
     skip: Option<bool>,
 }
 
@@ -113,6 +114,7 @@ pub struct FieldLevelSetter {
     prefix: Option<Ident>,
     name: Option<Ident>,
     into: Option<bool>,
+    strip_option: Option<bool>,
     skip: Option<bool>,
 }
 
@@ -125,7 +127,7 @@ impl FieldLevelSetter {
             return self.skip.map(|x| !x);
         }
 
-        if self.prefix.is_some() || self.name.is_some() || self.into.is_some() {
+        if self.prefix.is_some() || self.name.is_some() || self.into.is_some() || self.strip_option.is_some() {
             return Some(true);
         }
 
@@ -443,6 +445,16 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or_default()
     }
 
+    /// Checks if the emitted setter should strip the wrapper Option over types that impl
+    /// `Option<FieldType>`.
+    pub fn setter_strip_option(&self) -> bool {
+        self.field
+            .setter
+            .strip_option
+            .or(self.parent.setter.strip_option)
+            .unwrap_or_default()
+    }
+
     /// Get the visibility of the emitted setter, if there will be one.
     pub fn setter_vis(&self) -> Visibility {
         self.field
@@ -499,6 +511,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_ident: &self.field_ident(),
             field_type: &self.field.ty,
             generic_into: self.setter_into(),
+            strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
             bindings: self.bindings(),
         }

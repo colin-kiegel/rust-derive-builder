@@ -221,7 +221,38 @@
 //!     });
 //! }
 //! ```
+//! 
+//! ## Setters for Option
 //!
+//! You can avoid to user to wrap value into `Some(...)` for field of type `Option<T>`. It's as simple as adding
+//! `#[builder(setter(strip_option))]` to either a field or the whole struct.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Lorem {
+//!     #[builder(setter(into, strip_option))]
+//!     pub ipsum: Option<String>,
+//!     #[builder(setter(into, strip_option), default)]
+//!     pub foo: Option<String>,
+//! }
+//!
+//! fn main() {
+//!     // `"foo"` will be converted into a `String` automatically.
+//!     let x = LoremBuilder::default().ipsum("foo").build().unwrap();
+//!
+//!     assert_eq!(x, Lorem {
+//!         ipsum: Some("foo".to_string()),
+//!         foo: None
+//!     });
+//! }
+//! ```
+//! If you want to set the value to None when unset, then enable `default` on this field (or do not use `strip_option`).
+//!
+//! Limitation: only the `Option` type name is supported, not type alias nor `std::option::Option`.
+//! 
 //! ## Fallible Setters
 //!
 //! Alongside the normal setter methods, you can expose fallible setters which are generic over
