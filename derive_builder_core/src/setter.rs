@@ -182,20 +182,21 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
     }
 
     // TODO store (with lazy static) precomputed parsing of Option when support of rust 1.18 will be removed (incompatible with lazy_static)
+    // TODO maybe optimization, reverse the order of segments
     fn extract_option_segment(path: &Path) -> Option<Pair<&PathSegment, &Colon2>> {
         let idents_of_path = path
             .segments
             .iter()
             .into_iter()
             .fold(String::new(), |mut acc, v| {
-                acc.push_str("::");
                 acc.push_str(&v.ident.to_string());
+                acc.push('|');
                 acc
             });
         vec![
-            "::Option",
-            "::std::option::Option",
-            "::core::option::Option",
+            "Option|",
+            "std|option|Option|",
+            "core|option|Option|",
         ]
         .into_iter()
         .find(|s| &idents_of_path == *s)
