@@ -1,7 +1,7 @@
 use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::TokenStream;
 use syn::punctuated::Punctuated;
-use syn::{self, Ident, TraitBound, TraitBoundModifier, TypeParamBound};
+use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
 use doc_comment::doc_comment_from;
 use Bindings;
@@ -52,7 +52,7 @@ pub struct Builder<'a> {
     /// Pattern of this builder struct.
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
-    pub derives: &'a [syn::Ident],
+    pub derives: &'a [Path],
     /// Type parameters and lifetimes attached to this builder's struct
     /// definition.
     pub generics: Option<&'a syn::Generics>,
@@ -95,10 +95,10 @@ impl<'a> ToTokens for Builder<'a> {
 
             // Create the comma-separated set of derived traits for the builder
             let derived_traits = {
-                let default_trait: Ident = parse_quote!(Default);
-                let clone_trait: Ident = parse_quote!(Clone);
+                let default_trait: Path = parse_quote!(Default);
+                let clone_trait: Path = parse_quote!(Clone);
 
-                let mut traits: Punctuated<&Ident, Token![,]> = Default::default();
+                let mut traits: Punctuated<&Path, Token![,]> = Default::default();
                 traits.push(&default_trait);
 
                 if self.must_derive_clone {
@@ -344,7 +344,7 @@ mod tests {
 
     #[test]
     fn add_derives() {
-        let derives = vec![syn::Ident::new("Serialize", ::proc_macro2::Span::call_site()),];
+        let derives = vec![syn::parse_str("Serialize").unwrap(),];
         let mut builder = default_builder!();
         builder.derives = &derives;
 

@@ -2,7 +2,7 @@ use std::vec::IntoIter;
 
 use derive_builder_core::BuildMethod;
 
-use darling::util::{Flag, IdentList};
+use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 use proc_macro2::Span;
@@ -165,7 +165,7 @@ impl FromMeta for FieldSetterMeta {
     }
 
     fn from_meta(value: &syn::Meta) -> darling::Result<Self> {
-        if let syn::Meta::Word(_) = *value {
+        if let syn::Meta::Path(_) = *value {
             FieldSetterMeta::from_word()
         } else {
             FieldLevelSetter::from_meta(value).map(FieldSetterMeta::Longhand)
@@ -244,7 +244,7 @@ pub struct Options {
 
     /// Additional traits to derive on the builder.
     #[darling(default)]
-    derive: IdentList,
+    derive: PathList,
 
     /// Setter options applied to all field setters in the struct.
     #[darling(default)]
