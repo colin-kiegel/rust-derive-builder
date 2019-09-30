@@ -200,7 +200,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
         ]
         .into_iter()
         .find(|s| &idents_of_path == *s)
-        .and_then(|_| path.segments.last())
+        .and_then(|_| path.segments.last().map(Pair::End))
     }
 
     extract_type_path(ty)
@@ -213,7 +213,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
                 _ => None,
             }
         })
-        .and_then(|generic_arg| match *generic_arg.into_value() {
+        .and_then(|generic_arg| match *generic_arg {
             GenericArgument::Type(ref ty) => Some(ty),
             _ => None,
         })

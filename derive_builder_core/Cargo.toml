@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder_core"
-version = "0.5.0"
+version = "0.8.0"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
            "Jan-Erik Rediger <janerik@fnordig.de>",
@@ -20,10 +20,10 @@ logging = [ "log" ]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [dependencies]
-darling = "0.9"
-proc-macro2 = "0.4"
-quote = "0.6"
-syn = { version = "0.15", features = ["full", "extra-traits"] }
+darling = "0.10"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "1.0", features = ["full", "extra-traits"] }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
