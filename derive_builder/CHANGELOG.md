@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.0] - 2019-09-30
+- Increase dependency versions to latest #148
+- Requires Rust 1.37.0 or newer (was 1.18.0) #148
+- Increase version of derive_builder_core crate to match crate's public interface
+
 ## [0.7.2] - 2019-05-22
 - Add `strip_option` flag for setter #116
 
