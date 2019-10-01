@@ -9,6 +9,10 @@ function main {
   fi
 
   (cd derive_builder_core && rustup run nightly cargo publish --token "$CRATES_IO_TOKEN")
+
+  # Wait for `derive_builder_core` to be available on crates.io before publishing `derive_builder`
+  sleep 10
+
   (cd derive_builder      && rustup run nightly cargo publish --token "$CRATES_IO_TOKEN")
 }
 
