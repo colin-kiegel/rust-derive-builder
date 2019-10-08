@@ -69,7 +69,7 @@ impl Bindings {
     }
 
     /// Into trait.
-    #[cfg_attr(feature = "cargo-clippy", allow(wrong_self_convention))]
+    #[allow(clippy::wrong_self_convention)]
     pub fn into_trait(&self) -> Path {
         syn::parse_str(if self.no_std {
             "::core::convert::Into"

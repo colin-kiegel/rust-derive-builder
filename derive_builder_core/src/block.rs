@@ -57,7 +57,7 @@ impl FromStr for Block {
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
         let b: syn::Block =
             syn::parse_str(&format!("{{{}}}", expr)).map_err(|e| format!("{}", e))?;
-        Ok(Block(b.stmts))
+        Ok(Self(b.stmts))
     }
 }
 

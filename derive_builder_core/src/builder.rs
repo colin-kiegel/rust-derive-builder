@@ -244,7 +244,7 @@ mod tests {
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -274,7 +274,7 @@ mod tests {
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn generic_reference() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -305,7 +305,7 @@ mod tests {
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn owned_generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(

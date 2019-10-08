@@ -60,14 +60,14 @@ impl DeprecationNotes {
     }
 
     /// Extend this collection with all values from another collection.
-    pub fn extend(&mut self, other: &DeprecationNotes) {
+    pub fn extend(&mut self, other: &Self) {
         for x in &other.0 {
             self.0.push(x.to_owned())
         }
     }
 
     /// Create a view of these deprecation notes that can annotate a struct.
-    pub fn as_item(&self) -> DeprecationNotesAsItem {
+    pub const fn as_item(&self) -> DeprecationNotesAsItem {
         DeprecationNotesAsItem(self)
     }
 }

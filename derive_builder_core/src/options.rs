@@ -23,13 +23,13 @@ impl BuilderPattern {
     /// Returns true if this style of builder needs to be able to clone its
     /// fields during the `build` method.
     pub fn requires_clone(&self) -> bool {
-        *self != BuilderPattern::Owned
+        *self != Self::Owned
     }
 }
 
 /// Defaults to `Mutable`.
 impl Default for BuilderPattern {
-    fn default() -> BuilderPattern {
-        BuilderPattern::Mutable
+    fn default() -> Self {
+        Self::Mutable
     }
 }

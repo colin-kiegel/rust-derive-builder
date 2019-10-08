@@ -175,13 +175,13 @@ enum MatchSome {
 impl<'a> ToTokens for MatchSome {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match *self {
-            MatchSome::Move => tokens.append_all(quote!(
+            Self::Move => tokens.append_all(quote!(
                 Some(value) => value
             )),
-            MatchSome::Clone => tokens.append_all(quote!(
+            Self::Clone => tokens.append_all(quote!(
                 Some(ref value) => ::std::clone::Clone::clone(value)
             )),
-            MatchSome::CloneNoStd => tokens.append_all(quote!(
+            Self::CloneNoStd => tokens.append_all(quote!(
                 Some(ref value) => ::core::clone::Clone::clone(value)
             )),
         }
