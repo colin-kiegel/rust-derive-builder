@@ -27,4 +27,4 @@ syn = { version = "1.0", features = ["full", "extra-traits"] }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "0.5"
+pretty_assertions = "0.6"

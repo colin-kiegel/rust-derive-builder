@@ -1,6 +1,6 @@
 use doc_comment::doc_comment_from;
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{Span, TokenStream};
+use quote::{ToTokens, TokenStreamExt};
 use syn;
 use Bindings;
 use Block;
@@ -158,12 +158,13 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
-                Ok(Foo {
-                    foo: self.foo,
-                })
-            }
-        ).to_string()
+                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                    Ok(Foo {
+                        foo: self.foo,
+                    })
+                }
+            )
+            .to_string()
         );
     }
 
@@ -175,12 +176,13 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-            pub fn build(&self) -> ::core::result::Result<Foo, ::alloc::string::String> {
-                Ok(Foo {
-                    foo: self.foo,
-                })
-            }
-        ).to_string()
+                pub fn build(&self) -> ::core::result::Result<Foo, ::alloc::string::String> {
+                    Ok(Foo {
+                        foo: self.foo,
+                    })
+                }
+            )
+            .to_string()
         );
     }
 
@@ -192,13 +194,14 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
-                let __default: Foo = {Default::default()};
-                Ok(Foo {
-                    foo: self.foo,
-                })
-            }
-        ).to_string()
+                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                    let __default: Foo = {Default::default()};
+                    Ok(Foo {
+                        foo: self.foo,
+                    })
+                }
+            )
+            .to_string()
         );
     }
 
@@ -220,12 +223,13 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-            pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
-                Ok(Foo {
-                    foo: self.foo,
-                })
-            }
-        ).to_string()
+                pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                    Ok(Foo {
+                        foo: self.foo,
+                    })
+                }
+            )
+            .to_string()
         )
     }
 
@@ -240,14 +244,15 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-            pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
-                IpsumBuilder::validate(&self)?;
+                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                    IpsumBuilder::validate(&self)?;
 
-                Ok(Foo {
-                    foo: self.foo,
-                })
-            }
-        ).to_string()
+                    Ok(Foo {
+                        foo: self.foo,
+                    })
+                }
+            )
+            .to_string()
         );
     }
 }

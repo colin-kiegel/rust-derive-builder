@@ -4,8 +4,8 @@ use derive_builder_core::BuildMethod;
 
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
-use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 use proc_macro2::Span;
+use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 
 use derive_builder_core::{
     Bindings, Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter,
@@ -127,7 +127,11 @@ impl FieldLevelSetter {
             return self.skip.map(|x| !x);
         }
 
-        if self.prefix.is_some() || self.name.is_some() || self.into.is_some() || self.strip_option.is_some() {
+        if self.prefix.is_some()
+            || self.name.is_some()
+            || self.into.is_some()
+            || self.strip_option.is_some()
+        {
             return Some(true);
         }
 
@@ -222,7 +226,11 @@ impl FlagVisibility for Field {
 }
 
 #[derive(Debug, Clone, FromDeriveInput)]
-#[darling(attributes(builder), forward_attrs(doc, cfg, allow), supports(struct_named))]
+#[darling(
+    attributes(builder),
+    forward_attrs(doc, cfg, allow),
+    supports(struct_named)
+)]
 pub struct Options {
     ident: Ident,
 

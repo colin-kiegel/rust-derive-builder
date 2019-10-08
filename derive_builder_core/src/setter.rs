@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "cargo-clippy", allow(useless_let_if_seq))]
+#![allow(clippy::useless_let_if_seq)]
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
@@ -81,12 +81,15 @@ impl<'a> ToTokens for Setter<'a> {
             let clone = self.bindings.clone_trait();
             let option = self.bindings.option_ty();
             let into = self.bindings.into_trait();
-            let (ty, stripped_option) = match self.strip_option {
-                false => (field_type, false),
-                true => match extract_type_from_option(field_type) {
-                    None => (field_type, false),
-                    Some(ty) => (ty, true),
-                },
+            let (ty, stripped_option) = {
+                if self.strip_option {
+                    match extract_type_from_option(field_type) {
+                        Some(ty) => (ty, true),
+                        None => (field_type, false),
+                    }
+                } else {
+                    (field_type, false)
+                }
             };
 
             let self_param: TokenStream;
@@ -184,23 +187,15 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
     // TODO store (with lazy static) precomputed parsing of Option when support of rust 1.18 will be removed (incompatible with lazy_static)
     // TODO maybe optimization, reverse the order of segments
     fn extract_option_segment(path: &Path) -> Option<Pair<&PathSegment, &Colon2>> {
-        let idents_of_path = path
-            .segments
-            .iter()
+        let idents_of_path = path.segments.iter().fold(String::new(), |mut acc, v| {
+            acc.push_str(&v.ident.to_string());
+            acc.push('|');
+            acc
+        });
+        vec!["Option|", "std|option|Option|", "core|option|Option|"]
             .into_iter()
-            .fold(String::new(), |mut acc, v| {
-                acc.push_str(&v.ident.to_string());
-                acc.push('|');
-                acc
-            });
-        vec![
-            "Option|",
-            "std|option|Option|",
-            "core|option|Option|",
-        ]
-        .into_iter()
-        .find(|s| &idents_of_path == *s)
-        .and_then(|_| path.segments.last().map(Pair::End))
+            .find(|s| idents_of_path == *s)
+            .and_then(|_| path.segments.last().map(Pair::End))
     }
 
     extract_type_path(ty)

@@ -221,7 +221,7 @@
 //!     });
 //! }
 //! ```
-//! 
+//!
 //! ## Setters for Option
 //!
 //! You can avoid to user to wrap value into `Some(...)` for field of type `Option<T>`. It's as simple as adding
@@ -252,7 +252,7 @@
 //! If you want to set the value to None when unset, then enable `default` on this field (or do not use `strip_option`).
 //!
 //! Limitation: only the `Option` type name is supported, not type alias nor `std::option::Option`.
-//! 
+//!
 //! ## Fallible Setters
 //!
 //! Alongside the normal setter methods, you can expose fallible setters which are generic over
@@ -605,7 +605,7 @@ fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
         Ok(val) => val,
         Err(err) => {
             return err.write_errors();
-        },
+        }
     };
 
     let mut builder = opts.as_builder();

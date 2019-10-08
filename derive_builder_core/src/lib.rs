@@ -66,4 +66,4 @@ pub use initializer::Initializer;
 pub use options::BuilderPattern;
 pub use setter::Setter;
 
-const DEFAULT_STRUCT_NAME: &'static str = "__default";
+const DEFAULT_STRUCT_NAME: &str = "__default";

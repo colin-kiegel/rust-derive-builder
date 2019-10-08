@@ -1,5 +1,5 @@
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::TokenStream;
+use quote::{ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
@@ -226,24 +226,25 @@ mod tests {
         assert_eq!(
             quote!(#builder).to_string(),
             quote!(
-            #[derive(Default, Clone)]
-            pub struct FooBuilder {
-                foo: u32,
-            }
-
-            #[allow(dead_code)]
-            impl FooBuilder {
-                fn bar () -> {
-                    unimplemented!()
+                #[derive(Default, Clone)]
+                pub struct FooBuilder {
+                    foo: u32,
                 }
-            }
-        ).to_string()
+
+                #[allow(dead_code)]
+                impl FooBuilder {
+                    fn bar () -> {
+                        unimplemented!()
+                    }
+                }
+            )
+            .to_string()
         );
     }
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -273,7 +274,7 @@ mod tests {
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn generic_reference() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -304,7 +305,7 @@ mod tests {
 
     // This test depends on the exact formatting of the `stringify`'d code,
     // so we don't automatically format the test
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     #[test]
     fn owned_generic() {
         let ast: syn::DeriveInput = syn::parse_str(stringify!(
@@ -344,25 +345,26 @@ mod tests {
 
     #[test]
     fn add_derives() {
-        let derives = vec![syn::parse_str("Serialize").unwrap(),];
+        let derives = vec![syn::parse_str("Serialize").unwrap()];
         let mut builder = default_builder!();
         builder.derives = &derives;
 
         assert_eq!(
             quote!(#builder).to_string(),
             quote!(
-            #[derive(Default, Clone, Serialize)]
-            pub struct FooBuilder {
-                foo: u32,
-            }
-
-            #[allow(dead_code)]
-            impl FooBuilder {
-                fn bar () -> {
-                    unimplemented!()
+                #[derive(Default, Clone, Serialize)]
+                pub struct FooBuilder {
+                    foo: u32,
                 }
-            }
-        ).to_string()
+
+                #[allow(dead_code)]
+                impl FooBuilder {
+                    fn bar () -> {
+                        unimplemented!()
+                    }
+                }
+            )
+            .to_string()
         );
     }
 }

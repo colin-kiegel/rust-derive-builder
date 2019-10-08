@@ -38,11 +38,13 @@ impl DefaultExpression {
                 }
                 s
             }
-            DefaultExpression::Trait => if no_std {
-                "::core::default::Default::default()"
-            } else {
-                "::std::default::Default::default()"
-            },
+            DefaultExpression::Trait => {
+                if no_std {
+                    "::core::default::Default::default()"
+                } else {
+                    "::std::default::Default::default()"
+                }
+            }
         };
 
         expr.parse()

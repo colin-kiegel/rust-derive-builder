@@ -47,11 +47,18 @@ fn generic_field() {
 
 #[test]
 fn generic_struct() {
-    let x = IpsumBuilder::default().foo(42u8).strip_opt("bar").build().unwrap();
+    let x = IpsumBuilder::default()
+        .foo(42u8)
+        .strip_opt("bar")
+        .build()
+        .unwrap();
 
-    assert_eq!(x, Ipsum {
-        foo: 42u32,
-        strip_opt: Some("bar".to_string()),
-        strip_opt_with_default: None,
-    });
+    assert_eq!(
+        x,
+        Ipsum {
+            foo: 42u32,
+            strip_opt: Some("bar".to_string()),
+            strip_opt_with_default: None,
+        }
+    );
 }

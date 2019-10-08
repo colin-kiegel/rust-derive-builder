@@ -1,5 +1,5 @@
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{Span, TokenStream};
+use quote::{ToTokens, TokenStreamExt};
 use syn;
 
 /// Deprecation notes we want to emit to the user, implementing
@@ -40,7 +40,8 @@ pub struct DeprecationNotes(Vec<String>);
 impl ToTokens for DeprecationNotes {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         for note in &self.0 {
-            let fn_ident = syn::Ident::new("derive_builder_core_deprecation_note", Span::call_site());
+            let fn_ident =
+                syn::Ident::new("derive_builder_core_deprecation_note", Span::call_site());
             tokens.append_all(quote!(
                 {
                     #[deprecated(note=#note)]
@@ -59,14 +60,14 @@ impl DeprecationNotes {
     }
 
     /// Extend this collection with all values from another collection.
-    pub fn extend(&mut self, other: &DeprecationNotes) {
+    pub fn extend(&mut self, other: &Self) {
         for x in &other.0 {
             self.0.push(x.to_owned())
         }
     }
 
     /// Create a view of these deprecation notes that can annotate a struct.
-    pub fn as_item(&self) -> DeprecationNotesAsItem {
+    pub const fn as_item(&self) -> DeprecationNotesAsItem {
         DeprecationNotesAsItem(self)
     }
 }
@@ -103,6 +104,7 @@ fn deprecation_note() {
             #[deprecated(note = "Some Warning")]
             fn derive_builder_core_deprecation_note() {}
             derive_builder_core_deprecation_note();
-        }).to_string()
+        })
+        .to_string()
     );
 }

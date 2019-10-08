@@ -1,5 +1,5 @@
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::TokenStream;
+use quote::{ToTokens, TokenStreamExt};
 use syn;
 use Bindings;
 
@@ -109,8 +109,9 @@ mod tests {
         assert_eq!(
             quote!(#field).to_string(),
             quote!(
-            #[some_attr] pub foo: ::std::option::Option<String>,
-        ).to_string()
+                #[some_attr] pub foo: ::std::option::Option<String>,
+            )
+            .to_string()
         );
     }
 
@@ -124,7 +125,8 @@ mod tests {
             quote!(
                 #[some_attr]
                 foo: ::std::marker::PhantomData<String>,
-            ).to_string()
+            )
+            .to_string()
         );
     }
 
@@ -136,8 +138,9 @@ mod tests {
         assert_eq!(
             quote!(#field).to_string(),
             quote!(
-            #[some_attr] pub foo: ::core::option::Option<String>,
-        ).to_string()
+                #[some_attr] pub foo: ::core::option::Option<String>,
+            )
+            .to_string()
         );
     }
 
@@ -152,7 +155,8 @@ mod tests {
             quote!(
                 #[some_attr]
                 foo: ::core::marker::PhantomData<String>,
-            ).to_string()
+            )
+            .to_string()
         );
     }
 
@@ -167,7 +171,8 @@ mod tests {
             quote!(
                 #[some_attr]
                 foo: ::std::option::Option<String>,
-            ).to_string()
+            )
+            .to_string()
         );
     }
 }
