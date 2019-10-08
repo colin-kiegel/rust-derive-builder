@@ -55,7 +55,8 @@ impl FromStr for Block {
     /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
     /// parsing error.
     fn from_str(expr: &str) -> Result<Self, Self::Err> {
-        let b: syn::Block = syn::parse_str(&format!("{{{}}}", expr)).map_err(|e| format!("{}", e))?;
+        let b: syn::Block =
+            syn::parse_str(&format!("{{{}}}", expr)).map_err(|e| format!("{}", e))?;
         Ok(Block(b.stmts))
     }
 }
@@ -66,9 +67,7 @@ mod test {
     use super::*;
 
     #[test]
-    #[should_panic(
-        expected = r#"LexError"#
-    )]
+    #[should_panic(expected = r#"LexError"#)]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();
     }
@@ -83,7 +82,8 @@ mod test {
                 {
                     x + 1
                 }
-            }).to_string()
+            })
+            .to_string()
         );
     }
 

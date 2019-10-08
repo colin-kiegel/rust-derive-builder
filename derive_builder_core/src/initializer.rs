@@ -1,5 +1,5 @@
-use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{Span, TokenStream};
+use quote::{ToTokens, TokenStreamExt};
 use syn;
 use Bindings;
 use Block;
@@ -218,13 +218,14 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
-                    "`foo` must be initialized"
-                )),
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    None => return ::std::result::Result::Err(::std::string::String::from(
+                        "`foo` must be initialized"
+                    )),
+                },
+            )
+            .to_string()
         );
     }
 
@@ -236,13 +237,14 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => return ::std::result::Result::Err(::std::string::String::from(
-                    "`foo` must be initialized"
-                )),
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    None => return ::std::result::Result::Err(::std::string::String::from(
+                        "`foo` must be initialized"
+                    )),
+                },
+            )
+            .to_string()
         );
     }
 
@@ -254,13 +256,14 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(value) => value,
-                None => return ::std::result::Result::Err(::std::string::String::from(
-                    "`foo` must be initialized"
-                )),
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(value) => value,
+                    None => return ::std::result::Result::Err(::std::string::String::from(
+                        "`foo` must be initialized"
+                    )),
+                },
+            )
+            .to_string()
         );
     }
 
@@ -272,11 +275,12 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => { 42 },
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    None => { 42 },
+                },
+            )
+            .to_string()
         );
     }
 
@@ -288,11 +292,12 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(ref value) => ::std::clone::Clone::clone(value),
-                None => __default.foo,
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    None => __default.foo,
+                },
+            )
+            .to_string()
         );
     }
 
@@ -315,13 +320,14 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-            foo: match self.foo {
-                Some(ref value) => ::core::clone::Clone::clone(value),
-                None => return ::core::result::Result::Err(::alloc::string::String::from(
-                    "`foo` must be initialized"
-                )),
-            },
-        ).to_string()
+                foo: match self.foo {
+                    Some(ref value) => ::core::clone::Clone::clone(value),
+                    None => return ::core::result::Result::Err(::alloc::string::String::from(
+                        "`foo` must be initialized"
+                    )),
+                },
+            )
+            .to_string()
         );
     }
 

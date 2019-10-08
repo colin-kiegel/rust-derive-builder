@@ -193,14 +193,10 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
                 acc.push('|');
                 acc
             });
-        vec![
-            "Option|",
-            "std|option|Option|",
-            "core|option|Option|",
-        ]
-        .into_iter()
-        .find(|s| &idents_of_path == *s)
-        .and_then(|_| path.segments.last().map(Pair::End))
+        vec!["Option|", "std|option|Option|", "core|option|Option|"]
+            .into_iter()
+            .find(|s| &idents_of_path == *s)
+            .and_then(|_| path.segments.last().map(Pair::End))
     }
 
     extract_type_path(ty)

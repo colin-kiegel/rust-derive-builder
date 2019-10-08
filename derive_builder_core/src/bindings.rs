@@ -14,7 +14,8 @@ impl Bindings {
             "::alloc::string::String"
         } else {
             "::std::string::String"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// Result type.
@@ -23,7 +24,8 @@ impl Bindings {
             "::core::result::Result"
         } else {
             "::std::result::Result"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// Option type.
@@ -32,7 +34,8 @@ impl Bindings {
             "::core::option::Option"
         } else {
             "::std::option::Option"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// PhantomData type.
@@ -41,7 +44,8 @@ impl Bindings {
             "::core::marker::PhantomData"
         } else {
             "::std::marker::PhantomData"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// Default trait.
@@ -50,7 +54,8 @@ impl Bindings {
             "::core::default::Default"
         } else {
             "::std::default::Default"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// Clone trait.
@@ -59,7 +64,8 @@ impl Bindings {
             "::core::clone::Clone"
         } else {
             "::std::clone::Clone"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// Into trait.
@@ -69,7 +75,8 @@ impl Bindings {
             "::core::convert::Into"
         } else {
             "::std::convert::Into"
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     /// TryInto trait.
@@ -78,6 +85,7 @@ impl Bindings {
             "::core::convert::TryInto"
         } else {
             "::std::convert::TryInto"
-        }).unwrap()
+        })
+        .unwrap()
     }
 }
