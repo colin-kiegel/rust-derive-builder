@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.1] - 2019-10-30
+- Increase `darling` dependency to 0.10.2 #153
+
 ## [0.8.0] - 2019-09-30
 - Increase dependency versions to latest #148
 - Requires Rust 1.37.0 or newer (was 1.18.0) #148
