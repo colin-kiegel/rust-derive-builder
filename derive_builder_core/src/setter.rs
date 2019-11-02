@@ -39,7 +39,7 @@ use DeprecationNotes;
 #[derive(Debug, Clone)]
 pub struct Setter<'a> {
     /// Enables code generation for this setter fn.
-    pub enabled: bool,
+    pub setter_enabled: bool,
     /// Enables code generation for the `try_` variant of this setter fn.
     pub try_setter: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
@@ -69,7 +69,7 @@ pub struct Setter<'a> {
 
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.enabled {
+        if self.setter_enabled {
             trace!("Deriving setter for `{}`.", self.field_ident);
             let field_type = self.field_type;
             let pattern = self.pattern;
@@ -221,7 +221,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
 macro_rules! default_setter {
     () => {
         Setter {
-            enabled: true,
+            setter_enabled: true,
             try_setter: false,
             visibility: syn::parse_str("pub").unwrap(),
             pattern: BuilderPattern::Mutable,
@@ -461,7 +461,7 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut setter = default_setter!();
-        setter.enabled = false;
+        setter.setter_enabled = false;
 
         assert_eq!(quote!(#setter).to_string(), quote!().to_string());
     }

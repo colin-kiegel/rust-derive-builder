@@ -41,7 +41,7 @@ pub struct BuilderField<'a> {
     /// Note: We will fallback to `PhantomData` if the setter is disabled
     ///       to hack around issues with unused generic type parameters - at
     ///       least for now.
-    pub setter_enabled: bool,
+    pub field_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: syn::Visibility,
     /// Attributes which will be attached to this builder field.
@@ -52,7 +52,7 @@ pub struct BuilderField<'a> {
 
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.setter_enabled {
+        if self.field_enabled {
             trace!("Deriving builder field for `{}`.", self.field_ident);
             let vis = &self.field_visibility;
             let ident = self.field_ident;
@@ -89,7 +89,7 @@ macro_rules! default_builder_field {
         BuilderField {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &syn::parse_str("String").unwrap(),
-            setter_enabled: true,
+            field_enabled: true,
             field_visibility: syn::parse_str("pub").unwrap(),
             attrs: &[parse_quote!(#[some_attr])],
             bindings: Default::default(),
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut field = default_builder_field!();
-        field.setter_enabled = false;
+        field.field_enabled = false;
 
         assert_eq!(
             quote!(#field).to_string(),
@@ -148,7 +148,7 @@ mod tests {
     fn no_std_setter_disabled() {
         let mut field = default_builder_field!();
         field.bindings.no_std = true;
-        field.setter_enabled = false;
+        field.field_enabled = false;
 
         assert_eq!(
             quote!(#field).to_string(),
