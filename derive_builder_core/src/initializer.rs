@@ -40,7 +40,7 @@ pub struct Initializer<'a> {
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Whether the builder implements a setter for this field.
-    pub setter_enabled: bool,
+    pub field_enabled: bool,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
     /// Default value for the target field.
@@ -59,7 +59,7 @@ impl<'a> ToTokens for Initializer<'a> {
 
         let struct_field = &self.field_ident;
 
-        if self.setter_enabled {
+        if self.field_enabled {
             let match_some = self.match_some();
             let match_none = self.match_none();
             let builder_field = &*struct_field;
@@ -196,7 +196,7 @@ macro_rules! default_initializer {
     () => {
         Initializer {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            setter_enabled: true,
+            field_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut initializer = default_initializer!();
-        initializer.setter_enabled = false;
+        initializer.field_enabled = false;
 
         assert_eq!(
             quote!(#initializer).to_string(),
@@ -335,7 +335,7 @@ mod tests {
     fn no_std_setter_disabled() {
         let mut initializer = default_initializer!();
         initializer.bindings.no_std = true;
-        initializer.setter_enabled = false;
+        initializer.field_enabled = false;
 
         assert_eq!(
             quote!(#initializer).to_string(),

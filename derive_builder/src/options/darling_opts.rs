@@ -116,13 +116,25 @@ pub struct FieldLevelSetter {
     into: Option<bool>,
     strip_option: Option<bool>,
     skip: Option<bool>,
+    custom: Option<bool>,
 }
 
 impl FieldLevelSetter {
-    /// Get whether or not this field-level setter indicates a setter should
-    /// be emitted. The setter shorthand rules are that the presence of a
-    /// `setter` with _any_ properties set forces the setter to be emitted.
-    pub fn enabled(&self) -> Option<bool> {
+    /// Get whether the setter should be emitted. The rules are the same as
+    /// for `field_enabled`, except we only skip the setter if `setter(custom)` is present.
+    pub fn setter_enabled(&self) -> Option<bool> {
+        if self.custom.is_some() {
+            return self.custom.map(|x| !x);
+        }
+
+        self.field_enabled()
+    }
+
+    /// Get whether or not this field-level setter indicates a setter and
+    /// field should be emitted. The setter shorthand rules are that the
+    /// presence of a `setter` with _any_ properties set forces the setter
+    /// to be emitted.
+    pub fn field_enabled(&self) -> Option<bool> {
         if self.skip.is_some() {
             return self.skip.map(|x| !x);
         }
@@ -404,10 +416,18 @@ pub struct FieldWithDefaults<'a> {
 /// parent struct's configuration.
 impl<'a> FieldWithDefaults<'a> {
     /// Check if this field should emit a setter.
-    pub fn enabled(&self) -> bool {
+    pub fn setter_enabled(&self) -> bool {
         self.field
             .setter
-            .enabled()
+            .setter_enabled()
+            .or(self.parent.setter.enabled())
+            .unwrap_or(true)
+    }
+
+    pub fn field_enabled(&self) -> bool {
+        self.field
+            .setter
+            .field_enabled()
             .or(self.parent.setter.enabled())
             .unwrap_or(true)
     }
@@ -510,7 +530,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// Returns a `Setter` according to the options.
     pub fn as_setter(&'a self) -> Setter<'a> {
         Setter {
-            enabled: self.enabled(),
+            setter_enabled: self.setter_enabled(),
             try_setter: self.try_setter(),
             visibility: self.setter_vis(),
             pattern: self.pattern(),
@@ -532,7 +552,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// if `default_expression` can not be parsed as `Block`.
     pub fn as_initializer(&'a self) -> Initializer<'a> {
         Initializer {
-            setter_enabled: self.enabled(),
+            field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
             default_value: self
@@ -549,7 +569,7 @@ impl<'a> FieldWithDefaults<'a> {
         BuilderField {
             field_ident: self.field_ident(),
             field_type: &self.field.ty,
-            setter_enabled: self.enabled(),
+            field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
             attrs: &self.field.attrs,
             bindings: self.bindings(),
