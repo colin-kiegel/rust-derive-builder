@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.0] - 2019-11-07
+- Add `setter(custom)` to allow implementing a custom setter #154
+
 ## [0.8.1] - 2019-10-30
 - Increase `darling` dependency to 0.10.2 #153
 
