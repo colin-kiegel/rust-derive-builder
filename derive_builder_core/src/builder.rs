@@ -117,13 +117,21 @@ impl<'a> ToTokens for Builder<'a> {
                 ty_generics, where_clause, struct_generics
             );
 
+            #[cfg(not(feature = "clippy"))]
+            tokens.append_all(quote!(#[allow(clippy::all)]));
+
             tokens.append_all(quote!(
                 #[derive(#derived_traits)]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
+            ));
 
+            #[cfg(not(feature = "clippy"))]
+            tokens.append_all(quote!(#[allow(clippy::all)]));
+
+            tokens.append_all(quote!(
                 #[allow(dead_code)]
                 impl #impl_generics #builder_ident #ty_generics #where_clause {
                     #(#functions)*

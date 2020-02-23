@@ -15,6 +15,7 @@ readme = "README.md"
 
 [features]
 logging = [ "log" ]
+clippy = []
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
