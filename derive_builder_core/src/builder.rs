@@ -24,15 +24,28 @@ use Setter;
 /// # extern crate syn;
 /// # #[macro_use]
 /// # extern crate derive_builder_core;
+/// # use quote::TokenStreamExt;
 /// # use derive_builder_core::{Builder, DeprecationNotes};
 /// # fn main() {
 /// #    let builder = default_builder!();
 /// #
-/// #    assert_eq!(quote!(#builder).to_string(), quote!(
+/// #    assert_eq!(
+/// #       quote!(#builder).to_string(),
+/// #       {
+/// #           let mut result = quote!();
+/// #           #[cfg(not(feature = "clippy"))]
+/// #           result.append_all(quote!(#[allow(clippy::all)]));
+/// #
+/// #           result.append_all(quote!(
 /// #[derive(Default, Clone)]
 /// pub struct FooBuilder {
 ///     foo: u32,
 /// }
+/// #           ));
+/// #           #[cfg(not(feature = "clippy"))]
+/// #           result.append_all(quote!(#[allow(clippy::all)]));
+/// #
+/// #           result.append_all(quote!(
 ///
 /// #[allow(dead_code)]
 /// impl FooBuilder {
@@ -40,7 +53,10 @@ use Setter;
 ///         unimplemented!()
 ///     }
 /// }
-/// #    ).to_string());
+/// #           ));
+/// #           result
+/// #       }.to_string()
+/// #   );
 /// # }
 /// ```
 #[derive(Debug)]
@@ -117,13 +133,21 @@ impl<'a> ToTokens for Builder<'a> {
                 ty_generics, where_clause, struct_generics
             );
 
+            #[cfg(not(feature = "clippy"))]
+            tokens.append_all(quote!(#[allow(clippy::all)]));
+
             tokens.append_all(quote!(
                 #[derive(#derived_traits)]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
+            ));
 
+            #[cfg(not(feature = "clippy"))]
+            tokens.append_all(quote!(#[allow(clippy::all)]));
+
+            tokens.append_all(quote!(
                 #[allow(dead_code)]
                 impl #impl_generics #builder_ident #ty_generics #where_clause {
                     #(#functions)*
@@ -225,19 +249,33 @@ mod tests {
 
         assert_eq!(
             quote!(#builder).to_string(),
-            quote!(
-                #[derive(Default, Clone)]
-                pub struct FooBuilder {
-                    foo: u32,
-                }
+            {
+                let mut result = quote!();
 
-                #[allow(dead_code)]
-                impl FooBuilder {
-                    fn bar () -> {
-                        unimplemented!()
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Default, Clone)]
+                    pub struct FooBuilder {
+                        foo: u32,
                     }
-                }
-            )
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl FooBuilder {
+                        fn bar () -> {
+                            unimplemented!()
+                        }
+                    }
+                ));
+
+                result
+            }
             .to_string()
         );
     }
@@ -256,19 +294,33 @@ mod tests {
 
         assert_eq!(
             quote!(#builder).to_string(),
-            quote!(
-            #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
-                foo: u32,
-            }
+            {
+                let mut result = quote!();
 
-            #[allow(dead_code)]
-            impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
-                fn bar() -> {
-                    unimplemented!()
-                }
-            }
-        ).to_string()
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Default, Clone)]
+                    pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+                        fn bar() -> {
+                            unimplemented!()
+                        }
+                    }
+                ));
+
+                result
+            }.to_string()
         );
     }
 
@@ -287,19 +339,36 @@ mod tests {
 
         assert_eq!(
             quote!(#builder).to_string(),
-            quote!(
-            #[derive(Default, Clone)]
-            pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
-                foo: u32,
-            }
+            {
+                let mut result = quote!();
 
-            #[allow(dead_code)]
-            impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
-                fn bar() -> {
-                    unimplemented!()
-                }
-            }
-        ).to_string()
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Default, Clone)]
+                    pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T>
+                    where
+                        T: PartialEq
+                    {
+                        fn bar() -> {
+                            unimplemented!()
+                        }
+                    }
+                ));
+
+                result
+            }.to_string()
         );
     }
 
@@ -319,19 +388,33 @@ mod tests {
 
         assert_eq!(
             quote!(#builder).to_string(),
-            quote!(
-            #[derive(Default)]
-            pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
-                foo: u32,
-            }
+            {
+                let mut result = quote!();
 
-            #[allow(dead_code)]
-            impl<'a, T: Debug> FooBuilder<'a, T> where T: PartialEq {
-                fn bar() -> {
-                    unimplemented!()
-                }
-            }
-        ).to_string()
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Default)]
+                    pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl<'a, T: Debug> FooBuilder<'a, T> where T: PartialEq {
+                        fn bar() -> {
+                            unimplemented!()
+                        }
+                    }
+                ));
+
+                result
+            }.to_string()
         );
     }
 
@@ -351,19 +434,33 @@ mod tests {
 
         assert_eq!(
             quote!(#builder).to_string(),
-            quote!(
-                #[derive(Default, Clone, Serialize)]
-                pub struct FooBuilder {
-                    foo: u32,
-                }
+            {
+                let mut result = quote!();
 
-                #[allow(dead_code)]
-                impl FooBuilder {
-                    fn bar () -> {
-                        unimplemented!()
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Default, Clone, Serialize)]
+                    pub struct FooBuilder {
+                        foo: u32,
                     }
-                }
-            )
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl FooBuilder {
+                        fn bar () -> {
+                            unimplemented!()
+                        }
+                    }
+                ));
+
+                result
+            }
             .to_string()
         );
     }
