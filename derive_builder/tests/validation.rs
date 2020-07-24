@@ -43,14 +43,19 @@ impl LoremBuilder {
 #[test]
 fn out_of_bounds() {
     assert_eq!(
-        &LoremBuilder::default().my_effort(120).build().unwrap_err(),
+        &LoremBuilder::default()
+            .my_effort(120)
+            .build()
+            .unwrap_err()
+            .to_string(),
         "Don't wear yourself out"
     );
     assert_eq!(
         &LoremBuilder::default()
             .rivals_effort(120)
             .build()
-            .unwrap_err(),
+            .unwrap_err()
+            .to_string(),
         "Your rival is cheating"
     );
 }
