@@ -12,7 +12,7 @@ struct SetterCustom {
     setter_custom_shorthand: u32,
     #[builder(setter(custom = "false"))]
     setter_custom_by_explicit_opt_out: u32,
-    #[builder(setter(custom = "true"), default="4")]
+    #[builder(setter(custom = "true"), default = "4")]
     setter_custom_with_explicit_default: u32,
     #[builder(setter(custom = "true", strip_option))]
     setter_custom_with_strip_option: Option<u32>,
@@ -48,9 +48,7 @@ impl SetterCustomBuilder {
 
 #[test]
 fn setter_custom_defaults() {
-    let x: SetterCustom = SetterCustomBuilder::default()
-        .build()
-        .unwrap();
+    let x: SetterCustom = SetterCustomBuilder::default().build().unwrap();
 
     assert_eq!(
         x,
