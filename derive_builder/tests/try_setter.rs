@@ -36,14 +36,14 @@ struct Ipsum {
     pub source: MyAddr,
 }
 
-fn exact_helper() -> Result<Lorem, String> {
+fn exact_helper() -> Result<Lorem, LoremBuilderError> {
     LoremBuilder::default()
         .source(IpAddr::from_str("1.2.3.4").unwrap())
         .dest(IpAddr::from_str("0.0.0.0").unwrap())
         .build()
 }
 
-fn try_helper() -> Result<Lorem, String> {
+fn try_helper() -> Result<Lorem, LoremBuilderError> {
     LoremBuilder::default()
         .try_source("1.2.3.4")
         .map_err(|e| e.to_string())?
