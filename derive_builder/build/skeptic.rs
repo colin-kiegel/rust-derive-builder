@@ -62,7 +62,7 @@ use std::io::{Write, Read};
 const DOC_TPL_DIR: &'static str = "src/doc_tpl/";
 const DOC_TPL_OUT_DIR: &'static str = "doc_tpl/";
 
-fn generate_doc_tpl_tests() -> Result<Vec<String>, Box<Error>> {
+fn generate_doc_tpl_tests() -> Result<Vec<String>, Box<dyn Error>> {
     trace!("Generating doc template tests");
     let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
     let mut tpl_dir = root_dir;
