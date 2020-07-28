@@ -350,7 +350,7 @@ impl Options {
 
     /// Get an iterator over the input struct's fields which pulls fallback
     /// values from struct-level settings.
-    pub fn fields<'a>(&'a self) -> FieldIter<'a> {
+    pub fn fields(&self) -> FieldIter {
         FieldIter(self, self.raw_fields().into_iter())
     }
 
@@ -367,7 +367,7 @@ impl Options {
 
 /// Converters to codegen structs
 impl Options {
-    pub fn as_builder<'a>(&'a self) -> Builder<'a> {
+    pub fn as_builder(&self) -> Builder {
         Builder {
             enabled: true,
             ident: self.builder_ident(),
@@ -384,7 +384,7 @@ impl Options {
         }
     }
 
-    pub fn as_build_method<'a>(&'a self) -> BuildMethod<'a> {
+    pub fn as_build_method(&self) -> BuildMethod {
         let (_, ty_generics, _) = self.generics.split_for_impl();
         BuildMethod {
             enabled: !self.build_fn.skip,
@@ -420,7 +420,7 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .setter
             .setter_enabled()
-            .or(self.parent.setter.enabled())
+            .or_else(|| self.parent.setter.enabled())
             .unwrap_or(true)
     }
 
@@ -428,7 +428,7 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .setter
             .field_enabled()
-            .or(self.parent.setter.enabled())
+            .or_else(|| self.parent.setter.enabled())
             .unwrap_or(true)
     }
 
@@ -445,7 +445,7 @@ impl<'a> FieldWithDefaults<'a> {
             .setter
             .prefix
             .as_ref()
-            .or(self.parent.setter.prefix.as_ref())
+            .or_else(|| self.parent.setter.prefix.as_ref())
     }
 
     /// Get the ident of the emitted setter method
@@ -488,7 +488,7 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .as_expressed_vis()
             .or_else(|| self.parent.as_expressed_vis())
-            .unwrap_or(syn::parse_str("pub").unwrap())
+            .unwrap_or_else(|| syn::parse_str("pub").unwrap())
     }
 
     /// Get the ident of the input field. This is also used as the ident of the

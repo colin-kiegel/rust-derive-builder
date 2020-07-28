@@ -48,7 +48,7 @@ impl DefaultExpression {
         };
 
         expr.parse()
-            .expect(&format!("Couldn't parse default expression `{:?}`", self))
+            .unwrap_or_else(|_| panic!("Couldn't parse default expression `{:?}`", self))
     }
 }
 
