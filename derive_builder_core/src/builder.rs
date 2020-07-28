@@ -44,6 +44,7 @@ use Setter;
 ///
 /// #[doc="Error type for FooBuilder"]
 /// #[derive(Debug)]
+/// #[non_exhaustive]
 /// pub enum FooBuilderError {
 ///     /// Uninitialized field
 ///     UninitializedField(&'static str),
@@ -181,6 +182,7 @@ impl<'a> ToTokens for Builder<'a> {
 
                 #[doc=#builder_error_doc]
                 #[derive(Debug)]
+                #[non_exhaustive]
                 #builder_vis enum #builder_error_ident {
                     /// Uninitialized field
                     UninitializedField(&'static str),
@@ -334,6 +336,7 @@ mod tests {
                 result.append_all(quote!(
                     #[doc="Error type for FooBuilder"]
                     #[derive(Debug)]
+                    #[non_exhaustive]
                     pub enum FooBuilderError {
                         /// Uninitialized field
                         UninitializedField(&'static str),
@@ -414,6 +417,7 @@ mod tests {
                 result.append_all(quote!(
                     #[doc="Error type for FooBuilder"]
                     #[derive(Debug)]
+                    #[non_exhaustive]
                     pub enum FooBuilderError {
                         /// Uninitialized field
                         UninitializedField(&'static str),
@@ -494,6 +498,7 @@ mod tests {
                 result.append_all(quote!(
                     #[doc="Error type for FooBuilder"]
                     #[derive(Debug)]
+                    #[non_exhaustive]
                     pub enum FooBuilderError {
                         /// Uninitialized field
                         UninitializedField(&'static str),
@@ -578,6 +583,7 @@ mod tests {
                 result.append_all(quote!(
                     #[doc="Error type for FooBuilder"]
                     #[derive(Debug)]
+                    #[non_exhaustive]
                     pub enum FooBuilderError {
                         /// Uninitialized field
                         UninitializedField(&'static str),
@@ -659,6 +665,7 @@ mod tests {
                 result.append_all(quote!(
                     #[doc="Error type for FooBuilder"]
                     #[derive(Debug)]
+                    #[non_exhaustive]
                     pub enum FooBuilderError {
                         /// Uninitialized field
                         UninitializedField(&'static str),
