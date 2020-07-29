@@ -328,13 +328,14 @@ mod tests {
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
-                let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo<VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::std::option::Option::Some(value.into());
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -371,7 +372,8 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo<VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(::std::option::Option::Some(value.into()));
+                    new.foo =
+                        ::std::option::Option::Some(::std::option::Option::Some(value.into()));
                     new
                 }
             )
@@ -445,16 +447,21 @@ mod tests {
         setter.bindings.no_std = true;
         setter.generic_into = true;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
-            #[allow(unused_mut)]
-            pub fn foo <VALUE: ::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
-                let mut new = self;
-                new.foo = ::core::option::Option::Some(value.into());
-                new
-            }
-        ).to_string()
+                #[allow(unused_mut)]
+                pub fn foo<VALUE: ::core::convert::Into<Foo>>(
+                    &mut self,
+                    value: VALUE
+                ) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::core::option::Option::Some(value.into());
+                    new
+                }
+            )
+            .to_string()
         );
     }
 
@@ -472,6 +479,7 @@ mod tests {
         setter.pattern = BuilderPattern::Mutable;
         setter.try_setter = true;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
@@ -482,9 +490,11 @@ mod tests {
                     new
                 }
 
-                pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                    -> ::std::result::Result<&mut Self, VALUE::Error> {
-                    let converted : Foo = value.try_into()?;
+                pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(
+                    &mut self,
+                    value: VALUE
+                ) -> ::std::result::Result<&mut Self, VALUE::Error> {
+                    let converted: Foo = value.try_into()?;
                     let mut new = self;
                     new.foo = ::std::option::Option::Some(converted);
                     Ok(new)

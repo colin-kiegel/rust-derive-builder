@@ -10,7 +10,7 @@ matrix:
   include:
     - rust: nightly
       env: JOB=test CARGO_FEATURES="skeptic_tests nightlytests logging"
-    - rust: nightly
+    - rust: stable
       env: JOB=style_check
   allow_failures:
     - env: JOB=style_check
@@ -41,8 +41,7 @@ before_script: |
   # share build artifacts:
   export CARGO_TARGET_DIR="$TRAVIS_BUILD_DIR/target"
   if [ "$JOB" = "style_check" ]; then
-    which cargo-clippy || cargo install clippy --debug || exit
-    which cargo-fmt || cargo install rustfmt --debug || exit
+    rustup component add clippy rustfmt
   fi
 script: |
   case "$JOB" in
@@ -60,10 +59,10 @@ script: |
       ;;
     style_check)
       commands=(
-        "cd derive_builder_core && cargo clippy -- -Dclippy"
-        "cd derive_builder      && cargo clippy -- -Dclippy"
-        "cd derive_builder_core && cargo fmt -- --write-mode diff"
-        "cd derive_builder      && cargo fmt -- --write-mode diff"
+        "cd derive_builder_core && cargo clippy"
+        "cd derive_builder      && cargo clippy"
+        "cd derive_builder_core && cargo fmt -- --check"
+        "cd derive_builder      && cargo fmt -- --check"
       )
       ;;
     *)

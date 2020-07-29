@@ -155,6 +155,7 @@ mod tests {
     fn std() {
         let build_method = default_build_method!();
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
@@ -173,6 +174,7 @@ mod tests {
         let mut build_method = default_build_method!();
         build_method.bindings.no_std = true;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
@@ -191,11 +193,12 @@ mod tests {
         let mut build_method = default_build_method!();
         build_method.default_struct = Some("Default::default()".parse().unwrap());
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
                 pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
-                    let __default: Foo = {Default::default()};
+                    let __default: Foo = { Default::default() };
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -220,6 +223,7 @@ mod tests {
         let mut build_method: BuildMethod = default_build_method!();
         build_method.ident = &ident;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
@@ -230,7 +234,7 @@ mod tests {
                 }
             )
             .to_string()
-        )
+        );
     }
 
     #[test]
@@ -241,6 +245,7 @@ mod tests {
         let mut build_method: BuildMethod = default_build_method!();
         build_method.validate_fn = Some(&validate_path);
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
