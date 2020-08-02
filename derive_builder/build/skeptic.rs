@@ -14,7 +14,7 @@ mod log_disabled {
 fn main() {
     println!("INFO: Run with `RUST_LOG=build_script_build=trace` for debug information.");
     #[cfg(feature = "logging")]
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let mut files = generate_doc_tpl_tests().unwrap();
     files.push("README.md".to_string());
