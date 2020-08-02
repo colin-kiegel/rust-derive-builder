@@ -18,7 +18,7 @@ fn main() {
     //~^ ERROR struct `LoremBuilder` is private
         .public("Hello")
         .build()
-    //~^ ERROR associated function `build` is private
+    //~^ ERROR `build` is private
         .unwrap();
 
     assert_eq!(x.public, "Hello".to_string());
