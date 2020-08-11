@@ -5,22 +5,21 @@ rust:
   - beta
   - stable
   - nightly
-  - 1.37.0
+  - 1.40.0
 matrix:
   include:
-    - rust: nightly
-      env: JOB=test CARGO_FEATURES="skeptic_tests nightlytests logging"
     - rust: stable
       env: JOB=style_check
   allow_failures:
     - env: JOB=style_check
-    - env: JOB=test CARGO_FEATURES="skeptic_tests nightlytests logging"
   fast_finish: true
 env:
   matrix:
-    - JOB=test
+  - JOB=test CARGO_FEATURES=""
+  - JOB=test CARGO_FEATURES="skeptic_tests"
+  - JOB=test CARGO_FEATURES="logging"
+  - JOB=test CARGO_FEATURES="skeptic_tests logging"
   global:
-  - CARGO_FEATURES=""
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
   - PKGNAME=derive_builder

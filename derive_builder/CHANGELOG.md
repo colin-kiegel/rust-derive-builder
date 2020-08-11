@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+- Requires Rust 1.40.0 or newer (was 1.37.0) #169
+
 ## [0.9.0] - 2019-11-07
 - Add `setter(custom)` to allow implementing a custom setter #154
 

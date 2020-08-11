@@ -265,13 +265,8 @@
 //! to add `#![feature(try_from)]` to your crate to use it.
 //!
 //! ```rust
-//! // #![feature(try_from)]
-//! # #![cfg_attr(feature = "nightlytests", feature(try_from))]
-//! # #[cfg(feature = "nightlytests")]
 //! # #[macro_use]
 //! # extern crate derive_builder;
-//! #
-//! # #[cfg(feature = "nightlytests")]
 //! #[derive(Builder, Debug, PartialEq)]
 //! #[builder(try_setter, setter(into))]
 //! struct Lorem {
@@ -279,7 +274,6 @@
 //!     pub ipsum: u8,
 //! }
 //!
-//! # #[cfg(feature = "nightlytests")]
 //! #[derive(Builder, Debug, PartialEq)]
 //! struct Ipsum {
 //!     #[builder(try_setter, setter(into, name = "foo"))]
@@ -287,14 +281,12 @@
 //! }
 //!
 //! fn main() {
-//! #  #[cfg(feature = "nightlytests")]
 //!    LoremBuilder::default()
 //!        .try_ipsum(1u16).unwrap()
 //!        .name("hello")
 //!        .build()
 //!        .expect("1 fits into a u8");
 //!
-//! #  #[cfg(feature = "nightlytests")]
 //!    IpsumBuilder::default()
 //!        .try_foo(1u16).unwrap()
 //!        .build()
@@ -580,17 +572,17 @@ use darling::FromDeriveInput;
 use options::Options;
 use proc_macro::TokenStream;
 #[cfg(feature = "logging")]
-use std::sync::{Once, ONCE_INIT};
+use std::sync::Once;
 
 #[cfg(feature = "logging")]
-static INIT_LOGGER: Once = ONCE_INIT;
+static INIT_LOGGER: Once = Once::new();
 
 #[doc(hidden)]
 #[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(input: TokenStream) -> TokenStream {
     #[cfg(feature = "logging")]
     INIT_LOGGER.call_once(|| {
-        env_logger::init().unwrap();
+        env_logger::init();
     });
 
     let ast = parse_macro_input!(input as syn::DeriveInput);
