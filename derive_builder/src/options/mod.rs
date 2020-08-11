@@ -17,7 +17,7 @@ use derive_builder_core::Block;
 
 mod darling_opts;
 
-pub use self::darling_opts::Options;
+pub(crate) use self::darling_opts::Options;
 
 /// A `DefaultExpression` can be either explicit or refer to the canonical trait.
 #[derive(Debug, Clone)]

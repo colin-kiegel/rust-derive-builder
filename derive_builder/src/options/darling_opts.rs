@@ -40,7 +40,7 @@ trait FlagVisibility {
 /// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
 #[darling(default)]
-pub struct BuildFn {
+pub(crate) struct BuildFn {
     skip: bool,
     name: Ident,
     validate: Option<Path>,
@@ -73,7 +73,7 @@ impl FlagVisibility for BuildFn {
 /// Contents of the `field` meta in `builder` attributes.
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(default)]
-pub struct FieldMeta {
+pub(crate) struct FieldMeta {
     public: Flag,
     private: Flag,
 }
@@ -90,7 +90,7 @@ impl FlagVisibility for FieldMeta {
 
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(default)]
-pub struct StructLevelSetter {
+pub(crate) struct StructLevelSetter {
     prefix: Option<Ident>,
     into: Option<bool>,
     strip_option: Option<bool>,
@@ -100,7 +100,7 @@ pub struct StructLevelSetter {
 impl StructLevelSetter {
     /// Check if setters are explicitly enabled or disabled at
     /// the struct level.
-    pub fn enabled(&self) -> Option<bool> {
+    pub(crate) fn enabled(&self) -> Option<bool> {
         self.skip.map(|x| !x)
     }
 }
@@ -110,7 +110,7 @@ impl StructLevelSetter {
 /// name overrides.
 #[derive(Debug, Clone, Default, FromMeta)]
 #[darling(default)]
-pub struct FieldLevelSetter {
+pub(crate) struct FieldLevelSetter {
     prefix: Option<Ident>,
     name: Option<Ident>,
     into: Option<bool>,
@@ -122,7 +122,7 @@ pub struct FieldLevelSetter {
 impl FieldLevelSetter {
     /// Get whether the setter should be emitted. The rules are the same as
     /// for `field_enabled`, except we only skip the setter if `setter(custom)` is present.
-    pub fn setter_enabled(&self) -> Option<bool> {
+    pub(crate) fn setter_enabled(&self) -> Option<bool> {
         if self.custom.is_some() {
             return self.custom.map(|x| !x);
         }
@@ -134,7 +134,7 @@ impl FieldLevelSetter {
     /// field should be emitted. The setter shorthand rules are that the
     /// presence of a `setter` with _any_ properties set forces the setter
     /// to be emitted.
-    pub fn field_enabled(&self) -> Option<bool> {
+    pub(crate) fn field_enabled(&self) -> Option<bool> {
         if self.skip.is_some() {
             return self.skip.map(|x| !x);
         }
@@ -192,7 +192,7 @@ impl FromMeta for FieldSetterMeta {
 /// Data extracted from the fields of the input struct.
 #[derive(Debug, Clone, FromField)]
 #[darling(attributes(builder), forward_attrs(doc, cfg, allow))]
-pub struct Field {
+pub(crate) struct Field {
     ident: Option<Ident>,
     attrs: Vec<Attribute>,
     vis: syn::Visibility,
@@ -243,7 +243,7 @@ impl FlagVisibility for Field {
     forward_attrs(doc, cfg, allow),
     supports(struct_named)
 )]
-pub struct Options {
+pub(crate) struct Options {
     ident: Ident,
 
     attrs: Vec<Attribute>,
@@ -310,7 +310,7 @@ impl FlagVisibility for Options {
 
 /// Accessors for parsed properties.
 impl Options {
-    pub fn builder_ident(&self) -> Ident {
+    pub(crate) fn builder_ident(&self) -> Ident {
         if let Some(ref custom) = self.name {
             return custom.clone();
         }
@@ -322,19 +322,19 @@ impl Options {
     /// The visibility of the builder struct.
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
-    pub fn builder_vis(&self) -> Visibility {
+    pub(crate) fn builder_vis(&self) -> Visibility {
         self.as_expressed_vis().unwrap_or_else(|| self.vis.clone())
     }
 
     /// Get the visibility of the emitted `build` method.
     /// This defaults to the visibility of the parent builder, but can be overridden.
-    pub fn build_method_vis(&self) -> Visibility {
+    pub(crate) fn build_method_vis(&self) -> Visibility {
         self.build_fn
             .as_expressed_vis()
             .unwrap_or_else(|| self.builder_vis())
     }
 
-    pub fn raw_fields<'a>(&'a self) -> Vec<&'a Field> {
+    pub(crate) fn raw_fields<'a>(&'a self) -> Vec<&'a Field> {
         self.data
             .as_ref()
             .take_struct()
@@ -344,17 +344,17 @@ impl Options {
 
     /// A builder requires `Clone` to be derived if its build method or any of its setters
     /// use the mutable or immutable pattern.
-    pub fn requires_clone(&self) -> bool {
+    pub(crate) fn requires_clone(&self) -> bool {
         self.pattern.requires_clone() || self.fields().any(|f| f.pattern().requires_clone())
     }
 
     /// Get an iterator over the input struct's fields which pulls fallback
     /// values from struct-level settings.
-    pub fn fields(&self) -> FieldIter {
+    pub(crate) fn fields(&self) -> FieldIter {
         FieldIter(self, self.raw_fields().into_iter())
     }
 
-    pub fn field_count(&self) -> usize {
+    pub(crate) fn field_count(&self) -> usize {
         self.raw_fields().len()
     }
 
@@ -367,7 +367,7 @@ impl Options {
 
 /// Converters to codegen structs
 impl Options {
-    pub fn as_builder(&self) -> Builder {
+    pub(crate) fn as_builder(&self) -> Builder {
         Builder {
             enabled: true,
             ident: self.builder_ident(),
@@ -384,7 +384,7 @@ impl Options {
         }
     }
 
-    pub fn as_build_method(&self) -> BuildMethod {
+    pub(crate) fn as_build_method(&self) -> BuildMethod {
         let (_, ty_generics, _) = self.generics.split_for_impl();
         BuildMethod {
             enabled: !self.build_fn.skip,
@@ -407,7 +407,7 @@ impl Options {
 
 /// Accessor for field data which can pull through options from the parent
 /// struct.
-pub struct FieldWithDefaults<'a> {
+pub(crate) struct FieldWithDefaults<'a> {
     parent: &'a Options,
     field: &'a Field,
 }
@@ -416,7 +416,7 @@ pub struct FieldWithDefaults<'a> {
 /// parent struct's configuration.
 impl<'a> FieldWithDefaults<'a> {
     /// Check if this field should emit a setter.
-    pub fn setter_enabled(&self) -> bool {
+    pub(crate) fn setter_enabled(&self) -> bool {
         self.field
             .setter
             .setter_enabled()
@@ -424,7 +424,7 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(true)
     }
 
-    pub fn field_enabled(&self) -> bool {
+    pub(crate) fn field_enabled(&self) -> bool {
         self.field
             .setter
             .field_enabled()
@@ -434,13 +434,13 @@ impl<'a> FieldWithDefaults<'a> {
 
     /// Check if this field should emit a fallible setter.
     /// This depends on the `TryFrom` trait, which hasn't yet stabilized.
-    pub fn try_setter(&self) -> bool {
+    pub(crate) fn try_setter(&self) -> bool {
         self.field.try_setter.is_some() || self.parent.try_setter.is_some()
     }
 
     /// Get the prefix that should be applied to the field name to produce
     /// the setter ident, if any.
-    pub fn setter_prefix(&self) -> Option<&Ident> {
+    pub(crate) fn setter_prefix(&self) -> Option<&Ident> {
         self.field
             .setter
             .prefix
@@ -449,7 +449,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Get the ident of the emitted setter method
-    pub fn setter_ident(&self) -> syn::Ident {
+    pub(crate) fn setter_ident(&self) -> syn::Ident {
         if let Some(ref custom) = self.field.setter.name {
             return custom.clone();
         }
@@ -465,7 +465,7 @@ impl<'a> FieldWithDefaults<'a> {
 
     /// Checks if the emitted setter should be generic over types that impl
     /// `Into<FieldType>`.
-    pub fn setter_into(&self) -> bool {
+    pub(crate) fn setter_into(&self) -> bool {
         self.field
             .setter
             .into
@@ -475,7 +475,7 @@ impl<'a> FieldWithDefaults<'a> {
 
     /// Checks if the emitted setter should strip the wrapper Option over types that impl
     /// `Option<FieldType>`.
-    pub fn setter_strip_option(&self) -> bool {
+    pub(crate) fn setter_strip_option(&self) -> bool {
         self.field
             .setter
             .strip_option
@@ -484,7 +484,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Get the visibility of the emitted setter, if there will be one.
-    pub fn setter_vis(&self) -> Visibility {
+    pub(crate) fn setter_vis(&self) -> Visibility {
         self.field
             .as_expressed_vis()
             .or_else(|| self.parent.as_expressed_vis())
@@ -493,14 +493,14 @@ impl<'a> FieldWithDefaults<'a> {
 
     /// Get the ident of the input field. This is also used as the ident of the
     /// emitted field.
-    pub fn field_ident(&self) -> &syn::Ident {
+    pub(crate) fn field_ident(&self) -> &syn::Ident {
         self.field
             .ident
             .as_ref()
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Visibility {
+    pub(crate) fn field_vis(&self) -> Visibility {
         self.field
             .field
             .as_expressed_vis()
@@ -508,15 +508,15 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(Visibility::Inherited)
     }
 
-    pub fn pattern(&self) -> BuilderPattern {
+    pub(crate) fn pattern(&self) -> BuilderPattern {
         self.field.pattern.unwrap_or(self.parent.pattern)
     }
 
-    pub fn use_parent_default(&self) -> bool {
+    pub(crate) fn use_parent_default(&self) -> bool {
         self.field.default.is_none() && self.parent.default.is_some()
     }
 
-    pub fn deprecation_notes(&self) -> &DeprecationNotes {
+    pub(crate) fn deprecation_notes(&self) -> &DeprecationNotes {
         &self.parent.deprecation_notes
     }
 
@@ -528,7 +528,7 @@ impl<'a> FieldWithDefaults<'a> {
 /// Converters to codegen structs
 impl<'a> FieldWithDefaults<'a> {
     /// Returns a `Setter` according to the options.
-    pub fn as_setter(&'a self) -> Setter<'a> {
+    pub(crate) fn as_setter(&'a self) -> Setter<'a> {
         Setter {
             setter_enabled: self.setter_enabled(),
             try_setter: self.try_setter(),
@@ -550,7 +550,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// # Panics
     ///
     /// if `default_expression` can not be parsed as `Block`.
-    pub fn as_initializer(&'a self) -> Initializer<'a> {
+    pub(crate) fn as_initializer(&'a self) -> Initializer<'a> {
         Initializer {
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
@@ -565,7 +565,7 @@ impl<'a> FieldWithDefaults<'a> {
         }
     }
 
-    pub fn as_builder_field(&'a self) -> BuilderField<'a> {
+    pub(crate) fn as_builder_field(&'a self) -> BuilderField<'a> {
         BuilderField {
             field_ident: self.field_ident(),
             field_type: &self.field.ty,
@@ -577,7 +577,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 }
 
-pub struct FieldIter<'a>(&'a Options, IntoIter<&'a Field>);
+pub(crate) struct FieldIter<'a>(&'a Options, IntoIter<&'a Field>);
 
 impl<'a> Iterator for FieldIter<'a> {
     type Item = FieldWithDefaults<'a>;
