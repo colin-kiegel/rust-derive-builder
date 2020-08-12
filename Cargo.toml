@@ -1,2 +1,2 @@
 [workspace]
-members = ["derive_builder", "derive_builder_core"]
+members = ["derive_builder", "derive_builder_macro", "derive_builder_core"]
