@@ -30,5 +30,5 @@ fn main() {
     let x = LoremBuilder::default().ipsum(120).build().unwrap_err();
 
     // .. the build will fail:
-    assert_eq!(&x, "You'll tire yourself out");
+    assert_eq!(&x.to_string(), "You'll tire yourself out");
 }

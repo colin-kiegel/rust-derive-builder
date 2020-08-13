@@ -101,12 +101,9 @@ impl<'a> Initializer<'a> {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
                 } else if self.bindings.no_std {
-                    MatchNone::ReturnErrorNoStd(format!(
-                        "`{}` must be initialized",
-                        self.field_ident
-                    ))
+                    MatchNone::ReturnErrorNoStd(self.field_ident.to_string())
                 } else {
-                    MatchNone::ReturnError(format!("`{}` must be initialized", self.field_ident))
+                    MatchNone::ReturnError(self.field_ident.to_string())
                 }
             }
         }
@@ -155,11 +152,11 @@ impl<'a> ToTokens for MatchNone<'a> {
                 ))
             }
             MatchNone::ReturnError(ref err) => tokens.append_all(quote!(
-                None => return ::std::result::Result::Err(::std::string::String::from(#err))
+                None => return ::std::result::Result::Err(::std::convert::Into::into(#err))
             )),
             MatchNone::ReturnErrorNoStd(ref err) => tokens.append_all(quote!(
                 None => return ::core::result::Result::Err(
-                    ::alloc::string::String::from(#err))
+                    ::std::convert::Into::into(#err))
             )),
         }
     }
@@ -220,8 +217,8 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::std::clone::Clone::clone(value),
-                    None => return ::std::result::Result::Err(::std::string::String::from(
-                        "`foo` must be initialized"
+                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                        "foo"
                     )),
                 },
             )
@@ -239,8 +236,8 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::std::clone::Clone::clone(value),
-                    None => return ::std::result::Result::Err(::std::string::String::from(
-                        "`foo` must be initialized"
+                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                        "foo"
                     )),
                 },
             )
@@ -258,8 +255,8 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(value) => value,
-                    None => return ::std::result::Result::Err(::std::string::String::from(
-                        "`foo` must be initialized"
+                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                        "foo"
                     )),
                 },
             )
@@ -322,8 +319,8 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::core::clone::Clone::clone(value),
-                    None => return ::core::result::Result::Err(::alloc::string::String::from(
-                        "`foo` must be initialized"
+                    None => return ::core::result::Result::Err(::std::convert::Into::into(
+                        "foo"
                     )),
                 },
             )

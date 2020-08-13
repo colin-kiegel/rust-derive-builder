@@ -24,9 +24,9 @@ mod field_level {
     }
 
     #[test]
-    #[should_panic(expected = "`required` must be initialized")]
-    fn panic_if_uninitialized() {
-        LoremBuilder::default().build().unwrap();
+    fn error_if_uninitialized() {
+        let error = LoremBuilder::default().build().unwrap_err();
+        assert_eq!(&error.to_string(), "`required` must be initialized");
     }
 
     #[test]

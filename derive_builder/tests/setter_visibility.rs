@@ -53,12 +53,11 @@ pub mod foo {
 }
 
 #[test]
-#[should_panic(expected = "`private` must be initialized")]
 fn public_setters_foreign_module() {
-    let y = foo::IpsumBuilder::default()
+    let error = foo::IpsumBuilder::default()
         .public("Hello")
         .build()
-        .unwrap();
+        .unwrap_err();
 
-    assert_eq!(y.public, "Hello".to_string());
+    assert_eq!(&error.to_string(), "`private` must be initialized");
 }

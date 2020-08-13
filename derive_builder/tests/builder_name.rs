@@ -13,9 +13,9 @@ struct Lorem {
 }
 
 #[test]
-#[should_panic(expected = "`ipsum` must be initialized")]
-fn panic_if_uninitialized() {
-    MyBuilder::default().build().unwrap();
+fn error_if_uninitialized() {
+    let error = MyBuilder::default().build().unwrap_err();
+    assert_eq!(&error.to_string(), "`ipsum` must be initialized");
 }
 
 #[test]

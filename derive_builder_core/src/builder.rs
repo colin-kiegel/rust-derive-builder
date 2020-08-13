@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt};
+use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
@@ -41,6 +41,40 @@ use Setter;
 /// pub struct FooBuilder {
 ///     foo: u32,
 /// }
+///
+/// #[doc="Error type for FooBuilder"]
+/// #[derive(Debug)]
+/// #[non_exhaustive]
+/// pub enum FooBuilderError {
+///     /// Uninitialized field
+///     UninitializedField(&'static str),
+///     /// Custom validation error
+///     ValidationError(String),
+/// }
+///
+/// impl core::convert::From<&'static str> for FooBuilderError {
+///     fn from(s: &'static str) -> Self {
+///         Self::UninitializedField(s)
+///     }
+/// }
+///
+/// impl core::convert::From<String> for FooBuilderError {
+///     fn from(s: String) -> Self {
+///         Self::ValidationError(s)
+///     }
+/// }
+///
+/// impl core::fmt::Display for FooBuilderError {
+///     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+///         match self {
+///             Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+///             Self::ValidationError(ref error) => write!(f, "{}", error),
+///         }
+///     }
+/// }
+///
+/// #[cfg(not(no_std))]
+/// impl std::error::Error for FooBuilderError {}
 /// #           ));
 /// #           #[cfg(not(feature = "clippy"))]
 /// #           result.append_all(quote!(#[allow(clippy::all)]));
@@ -136,12 +170,49 @@ impl<'a> ToTokens for Builder<'a> {
             #[cfg(not(feature = "clippy"))]
             tokens.append_all(quote!(#[allow(clippy::all)]));
 
+            let builder_error_ident = format_ident!("{}Error", builder_ident);
+            let builder_error_doc = format!("Error type for {}", builder_ident);
+
             tokens.append_all(quote!(
                 #[derive(#derived_traits)]
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
+
+                #[doc=#builder_error_doc]
+                #[derive(Debug)]
+                #[non_exhaustive]
+                #builder_vis enum #builder_error_ident {
+                    /// Uninitialized field
+                    UninitializedField(&'static str),
+                    /// Custom validation error
+                    ValidationError(String),
+                }
+
+                impl core::convert::From<&'static str> for #builder_error_ident {
+                    fn from(s: &'static str) -> Self {
+                        Self::UninitializedField(s)
+                    }
+                }
+
+                impl core::convert::From<String> for #builder_error_ident {
+                    fn from(s: String) -> Self {
+                        Self::ValidationError(s)
+                    }
+                }
+
+                impl core::fmt::Display for #builder_error_ident {
+                    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                        match self {
+                            Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                            Self::ValidationError(ref error) => write!(f, "{}", error),
+                        }
+                    }
+                }
+
+                #[cfg(not(no_std))]
+                impl std::error::Error for #builder_error_ident {}
             ));
 
             #[cfg(not(feature = "clippy"))]
@@ -262,6 +333,42 @@ mod tests {
                     }
                 ));
 
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl core::convert::From<&'static str> for FooBuilderError {
+                        fn from(s: &'static str) -> Self {
+                            Self::UninitializedField(s)
+                        }
+                    }
+
+                    impl core::convert::From<String> for FooBuilderError {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for FooBuilderError {}
+                ));
+
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -307,6 +414,42 @@ mod tests {
                     }
                 ));
 
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl core::convert::From<&'static str> for FooBuilderError {
+                        fn from(s: &'static str) -> Self {
+                            Self::UninitializedField(s)
+                        }
+                    }
+
+                    impl core::convert::From<String> for FooBuilderError {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for FooBuilderError {}
+                ));
+
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -350,6 +493,42 @@ mod tests {
                     pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
                         foo: u32,
                     }
+                ));
+
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl core::convert::From<&'static str> for FooBuilderError {
+                        fn from(s: &'static str) -> Self {
+                            Self::UninitializedField(s)
+                        }
+                    }
+
+                    impl core::convert::From<String> for FooBuilderError {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for FooBuilderError {}
                 ));
 
                 #[cfg(not(feature = "clippy"))]
@@ -401,6 +580,42 @@ mod tests {
                     }
                 ));
 
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl core::convert::From<&'static str> for FooBuilderError {
+                        fn from(s: &'static str) -> Self {
+                            Self::UninitializedField(s)
+                        }
+                    }
+
+                    impl core::convert::From<String> for FooBuilderError {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for FooBuilderError {}
+                ));
+
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -445,6 +660,42 @@ mod tests {
                     pub struct FooBuilder {
                         foo: u32,
                     }
+                ));
+
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl core::convert::From<&'static str> for FooBuilderError {
+                        fn from(s: &'static str) -> Self {
+                            Self::UninitializedField(s)
+                        }
+                    }
+
+                    impl core::convert::From<String> for FooBuilderError {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for FooBuilderError {}
                 ));
 
                 #[cfg(not(feature = "clippy"))]

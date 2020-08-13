@@ -24,9 +24,9 @@ where
 }
 
 #[test]
-#[should_panic(expected = "`ipsum` must be initialized")]
-fn panic_if_uninitialized() {
-    GenericBuilder::<String>::default().build().unwrap();
+fn error_if_uninitialized() {
+    let error = GenericBuilder::<String>::default().build().unwrap_err();
+    assert_eq!(&error.to_string(), "`ipsum` must be initialized");
 }
 
 #[test]

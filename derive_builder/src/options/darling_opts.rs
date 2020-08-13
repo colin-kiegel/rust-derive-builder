@@ -319,6 +319,14 @@ impl Options {
             .expect("Struct name with Builder suffix should be an ident")
     }
 
+    pub fn builder_error_ident(&self) -> Ident {
+        if let Some(ref custom) = self.name {
+            format_ident!("{}Error", custom)
+        } else {
+            format_ident!("{}BuilderError", self.ident)
+        }
+    }
+
     /// The visibility of the builder struct.
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
@@ -393,6 +401,7 @@ impl Options {
             pattern: self.pattern,
             target_ty: &self.ident,
             target_ty_generics: Some(ty_generics),
+            error_ty: self.builder_error_ident(),
             initializers: Vec::with_capacity(self.field_count()),
             doc_comment: None,
             bindings: self.bindings(),

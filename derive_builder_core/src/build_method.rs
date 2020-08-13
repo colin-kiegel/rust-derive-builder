@@ -27,7 +27,7 @@ use DEFAULT_STRUCT_NAME;
 /// #    let build_method = default_build_method!();
 /// #
 /// #    assert_eq!(quote!(#build_method).to_string(), quote!(
-/// pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+/// pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
 ///     Ok(Foo {
 ///         foo: self.foo,
 ///     })
@@ -51,6 +51,8 @@ pub struct BuildMethod<'a> {
     pub target_ty: &'a syn::Ident,
     /// Type parameters and lifetimes attached to this builder struct.
     pub target_ty_generics: Option<syn::TypeGenerics<'a>>,
+    /// Type of error.
+    pub error_ty: syn::Ident,
     /// Field initializers for the target type.
     pub initializers: Vec<TokenStream>,
     /// Doc-comment of the builder struct.
@@ -84,14 +86,14 @@ impl<'a> ToTokens for BuildMethod<'a> {
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
         let result = self.bindings.result_ty();
-        let string = self.bindings.string_ty();
+        let error_ty = &self.error_ty;
 
         if self.enabled {
             trace!("Deriving build method `{}`.", self.ident);
             tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
-                    -> #result<#target_ty #target_ty_generics, #string>
+                    -> #result<#target_ty #target_ty_generics, #error_ty>
                 {
                     #validate_fn
                     #default_struct
@@ -137,6 +139,7 @@ macro_rules! default_build_method {
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,
+            error_ty: syn::Ident::new("FooBuilderError", ::proc_macro2::Span::call_site()),
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
             bindings: Default::default(),
@@ -159,7 +162,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -178,7 +181,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::core::result::Result<Foo, ::alloc::string::String> {
+                pub fn build(&self) -> ::core::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -197,7 +200,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
                     let __default: Foo = { Default::default() };
                     Ok(Foo {
                         foo: self.foo,
@@ -227,7 +230,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn finish(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                pub fn finish(&self) -> ::std::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -249,7 +252,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, ::std::string::String> {
+                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
                     IpsumBuilder::validate(&self)?;
 
                     Ok(Foo {

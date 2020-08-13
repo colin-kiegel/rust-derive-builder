@@ -63,7 +63,8 @@
 //!
 //! You can easily opt into different patterns and control many other aspects.
 //!
-//! The build method returns `Result<T, String>`, where `T` is the struct you started with.
+//! The build method returns `Result<T, E>`, where `T` is the struct you started with
+//! and E is a generated builder error type.
 //! It returns `Err` if you didn't initialize all fields and no default values were
 //! provided.
 //!
@@ -74,7 +75,7 @@
 //! ```rust
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
-//! # fn try_main() -> Result<(), String> {
+//! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 //! let x: Lorem = LoremBuilder::default().ipsum(42).build()?;
 //! # Ok(())
 //! # } fn main() { try_main().unwrap(); }
@@ -87,7 +88,7 @@
 //! ```rust
 //! # #[macro_use] extern crate derive_builder;
 //! # #[derive(Builder)] struct Lorem { ipsum: u32 }
-//! # fn try_main() -> Result<(), String> {
+//! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 //! # let geek = true;
 //! let mut builder = LoremBuilder::default();
 //! if geek {
@@ -439,7 +440,7 @@
 //!     let x = LoremBuilder::default().ipsum(120).build().unwrap_err();
 //!
 //!     // .. the build will fail:
-//!     assert_eq!(&x, "You'll tire yourself out");
+//!     assert_eq!(&x.to_string(), "You'll tire yourself out");
 //! }
 //! ```
 //!
