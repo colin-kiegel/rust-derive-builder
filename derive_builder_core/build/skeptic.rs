@@ -1,15 +1,8 @@
-#[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
 #[cfg(feature = "logging")]
 extern crate env_logger;
 extern crate skeptic;
-
-#[cfg(not(feature = "logging"))]
-#[macro_use]
-mod log_disabled {
-    include!("../../derive_builder_core/src/log_disabled.rs");
-}
 
 fn main() {
     println!("INFO: Run with `RUST_LOG=build_script_build=trace` for debug information.");

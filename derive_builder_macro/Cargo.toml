@@ -24,6 +24,7 @@ proc-macro = true
 [features]
 logging = ["env_logger"]
 clippy = ["derive_builder_core/clippy"]
+skeptic_tests = ["derive_builder_core/skeptic_tests"]
 
 [dependencies]
 syn = { version = "1", features = ["full", "extra-traits"] }
