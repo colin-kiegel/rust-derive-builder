@@ -21,17 +21,14 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [features]
 logging = [ "derive_builder_macro/logging", "derive_builder_core/logging" ]
-skeptic_tests = ["skeptic"]
+skeptic_tests = []
 clippy = ["derive_builder_core/clippy"]
 
 [dependencies]
 derive_builder_macro = { version = "=0.10.0-alpha", path = "../derive_builder_macro" }
 derive_builder_core = { version = "=0.10.0-alpha", path = "../derive_builder_core" }
-skeptic = { version = "0.13", optional = true }
-
-[build-dependencies]
-skeptic = { version = "0.13", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "0.6"
 compiletest_rs = "0.5"
+skeptic = "0.13"

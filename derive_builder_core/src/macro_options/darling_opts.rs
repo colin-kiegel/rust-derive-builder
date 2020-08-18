@@ -1,16 +1,16 @@
 use std::vec::IntoIter;
 
-use derive_builder_core::BuildMethod;
+use crate::BuildMethod;
 
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use proc_macro2::Span;
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 
-use derive_builder_core::{
+use crate::macro_options::DefaultExpression;
+use crate::{
     Bindings, Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter,
 };
-use options::DefaultExpression;
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to

@@ -13,7 +13,7 @@
 
 use darling;
 
-use derive_builder_core::Block;
+use crate::Block;
 
 mod darling_opts;
 
