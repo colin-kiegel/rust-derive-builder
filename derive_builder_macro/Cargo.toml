@@ -22,7 +22,7 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 proc-macro = true
 
 [features]
-logging = [ "env_logger", "derive_builder_core/logging" ]
+logging = ["env_logger"]
 clippy = ["derive_builder_core/clippy"]
 
 [dependencies]

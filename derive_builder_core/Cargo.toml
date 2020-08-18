@@ -16,7 +16,6 @@ readme = "README.md"
 build = "build/mod.rs"
 
 [features]
-logging = [ "log" ]
 clippy = []
 skeptic_tests = []
 
@@ -28,7 +27,7 @@ darling = "0.10.2"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "1.0", features = ["full", "extra-traits"] }
-log = { version = "0.4", optional = true }
+log = "0.4"
 
 [dev-dependencies]
 pretty_assertions = "0.6"

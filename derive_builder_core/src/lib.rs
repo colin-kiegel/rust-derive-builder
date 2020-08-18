@@ -34,16 +34,12 @@ extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
-#[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
 
-#[cfg(not(feature = "logging"))]
-#[macro_use]
-mod log_disabled;
 mod bindings;
 mod block;
 mod build_method;

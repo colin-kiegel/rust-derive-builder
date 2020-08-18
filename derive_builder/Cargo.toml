@@ -20,7 +20,7 @@ build = "build/mod.rs"
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
 [features]
-logging = [ "derive_builder_macro/logging", "derive_builder_core/logging" ]
+logging = ["derive_builder_macro/logging"]
 skeptic_tests = []
 clippy = ["derive_builder_core/clippy"]
 
