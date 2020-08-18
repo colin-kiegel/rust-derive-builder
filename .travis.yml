@@ -19,6 +19,7 @@ env:
   - JOB=test CARGO_FEATURES="skeptic_tests"
   - JOB=test CARGO_FEATURES="logging"
   - JOB=test CARGO_FEATURES="skeptic_tests logging"
+  - JOB=test CARGO_FEATURES="clippy"
   global:
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
@@ -51,17 +52,25 @@ script: |
       #   `derive_builder` crate will implicitly build/doc the
       #   `derive_builder_core` crate too.
       commands=(
-        "cd derive_builder && travis-cargo build -- --features \"$CARGO_FEATURES\""
-        "cd derive_builder && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
-        "cd derive_builder && travis-cargo doc"
+        "cd derive_builder_core  && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd derive_builder_core  && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
+        "cd derive_builder_core  && travis-cargo doc"
+        "cd derive_builder_macro && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd derive_builder_macro && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
+        "cd derive_builder_macro && travis-cargo doc"
+        "cd derive_builder       && travis-cargo build -- --features \"$CARGO_FEATURES\""
+        "cd derive_builder       && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
+        "cd derive_builder       && travis-cargo doc"
       )
       ;;
     style_check)
       commands=(
-        "cd derive_builder_core && cargo clippy"
-        "cd derive_builder      && cargo clippy"
-        "cd derive_builder_core && cargo fmt -- --check"
-        "cd derive_builder      && cargo fmt -- --check"
+        "cd derive_builder_core  && cargo clippy"
+        "cd derive_builder_macro && cargo clippy"
+        "cd derive_builder       && cargo clippy"
+        "cd derive_builder_core  && cargo fmt -- --check"
+        "cd derive_builder_macro && cargo fmt -- --check"
+        "cd derive_builder       && cargo fmt -- --check"
       )
       ;;
     *)
