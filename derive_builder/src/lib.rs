@@ -546,7 +546,18 @@
 //! [`derive_builder_core`]: https://crates.io/crates/derive_builder_core
 
 #![deny(warnings)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate derive_builder_macro;
 
 pub use derive_builder_macro::Builder;
+
+#[doc(hidden)]
+pub mod export {
+    pub mod core {
+        #[cfg(not(feature = "std"))]
+        pub use core::*;
+        #[cfg(feature = "std")]
+        pub use std::*;
+    }
+}

@@ -40,7 +40,6 @@ extern crate log;
 #[macro_use]
 extern crate pretty_assertions;
 
-mod bindings;
 mod block;
 mod build_method;
 mod builder;
@@ -52,7 +51,6 @@ mod macro_options;
 mod options;
 mod setter;
 
-pub use bindings::Bindings;
 pub use block::Block;
 pub use build_method::BuildMethod;
 pub use builder::Builder;

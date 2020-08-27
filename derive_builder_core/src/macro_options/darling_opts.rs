@@ -8,9 +8,7 @@ use proc_macro2::Span;
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
-use crate::{
-    Bindings, Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter,
-};
+use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to
@@ -365,12 +363,6 @@ impl Options {
     pub fn field_count(&self) -> usize {
         self.raw_fields().len()
     }
-
-    fn bindings(&self) -> Bindings {
-        Bindings {
-            no_std: self.no_std.is_some(),
-        }
-    }
 }
 
 /// Converters to codegen structs
@@ -388,7 +380,6 @@ impl Options {
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
-            bindings: self.bindings(),
         }
     }
 
@@ -404,7 +395,6 @@ impl Options {
             error_ty: self.builder_error_ident(),
             initializers: Vec::with_capacity(self.field_count()),
             doc_comment: None,
-            bindings: self.bindings(),
             default_struct: self
                 .default
                 .as_ref()
@@ -528,10 +518,6 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn deprecation_notes(&self) -> &DeprecationNotes {
         &self.parent.deprecation_notes
     }
-
-    fn bindings(&self) -> Bindings {
-        self.parent.bindings()
-    }
 }
 
 /// Converters to codegen structs
@@ -550,7 +536,6 @@ impl<'a> FieldWithDefaults<'a> {
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
-            bindings: self.bindings(),
         }
     }
 
@@ -570,7 +555,6 @@ impl<'a> FieldWithDefaults<'a> {
                 .as_ref()
                 .map(|x| x.parse_block(self.parent.no_std.into())),
             use_default_struct: self.use_parent_default(),
-            bindings: self.bindings(),
         }
     }
 
@@ -581,7 +565,6 @@ impl<'a> FieldWithDefaults<'a> {
             field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
             attrs: &self.field.attrs,
-            bindings: self.bindings(),
         }
     }
 }

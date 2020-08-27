@@ -1,7 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn;
-use Bindings;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///
@@ -24,7 +23,7 @@ use Bindings;
 /// #    field.attrs = attrs.as_slice();
 /// #
 /// #    assert_eq!(quote!(#field).to_string(), quote!(
-/// #[some_attr] pub foo: ::std::option::Option<String>,
+/// #[some_attr] pub foo: ::derive_builder::export::core::option::Option<String>,
 /// #    ).to_string());
 /// # }
 /// ```
@@ -46,8 +45,6 @@ pub struct BuilderField<'a> {
     pub field_visibility: syn::Visibility,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
-    /// Bindings to libstd or libcore.
-    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for BuilderField<'a> {
@@ -58,10 +55,9 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-            let option = self.bindings.option_ty();
 
             tokens.append_all(quote!(
-                #(#attrs)* #vis #ident: #option<#ty>,
+                #(#attrs)* #vis #ident: ::derive_builder::export::core::option::Option<#ty>,
             ));
         } else {
             trace!(
@@ -71,10 +67,9 @@ impl<'a> ToTokens for BuilderField<'a> {
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
-            let phantom_data = self.bindings.phantom_data_ty();
 
             tokens.append_all(quote!(
-                #(#attrs)* #ident: #phantom_data<#ty>,
+                #(#attrs)* #ident: ::derive_builder::export::core::marker::PhantomData<#ty>,
             ));
         }
     }
@@ -92,7 +87,6 @@ macro_rules! default_builder_field {
             field_enabled: true,
             field_visibility: syn::parse_str("pub").unwrap(),
             attrs: &[parse_quote!(#[some_attr])],
-            bindings: Default::default(),
         }
     }};
 }
@@ -109,7 +103,7 @@ mod tests {
         assert_eq!(
             quote!(#field).to_string(),
             quote!(
-                #[some_attr] pub foo: ::std::option::Option<String>,
+                #[some_attr] pub foo: ::derive_builder::export::core::option::Option<String>,
             )
             .to_string()
         );
@@ -124,37 +118,7 @@ mod tests {
             quote!(#field).to_string(),
             quote!(
                 #[some_attr]
-                foo: ::std::marker::PhantomData<String>,
-            )
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn no_std_setter_enabled() {
-        let mut field = default_builder_field!();
-        field.bindings.no_std = true;
-
-        assert_eq!(
-            quote!(#field).to_string(),
-            quote!(
-                #[some_attr] pub foo: ::core::option::Option<String>,
-            )
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn no_std_setter_disabled() {
-        let mut field = default_builder_field!();
-        field.bindings.no_std = true;
-        field.field_enabled = false;
-
-        assert_eq!(
-            quote!(#field).to_string(),
-            quote!(
-                #[some_attr]
-                foo: ::core::marker::PhantomData<String>,
+                foo: ::derive_builder::export::core::marker::PhantomData<String>,
             )
             .to_string()
         );
@@ -170,7 +134,7 @@ mod tests {
             quote!(#field).to_string(),
             quote!(
                 #[some_attr]
-                foo: ::std::option::Option<String>,
+                foo: ::derive_builder::export::core::option::Option<String>,
             )
             .to_string()
         );

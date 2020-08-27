@@ -4,7 +4,6 @@ use syn::punctuated::Punctuated;
 use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
 use doc_comment::doc_comment_from;
-use Bindings;
 use BuildMethod;
 use BuilderField;
 use BuilderPattern;
@@ -52,20 +51,20 @@ use Setter;
 ///     ValidationError(String),
 /// }
 ///
-/// impl core::convert::From<&'static str> for FooBuilderError {
+/// impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
 ///     fn from(s: &'static str) -> Self {
 ///         Self::UninitializedField(s)
 ///     }
 /// }
 ///
-/// impl core::convert::From<String> for FooBuilderError {
+/// impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
 ///     fn from(s: String) -> Self {
 ///         Self::ValidationError(s)
 ///     }
 /// }
 ///
-/// impl core::fmt::Display for FooBuilderError {
-///     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+/// impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+///     fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
 ///         match self {
 ///             Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
 ///             Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -123,8 +122,6 @@ pub struct Builder<'a> {
     pub doc_comment: Option<syn::Attribute>,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: DeprecationNotes,
-    /// Library bindings to use in emitted builder.
-    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Builder<'a> {
@@ -190,20 +187,20 @@ impl<'a> ToTokens for Builder<'a> {
                     ValidationError(String),
                 }
 
-                impl core::convert::From<&'static str> for #builder_error_ident {
+                impl ::derive_builder::export::core::convert::From<&'static str> for #builder_error_ident {
                     fn from(s: &'static str) -> Self {
                         Self::UninitializedField(s)
                     }
                 }
 
-                impl core::convert::From<String> for #builder_error_ident {
+                impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
                     fn from(s: String) -> Self {
                         Self::ValidationError(s)
                     }
                 }
 
-                impl core::fmt::Display for #builder_error_ident {
-                    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                impl ::derive_builder::export::core::fmt::Display for #builder_error_ident {
+                    fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                         match self {
                             Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                             Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -272,7 +269,7 @@ impl<'a> Builder<'a> {
                 paren_token: None,
                 modifier: TraitBoundModifier::None,
                 lifetimes: None,
-                path: self.bindings.clone_trait(),
+                path: syn::parse_str("::derive_builder::export::core::clone::Clone").unwrap(),
             });
 
             for typ in generics.type_params_mut() {
@@ -304,7 +301,6 @@ macro_rules! default_builder {
             must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
-            bindings: Default::default(),
         }
     };
 }
@@ -344,20 +340,20 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl core::convert::From<&'static str> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
                         fn from(s: &'static str) -> Self {
                             Self::UninitializedField(s)
                         }
                     }
 
-                    impl core::convert::From<String> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
                         fn from(s: String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -425,20 +421,20 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl core::convert::From<&'static str> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
                         fn from(s: &'static str) -> Self {
                             Self::UninitializedField(s)
                         }
                     }
 
-                    impl core::convert::From<String> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
                         fn from(s: String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -455,7 +451,7 @@ mod tests {
 
                 result.append_all(quote!(
                     #[allow(dead_code)]
-                    impl<'a, T: Debug + ::std::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+                    impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
                         fn bar() -> {
                             unimplemented!()
                         }
@@ -506,20 +502,20 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl core::convert::From<&'static str> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
                         fn from(s: &'static str) -> Self {
                             Self::UninitializedField(s)
                         }
                     }
 
-                    impl core::convert::From<String> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
                         fn from(s: String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -536,7 +532,7 @@ mod tests {
 
                 result.append_all(quote!(
                     #[allow(dead_code)]
-                    impl<'a, T: 'a + Default + ::std::clone::Clone> FooBuilder<'a, T>
+                    impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> FooBuilder<'a, T>
                     where
                         T: PartialEq
                     {
@@ -591,20 +587,20 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl core::convert::From<&'static str> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
                         fn from(s: &'static str) -> Self {
                             Self::UninitializedField(s)
                         }
                     }
 
-                    impl core::convert::From<String> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
                         fn from(s: String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -673,20 +669,20 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl core::convert::From<&'static str> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
                         fn from(s: &'static str) -> Self {
                             Self::UninitializedField(s)
                         }
                     }
 
-                    impl core::convert::From<String> for FooBuilderError {
+                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
                         fn from(s: String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
