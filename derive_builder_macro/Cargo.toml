@@ -1,5 +1,5 @@
 [package]
-name = "derive_builder"
+name = "derive_builder_macro"
 version = "0.10.0-alpha"
 authors = ["Colin Kiegel <kiegel@gmx.de>",
            "Pascal Hertleif <killercup@gmail.com>",
@@ -8,32 +8,25 @@ authors = ["Colin Kiegel <kiegel@gmx.de>",
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
-documentation = "https://docs.rs/derive_builder/0.10.0-alpha"
+documentation = "https://docs.rs/derive_builder_macro/0.10.0-alpha"
 
 license = "MIT/Apache-2.0"
 categories = ["development-tools", "rust-patterns"]
 keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "README.md"
-build = "build/mod.rs"
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 
+[lib]
+proc-macro = true
+
 [features]
-default = ["std"]
-std = []
-logging = ["derive_builder_macro/logging", "derive_builder_core/logging"]
-skeptic_tests = ["skeptic", "derive_builder_macro/skeptic_tests", "derive_builder_core/skeptic_tests"]
-clippy = ["derive_builder_macro/clippy", "derive_builder_core/clippy"]
+logging = ["env_logger"]
+clippy = ["derive_builder_core/clippy"]
+skeptic_tests = ["derive_builder_core/skeptic_tests"]
 
 [dependencies]
-derive_builder_macro = { version = "=0.10.0-alpha", path = "../derive_builder_macro" }
+syn = { version = "1", features = ["full", "extra-traits"] }
+env_logger = { version = "0.5", optional = true }
 derive_builder_core = { version = "=0.10.0-alpha", path = "../derive_builder_core" }
-
-[dev-dependencies]
-pretty_assertions = "0.6"
-compiletest_rs = "0.5"
-skeptic = "0.13"
-
-[build-dependencies]
-skeptic = { version = "0.13", optional = true }

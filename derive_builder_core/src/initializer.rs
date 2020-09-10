@@ -1,7 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
-use Bindings;
 use Block;
 use BuilderPattern;
 use DEFAULT_STRUCT_NAME;
@@ -49,8 +48,6 @@ pub struct Initializer<'a> {
     pub default_value: Option<Block>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
-    /// Bindings to libstd or libcore.
-    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -83,13 +80,7 @@ impl<'a> Initializer<'a> {
     fn match_some(&'a self) -> MatchSome {
         match self.builder_pattern {
             BuilderPattern::Owned => MatchSome::Move,
-            BuilderPattern::Mutable | BuilderPattern::Immutable => {
-                if self.bindings.no_std {
-                    MatchSome::CloneNoStd
-                } else {
-                    MatchSome::Clone
-                }
-            }
+            BuilderPattern::Mutable | BuilderPattern::Immutable => MatchSome::Clone,
         }
     }
 
@@ -100,8 +91,6 @@ impl<'a> Initializer<'a> {
             None => {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
-                } else if self.bindings.no_std {
-                    MatchNone::ReturnErrorNoStd(self.field_ident.to_string())
                 } else {
                     MatchNone::ReturnError(self.field_ident.to_string())
                 }
@@ -117,10 +106,7 @@ impl<'a> Initializer<'a> {
                 let field_ident = self.field_ident;
                 quote!(#struct_ident.#field_ident)
             }
-            None => {
-                let default = self.bindings.default_trait();
-                quote!(#default::default())
-            }
+            None => quote!(::derive_builder::export::core::default::Default::default()),
         }
     }
 }
@@ -135,8 +121,6 @@ enum MatchNone<'a> {
     UseDefaultStructField(&'a syn::Ident),
     /// Inner value must be the field name
     ReturnError(String),
-    /// Inner value must be the field name
-    ReturnErrorNoStd(String),
 }
 
 impl<'a> ToTokens for MatchNone<'a> {
@@ -152,11 +136,7 @@ impl<'a> ToTokens for MatchNone<'a> {
                 ))
             }
             MatchNone::ReturnError(ref err) => tokens.append_all(quote!(
-                None => return ::std::result::Result::Err(::std::convert::Into::into(#err))
-            )),
-            MatchNone::ReturnErrorNoStd(ref err) => tokens.append_all(quote!(
-                None => return ::core::result::Result::Err(
-                    ::std::convert::Into::into(#err))
+                None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(#err))
             )),
         }
     }
@@ -166,7 +146,6 @@ impl<'a> ToTokens for MatchNone<'a> {
 enum MatchSome {
     Move,
     Clone,
-    CloneNoStd,
 }
 
 impl<'a> ToTokens for MatchSome {
@@ -176,10 +155,7 @@ impl<'a> ToTokens for MatchSome {
                 Some(value) => value
             )),
             Self::Clone => tokens.append_all(quote!(
-                Some(ref value) => ::std::clone::Clone::clone(value)
-            )),
-            Self::CloneNoStd => tokens.append_all(quote!(
-                Some(ref value) => ::core::clone::Clone::clone(value)
+                Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value)
             )),
         }
     }
@@ -197,7 +173,6 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
-            bindings: Default::default(),
         }
     };
 }
@@ -216,8 +191,8 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::std::clone::Clone::clone(value),
-                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
+                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
                         "foo"
                     )),
                 },
@@ -235,8 +210,8 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::std::clone::Clone::clone(value),
-                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
+                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
                         "foo"
                     )),
                 },
@@ -255,7 +230,7 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(value) => value,
-                    None => return ::std::result::Result::Err(::std::convert::Into::into(
+                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
                         "foo"
                     )),
                 },
@@ -273,7 +248,7 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
                     None => { 42 },
                 },
             )
@@ -290,7 +265,7 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::std::clone::Clone::clone(value),
+                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
                     None => __default.foo,
                 },
             )
@@ -305,38 +280,25 @@ mod tests {
 
         assert_eq!(
             quote!(#initializer).to_string(),
-            quote!(foo: ::std::default::Default::default(),).to_string()
+            quote!(foo: ::derive_builder::export::core::default::Default::default(),).to_string()
         );
     }
 
     #[test]
     fn no_std() {
-        let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
+        let initializer = default_initializer!();
 
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::core::clone::Clone::clone(value),
-                    None => return ::core::result::Result::Err(::std::convert::Into::into(
+                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
+                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
                         "foo"
                     )),
                 },
             )
             .to_string()
-        );
-    }
-
-    #[test]
-    fn no_std_setter_disabled() {
-        let mut initializer = default_initializer!();
-        initializer.bindings.no_std = true;
-        initializer.field_enabled = false;
-
-        assert_eq!(
-            quote!(#initializer).to_string(),
-            quote!(foo: ::core::default::Default::default(),).to_string()
         );
     }
 }

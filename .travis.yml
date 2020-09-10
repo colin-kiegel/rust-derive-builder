@@ -15,10 +15,15 @@ matrix:
   fast_finish: true
 env:
   matrix:
-  - JOB=test CARGO_FEATURES=""
-  - JOB=test CARGO_FEATURES="skeptic_tests"
-  - JOB=test CARGO_FEATURES="logging"
-  - JOB=test CARGO_FEATURES="skeptic_tests logging"
+  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES=""
+  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="skeptic_tests"
+  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="logging"
+  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="skeptic_tests logging"
+  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES=""
+  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="skeptic_tests"
+  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="logging"
+  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="skeptic_tests logging"
+  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="clippy"
   global:
   - RUST_BACKTRACE=1
   - TRAVIS_CARGO_NIGHTLY_FEATURE=""
@@ -51,17 +56,27 @@ script: |
       #   `derive_builder` crate will implicitly build/doc the
       #   `derive_builder_core` crate too.
       commands=(
-        "cd derive_builder && travis-cargo build -- --features \"$CARGO_FEATURES\""
-        "cd derive_builder && travis-cargo test -- --all --no-fail-fast --features \"$CARGO_FEATURES\""
-        "cd derive_builder && travis-cargo doc"
+        "cd derive_builder_core  && travis-cargo build -- $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder_core  && travis-cargo test -- --all --no-fail-fast $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder_core  && travis-cargo doc"
+        "cargo clean"
+        "cd derive_builder_macro && travis-cargo build -- $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder_macro && travis-cargo test -- --all --no-fail-fast $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder_macro && travis-cargo doc"
+        "cargo clean"
+        "cd derive_builder       && travis-cargo build -- $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder       && travis-cargo test -- --all --no-fail-fast $CARGO_DEFAULT_FEATURES --features \"$CARGO_FEATURES\""
+        "cd derive_builder       && travis-cargo doc"
       )
       ;;
     style_check)
       commands=(
-        "cd derive_builder_core && cargo clippy"
-        "cd derive_builder      && cargo clippy"
-        "cd derive_builder_core && cargo fmt -- --check"
-        "cd derive_builder      && cargo fmt -- --check"
+        "cd derive_builder_core  && cargo clippy"
+        "cd derive_builder_macro && cargo clippy"
+        "cd derive_builder       && cargo clippy"
+        "cd derive_builder_core  && cargo fmt -- --check"
+        "cd derive_builder_macro && cargo fmt -- --check"
+        "cd derive_builder       && cargo fmt -- --check"
       )
       ;;
     *)

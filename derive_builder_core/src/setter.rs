@@ -3,7 +3,6 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
 
-use Bindings;
 use BuilderPattern;
 use DeprecationNotes;
 
@@ -30,7 +29,7 @@ use DeprecationNotes;
 /// # #[allow(unused_mut)]
 /// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
-///     new.foo = ::std::option::Option::Some(value);
+///     new.foo = ::derive_builder::export::core::option::Option::Some(value);
 ///     new
 /// }
 /// #     ).to_string());
@@ -63,8 +62,6 @@ pub struct Setter<'a> {
     pub strip_option: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
-    /// Bindings to libstd or libcore.
-    pub bindings: Bindings,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -78,9 +75,6 @@ impl<'a> ToTokens for Setter<'a> {
             let ident = &self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
-            let clone = self.bindings.clone_trait();
-            let option = self.bindings.option_ty();
-            let into = self.bindings.into_trait();
             let (ty, stripped_option) = {
                 if self.strip_option {
                     match extract_type_from_option(field_type) {
@@ -110,7 +104,8 @@ impl<'a> ToTokens for Setter<'a> {
                 BuilderPattern::Immutable => {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
-                    self_into_return_ty = quote!(#clone::clone(self));
+                    self_into_return_ty =
+                        quote!(::derive_builder::export::core::clone::Clone::clone(self));
                 }
             };
 
@@ -119,7 +114,7 @@ impl<'a> ToTokens for Setter<'a> {
             let mut into_value: TokenStream;
 
             if self.generic_into {
-                ty_params = quote!(<VALUE: #into<#ty>>);
+                ty_params = quote!(<VALUE: ::derive_builder::export::core::convert::Into<#ty>>);
                 param_ty = quote!(VALUE);
                 into_value = quote!(value.into());
             } else {
@@ -128,7 +123,8 @@ impl<'a> ToTokens for Setter<'a> {
                 into_value = quote!(value);
             }
             if stripped_option {
-                into_value = quote!(#option::Some(#into_value));
+                into_value =
+                    quote!(::derive_builder::export::core::option::Option::Some(#into_value));
             }
             tokens.append_all(quote!(
                 #(#attrs)*
@@ -138,24 +134,23 @@ impl<'a> ToTokens for Setter<'a> {
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = #option::Some(#into_value);
+                    new.#field_ident = ::derive_builder::export::core::option::Option::Some(#into_value);
                     new
             }));
 
             if self.try_setter {
-                let try_into = self.bindings.try_into_trait();
-                let try_ty_params = quote!(<VALUE: #try_into<#ty>>);
+                let try_ty_params =
+                    quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
-                let result = self.bindings.result_ty();
 
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
-                        -> #result<#return_ty, VALUE::Error>
+                        -> ::derive_builder::export::core::result::Result<#return_ty, VALUE::Error>
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
-                        new.#field_ident = #option::Some(converted);
+                        new.#field_ident = ::derive_builder::export::core::option::Option::Some(converted);
                         Ok(new)
                 }));
             } else {
@@ -232,7 +227,6 @@ macro_rules! default_setter {
             generic_into: false,
             strip_option: false,
             deprecation_notes: &Default::default(),
-            bindings: Default::default(),
         };
     };
 }
@@ -252,8 +246,8 @@ mod tests {
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo(&self, value: Foo) -> Self {
-                    let mut new = ::std::clone::Clone::clone(self);
-                    new.foo = ::std::option::Option::Some(value);
+                    let mut new = ::derive_builder::export::core::clone::Clone::clone(self);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -272,7 +266,7 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(value);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -291,7 +285,7 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(self, value: Foo) -> Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(value);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -312,7 +306,7 @@ mod tests {
                 #[allow(unused_mut)]
                 fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(value);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -325,13 +319,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.generic_into = true;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
+                    &mut self,
+                    value: VALUE
+                ) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(value.into());
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
                     new
                 }
             )
@@ -345,13 +343,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.strip_option = true;
         setter.field_type = &ty;
+
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(::std::option::Option::Some(value));
+                    new.foo = ::derive_builder::export::core::option::Option::Some(
+                        ::derive_builder::export::core::option::Option::Some(value)
+                    );
                     new
                 }
             )
@@ -366,14 +368,20 @@ mod tests {
         setter.strip_option = true;
         setter.generic_into = true;
         setter.field_type = &ty;
+
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
+                    &mut self,
+                    value: VALUE
+                ) -> &mut Self {
                     let mut new = self;
-                    new.foo =
-                        ::std::option::Option::Some(::std::option::Option::Some(value.into()));
+                    new.foo = ::derive_builder::export::core::option::Option::Some(
+                        ::derive_builder::export::core::option::Option::Some(value.into())
+                    );
                     new
                 }
             )
@@ -402,19 +410,19 @@ mod tests {
             quote!(
             #[some_attr]
             #[allow(unused_mut)]
-            pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo <VALUE: ::derive_builder::export::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(value.into());
+                new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
                 new
             }
 
             #[some_attr]
-            pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                -> ::std::result::Result<&mut Self, VALUE::Error> {
+            pub fn try_foo<VALUE: ::derive_builder::export::core::convert::TryInto<Foo>>(&mut self, value: VALUE)
+                -> ::derive_builder::export::core::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::std::option::Option::Some(converted);
+                new.foo = ::derive_builder::export::core::option::Option::Some(converted);
                 Ok(new)
             }
         ).to_string()
@@ -424,7 +432,6 @@ mod tests {
     #[test]
     fn no_std() {
         let mut setter = default_setter!();
-        setter.bindings.no_std = true;
         setter.pattern = BuilderPattern::Immutable;
 
         assert_eq!(
@@ -432,8 +439,8 @@ mod tests {
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo(&self, value: Foo) -> Self {
-                    let mut new = ::core::clone::Clone::clone(self);
-                    new.foo = ::core::option::Option::Some(value);
+                    let mut new = ::derive_builder::export::core::clone::Clone::clone(self);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -444,7 +451,6 @@ mod tests {
     #[test]
     fn no_std_generic() {
         let mut setter = default_setter!();
-        setter.bindings.no_std = true;
         setter.generic_into = true;
 
         #[rustfmt::skip]
@@ -452,12 +458,12 @@ mod tests {
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::core::convert::Into<Foo>>(
+                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
                     &mut self,
                     value: VALUE
                 ) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::core::option::Option::Some(value.into());
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
                     new
                 }
             )
@@ -486,17 +492,17 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(value);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
                     new
                 }
 
-                pub fn try_foo<VALUE: ::std::convert::TryInto<Foo>>(
+                pub fn try_foo<VALUE: ::derive_builder::export::core::convert::TryInto<Foo>>(
                     &mut self,
                     value: VALUE
-                ) -> ::std::result::Result<&mut Self, VALUE::Error> {
+                ) -> ::derive_builder::export::core::result::Result<&mut Self, VALUE::Error> {
                     let converted: Foo = value.try_into()?;
                     let mut new = self;
-                    new.foo = ::std::option::Option::Some(converted);
+                    new.foo = ::derive_builder::export::core::option::Option::Some(converted);
                     Ok(new)
                 }
             )

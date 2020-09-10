@@ -34,17 +34,12 @@ extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
-#[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
 
-#[cfg(not(feature = "logging"))]
-#[macro_use]
-mod log_disabled;
-mod bindings;
 mod block;
 mod build_method;
 mod builder;
@@ -52,14 +47,15 @@ mod builder_field;
 mod deprecation_notes;
 mod doc_comment;
 mod initializer;
+mod macro_options;
 mod options;
 mod setter;
 
-pub use bindings::Bindings;
 pub use block::Block;
 pub use build_method::BuildMethod;
 pub use builder::Builder;
 pub use builder_field::BuilderField;
+use darling::FromDeriveInput;
 pub use deprecation_notes::DeprecationNotes;
 pub use doc_comment::doc_comment_from;
 pub use initializer::Initializer;
@@ -67,3 +63,37 @@ pub use options::BuilderPattern;
 pub use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
+
+/// Derive a builder for a struct
+pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
+    debug!("Deriving Builder for `{}`.", ast.ident);
+
+    let opts = match macro_options::Options::from_derive_input(&ast) {
+        Ok(val) => val,
+        Err(err) => {
+            return err.write_errors();
+        }
+    };
+
+    let mut builder = opts.as_builder();
+    let mut build_fn = opts.as_build_method();
+
+    builder.doc_comment(format!(
+        include_str!("doc_tpl/builder_struct.md"),
+        struct_name = ast.ident
+    ));
+    build_fn.doc_comment(format!(
+        include_str!("doc_tpl/builder_method.md"),
+        struct_name = ast.ident
+    ));
+
+    for field in opts.fields() {
+        builder.push_field(field.as_builder_field());
+        builder.push_setter_fn(field.as_setter());
+        build_fn.push_initializer(field.as_initializer());
+    }
+
+    builder.push_build_fn(build_fn);
+
+    quote!(#builder)
+}

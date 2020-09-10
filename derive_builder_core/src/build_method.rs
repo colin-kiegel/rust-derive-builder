@@ -2,7 +2,6 @@ use doc_comment::doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
-use Bindings;
 use Block;
 use BuilderPattern;
 use Initializer;
@@ -27,7 +26,7 @@ use DEFAULT_STRUCT_NAME;
 /// #    let build_method = default_build_method!();
 /// #
 /// #    assert_eq!(quote!(#build_method).to_string(), quote!(
-/// pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
+/// pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
 ///     Ok(Foo {
 ///         foo: self.foo,
 ///     })
@@ -57,8 +56,6 @@ pub struct BuildMethod<'a> {
     pub initializers: Vec<TokenStream>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
-    /// Bindings to libstd or libcore.
-    pub bindings: Bindings,
     /// Default value for the whole struct.
     ///
     /// This will be in scope for all initializers as `__default`.
@@ -85,7 +82,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
-        let result = self.bindings.result_ty();
         let error_ty = &self.error_ty;
 
         if self.enabled {
@@ -93,7 +89,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
             tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
-                    -> #result<#target_ty #target_ty_generics, #error_ty>
+                    -> ::derive_builder::export::core::result::Result<#target_ty #target_ty_generics, #error_ty>
                 {
                     #validate_fn
                     #default_struct
@@ -142,7 +138,6 @@ macro_rules! default_build_method {
             error_ty: syn::Ident::new("FooBuilderError", ::proc_macro2::Span::call_site()),
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
-            bindings: Default::default(),
             default_struct: None,
             validate_fn: None,
         }
@@ -162,26 +157,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
-                    Ok(Foo {
-                        foo: self.foo,
-                    })
-                }
-            )
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn no_std() {
-        let mut build_method = default_build_method!();
-        build_method.bindings.no_std = true;
-
-        #[rustfmt::skip]
-        assert_eq!(
-            quote!(#build_method).to_string(),
-            quote!(
-                pub fn build(&self) -> ::core::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -200,7 +176,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     let __default: Foo = { Default::default() };
                     Ok(Foo {
                         foo: self.foo,
@@ -230,7 +206,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn finish(&self) -> ::std::result::Result<Foo, FooBuilderError> {
+                pub fn finish(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -252,7 +228,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::std::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     IpsumBuilder::validate(&self)?;
 
                     Ok(Foo {
