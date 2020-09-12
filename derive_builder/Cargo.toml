@@ -32,8 +32,9 @@ derive_builder_core = { version = "=0.10.0-alpha", path = "../derive_builder_cor
 
 [dev-dependencies]
 pretty_assertions = "0.6"
-compiletest_rs = "0.5"
 skeptic = "0.13"
+rustversion = "1"
+trybuild = "1"
 
 [build-dependencies]
 skeptic = { version = "0.13", optional = true }

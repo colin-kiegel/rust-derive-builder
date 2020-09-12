@@ -23,5 +23,4 @@ fn main() {
     lorem.dolor(15u16);
     lorem.sit = Some(true); // <-- public
     lorem.dolor = Some(0); // <-- private
-    //~^ ERROR field `dolor` of struct `inner::LoremBuilder` is private
 }

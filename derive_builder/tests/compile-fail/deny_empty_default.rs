@@ -6,7 +6,6 @@ extern crate derive_builder;
 #[derive(Builder)]
 struct Lorem {
     #[builder(default = "")]
-    //~^ ERROR Unknown literal value ``
     ipsum: String,
 }
 
