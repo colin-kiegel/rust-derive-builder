@@ -75,6 +75,14 @@ impl<'a> ToTokens for BuilderField<'a> {
     }
 }
 
+impl<'a> BuilderField<'a> {
+    /// Emits a struct field initializer that initializes the field to `Default::default`.
+    pub fn default_initializer_tokens(&self) -> TokenStream {
+        let ident = self.field_ident;
+        quote!{ #ident : ::derive_builder::export::core::default::Default::default(), }
+    }
+}
+
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
 #[doc(hidden)]
