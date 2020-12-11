@@ -542,7 +542,7 @@
 //! If possible please try to provide the debugging info if you experience unexpected
 //! compilation errors (see above).
 //!
-//! [builder pattern]: https://aturon.github.io/ownership/builders.html
+//! [builder pattern]: https://web.archive.org/web/20170701044756/https://aturon.github.io/ownership/builders.html
 //! [`derive_builder_core`]: https://crates.io/crates/derive_builder_core
 
 #![deny(warnings)]
