@@ -333,6 +333,9 @@
 //! * Delegate to a private helper method on `FooBuilder` for anything fancy. This way
 //!   you will get _much better error diagnostics_ from the rust compiler and it will be _much
 //!   more readable_ for other human beings. :-)
+//! * Defaults will not work while using `#[builder(build_fn(skip))]`. In this case, you'll
+//!   need to handle default values yourself when converting from the builder, such as by
+//!   using `.unwrap_or()` and `.unwrap_or_else()`.
 //!
 //! [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
 //!
