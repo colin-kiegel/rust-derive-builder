@@ -340,7 +340,7 @@ impl Options {
             .unwrap_or_else(|| self.builder_vis())
     }
 
-    pub fn raw_fields<'a>(&'a self) -> Vec<&'a Field> {
+    pub fn raw_fields(&self) -> Vec<&Field> {
         self.data
             .as_ref()
             .take_struct()
