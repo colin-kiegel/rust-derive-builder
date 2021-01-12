@@ -25,7 +25,6 @@ fn main() {
     let lorem1 = LoremBuilder::default().my_build();
 
     let lorem2 = LoremBuilder::default().build().unwrap();
-    //~^ ERROR `build` is private
 
     println!("{:?} vs {:?}", lorem1, lorem2);
 }

@@ -15,10 +15,8 @@ pub mod foo {
 
 fn main() {
     let x = foo::LoremBuilder::default()
-    //~^ ERROR struct `LoremBuilder` is private
         .public("Hello")
         .build()
-    //~^ ERROR `build` is private
         .unwrap();
 
     assert_eq!(x.public, "Hello".to_string());
