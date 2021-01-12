@@ -36,7 +36,7 @@ use Setter;
 /// #           result.append_all(quote!(#[allow(clippy::all)]));
 /// #
 /// #           result.append_all(quote!(
-/// #[derive(Default, Clone)]
+/// #[derive(Clone)]
 /// pub struct FooBuilder {
 ///     foo: u32,
 /// }
@@ -86,6 +86,15 @@ use Setter;
 ///         unimplemented!()
 ///     }
 /// }
+///
+/// impl ::derive_builder::export::core::default::Default for FooBuilder {
+///     fn default() -> Self {
+///         Self {
+///            foo: ::derive_builder::export::core::default::Default::default(),
+///         }
+///     }
+/// }
+///
 /// #           ));
 /// #           result
 /// #       }.to_string()
@@ -111,6 +120,10 @@ pub struct Builder<'a> {
     ///
     /// Expects each entry to be terminated by a comma.
     pub fields: Vec<TokenStream>,
+    /// Builder field initializers, e.g. `foo: Default::default(),`
+    ///
+    /// Expects each entry to be terminated by a comma.
+    pub field_initializers: Vec<TokenStream>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<TokenStream>,
     /// Whether this builder must derive `Clone`.
@@ -138,22 +151,24 @@ impl<'a> ToTokens for Builder<'a> {
                 .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
                 .unwrap_or((None, None, None));
             let builder_fields = &self.fields;
+            let builder_field_initializers = &self.field_initializers;
             let functions = &self.functions;
 
             // Create the comma-separated set of derived traits for the builder
-            let derived_traits = {
-                let default_trait: Path = parse_quote!(Default);
+            let derive_attr = {
                 let clone_trait: Path = parse_quote!(Clone);
 
                 let mut traits: Punctuated<&Path, Token![,]> = Default::default();
-                traits.push(&default_trait);
-
                 if self.must_derive_clone {
                     traits.push(&clone_trait);
                 }
                 traits.extend(self.derives);
 
-                quote!(#traits)
+                if traits.is_empty() {
+                    quote!()
+                } else {
+                    quote!(#[derive(#traits)])
+                }
             };
 
             let builder_doc_comment = &self.doc_comment;
@@ -171,7 +186,7 @@ impl<'a> ToTokens for Builder<'a> {
             let builder_error_doc = format!("Error type for {}", builder_ident);
 
             tokens.append_all(quote!(
-                #[derive(#derived_traits)]
+                #derive_attr
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
@@ -221,6 +236,14 @@ impl<'a> ToTokens for Builder<'a> {
                     #(#functions)*
                     #deprecation_notes
                 }
+                
+                impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
+                    fn default() -> Self {
+                        Self {
+                            #(#builder_field_initializers)*
+                        }
+                    }
+                }
             ));
         } else {
             trace!("Skipping builder `{}`.", self.ident);
@@ -238,6 +261,7 @@ impl<'a> Builder<'a> {
     /// Add a field to the builder
     pub fn push_field(&mut self, f: BuilderField) -> &mut Self {
         self.fields.push(quote!(#f));
+        self.field_initializers.push(f.default_initializer_tokens());
         self
     }
 
@@ -297,6 +321,7 @@ macro_rules! default_builder {
             generics: None,
             visibility: syn::parse_str("pub").unwrap(),
             fields: vec![quote!(foo: u32,)],
+            field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             must_derive_clone: true,
             doc_comment: None,
@@ -323,7 +348,7 @@ mod tests {
                 result.append_all(quote!(#[allow(clippy::all)]));
 
                 result.append_all(quote!(
-                    #[derive(Default, Clone)]
+                    #[derive(Clone)]
                     pub struct FooBuilder {
                         foo: u32,
                     }
@@ -375,6 +400,14 @@ mod tests {
                             unimplemented!()
                         }
                     }
+                    
+                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                        fn default() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
                 ));
 
                 result
@@ -404,7 +437,7 @@ mod tests {
                 result.append_all(quote!(#[allow(clippy::all)]));
 
                 result.append_all(quote!(
-                    #[derive(Default, Clone)]
+                    #[derive(Clone)]
                     pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                         foo: u32,
                     }
@@ -456,6 +489,14 @@ mod tests {
                             unimplemented!()
                         }
                     }
+                    
+                    impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
+                        fn default() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
                 ));
 
                 result
@@ -485,7 +526,7 @@ mod tests {
                 result.append_all(quote!(#[allow(clippy::all)]));
 
                 result.append_all(quote!(
-                    #[derive(Default, Clone)]
+                    #[derive(Clone)]
                     pub struct FooBuilder<'a, T: 'a + Default> where T: PartialEq {
                         foo: u32,
                     }
@@ -540,6 +581,14 @@ mod tests {
                             unimplemented!()
                         }
                     }
+                    
+                    impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
+                        fn default() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
                 ));
 
                 result
@@ -570,7 +619,6 @@ mod tests {
                 result.append_all(quote!(#[allow(clippy::all)]));
 
                 result.append_all(quote!(
-                    #[derive(Default)]
                     pub struct FooBuilder<'a, T: Debug> where T: PartialEq {
                         foo: u32,
                     }
@@ -622,6 +670,15 @@ mod tests {
                             unimplemented!()
                         }
                     }
+                    
+                    impl<'a, T: Debug> ::derive_builder::export::core::default::Default for FooBuilder<'a, T>
+                    where T: PartialEq {
+                        fn default() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
                 ));
 
                 result
@@ -652,7 +709,7 @@ mod tests {
                 result.append_all(quote!(#[allow(clippy::all)]));
 
                 result.append_all(quote!(
-                    #[derive(Default, Clone, Serialize)]
+                    #[derive(Clone, Serialize)]
                     pub struct FooBuilder {
                         foo: u32,
                     }
@@ -702,6 +759,14 @@ mod tests {
                     impl FooBuilder {
                         fn bar () -> {
                             unimplemented!()
+                        }
+                    }
+                    
+                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                        fn default() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
                         }
                     }
                 ));

@@ -376,6 +376,7 @@ impl Options {
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
+            field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
