@@ -1,5 +1,4 @@
-[![Build status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
-[![Documentation](https://docs.rs/derive_builder_macro/badge.svg)](https://docs.rs/derive_builder_macro)
+![Build](https://github.com/colin-kiegel/rust-derive-builder/workflows/Build/badge.svg?branch=master)
 [![Latest version](https://img.shields.io/crates/v/derive_builder_macro.svg)](https://crates.io/crates/derive_builder_macro)
 [![All downloads](https://img.shields.io/crates/d/derive_builder_macro.svg)](https://crates.io/crates/derive_builder_macro)
 [![Downloads of latest version](https://img.shields.io/crates/dv/derive_builder_macro.svg)](https://crates.io/crates/derive_builder_macro)
@@ -14,16 +13,6 @@
 ## Purpose
 
 This is an internal helper library of [`derive_builder`].
-
-## Documentation
-
-Please refer to
-[docs.rs/derive_builder_macro](https://docs.rs/derive_builder_macro)
-for the documentation of all published versions.
-
-## [Changelog](CHANGELOG.md)
-
-Yes, we keep a changelog.
 
 ## License
 

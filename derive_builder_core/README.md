@@ -1,4 +1,4 @@
-[![Build status](https://travis-ci.org/colin-kiegel/rust-derive-builder.svg?branch=master)](https://travis-ci.org/colin-kiegel/rust-derive-builder)
+![Build](https://github.com/colin-kiegel/rust-derive-builder/workflows/Build/badge.svg?branch=master)
 [![Documentation](https://docs.rs/derive_builder_core/badge.svg)](https://docs.rs/derive_builder_core)
 [![Latest version](https://img.shields.io/crates/v/derive_builder_core.svg)](https://crates.io/crates/derive_builder_core)
 [![All downloads](https://img.shields.io/crates/d/derive_builder_core.svg)](https://crates.io/crates/derive_builder_core)

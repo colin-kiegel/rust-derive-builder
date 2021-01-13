@@ -15,9 +15,6 @@ categories = ["development-tools", "rust-patterns"]
 keywords = ["derive", "macro", "builder", "setter", "struct"]
 readme = "README.md"
 
-[badges]
-travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
-
 [lib]
 proc-macro = true
 

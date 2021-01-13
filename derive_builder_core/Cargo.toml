@@ -16,9 +16,6 @@ readme = "README.md"
 [features]
 clippy = []
 
-[badges]
-travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
-
 [dependencies]
 darling = "0.10.2"
 proc-macro2 = "1.0"
