@@ -64,7 +64,7 @@ function run_tests_on {
 		if [ "$rustup" == true ]; then
 			rustup update $1 || exit
 		fi
-		cd derive_builder && rustup run "$1" cargo test --all --color always --features skeptic_tests
+		cd derive_builder && rustup run "$1" cargo test --all --color always
 	); ret=$?
 	check_or_echo $ret "" "$result"
 }

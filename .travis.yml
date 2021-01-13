@@ -1,6 +1,5 @@
 sudo: false
 language: rust
-# cache: cargo # blocked by https://github.com/brson/rust-skeptic/issues/18
 rust:
   - beta
   - stable
@@ -16,9 +15,7 @@ matrix:
 env:
   matrix:
   - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES=""
-  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="skeptic_tests"
   - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES=""
-  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="skeptic_tests"
   - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="clippy"
   global:
   - RUST_BACKTRACE=1

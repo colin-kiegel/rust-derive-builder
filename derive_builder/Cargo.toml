@@ -22,7 +22,6 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 [features]
 default = ["std"]
 std = []
-skeptic_tests = ["skeptic", "derive_builder_macro/skeptic_tests", "derive_builder_core/skeptic_tests"]
 clippy = ["derive_builder_macro/clippy", "derive_builder_core/clippy"]
 
 [dependencies]
@@ -31,9 +30,5 @@ derive_builder_core = { version = "=0.10.0-alpha", path = "../derive_builder_cor
 
 [dev-dependencies]
 pretty_assertions = "0.6"
-skeptic = "0.13"
 rustversion = "1"
 trybuild = "1"
-
-[build-dependencies]
-skeptic = { version = "0.13", optional = true }

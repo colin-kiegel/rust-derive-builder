@@ -15,9 +15,7 @@ jobs:
           - 1.40.0
         features:
           - ""
-          - --features skeptic_tests
           - --no-default-features
-          - --no-default-features --features skeptic_tests
           - --features clippy
 
     env:
