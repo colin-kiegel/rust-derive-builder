@@ -4,7 +4,7 @@ function main {
   export CARGO_TARGET_DIR="../target/__nightlytests"
 
   commands=(
-    "cd derive_builder && rustup run nightly cargo test --all --color always --features \"skeptic_tests nightlytests\""
+    "cd derive_builder && rustup run nightly cargo test --all --color always --features \"nightlytests\""
   )
 
   dev/travis-run-all.sh "${commands[@]}"

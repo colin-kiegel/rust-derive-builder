@@ -13,11 +13,8 @@ documentation = "https://docs.rs/derive_builder_core"
 license = "MIT/Apache-2.0"
 readme = "README.md"
 
-build = "build/mod.rs"
-
 [features]
 clippy = []
-skeptic_tests = ["skeptic"]
 
 [badges]
 travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
@@ -30,6 +27,3 @@ syn = { version = "1.0", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 pretty_assertions = "0.6"
-
-[build-dependencies]
-skeptic = { version = "0.13", optional = true }
