@@ -6,7 +6,7 @@ use syn::Attribute;
 ///
 /// Will expand to something like the following (depending on inner value):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate syn;

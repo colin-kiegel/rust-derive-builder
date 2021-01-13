@@ -13,7 +13,7 @@ use syn;
 ///
 /// Will expand to something like the following (depending on settings):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate derive_builder_core;

@@ -3,7 +3,7 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use doc_comment::doc_comment_from;
+use doc_comment_from;
 use BuildMethod;
 use BuilderField;
 use BuilderPattern;
@@ -16,7 +16,7 @@ use Setter;
 ///
 /// Will expand to something like the following (depending on settings):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
@@ -481,7 +481,7 @@ mod tests {
                             unimplemented!()
                         }
                     }
-                    
+
                     impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
                             Self {
@@ -573,7 +573,7 @@ mod tests {
                             unimplemented!()
                         }
                     }
-                    
+
                     impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
                             Self {
@@ -662,7 +662,7 @@ mod tests {
                             unimplemented!()
                         }
                     }
-                    
+
                     impl<'a, T: Debug> ::derive_builder::export::core::default::Default for FooBuilder<'a, T>
                     where T: PartialEq {
                         fn default() -> Self {

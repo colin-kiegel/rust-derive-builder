@@ -12,7 +12,7 @@ use syn;
 ///
 /// Will expand to something like the following (depending on settings):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[macro_use]
 /// # extern crate quote;
 /// # extern crate derive_builder_core;
@@ -55,15 +55,9 @@ impl ToTokens for DeprecationNotes {
 
 impl DeprecationNotes {
     /// Appends a note to the collection.
+    #[cfg(test)]
     pub fn push(&mut self, note: String) {
         self.0.push(note)
-    }
-
-    /// Extend this collection with all values from another collection.
-    pub fn extend(&mut self, other: &Self) {
-        for x in &other.0 {
-            self.0.push(x.to_owned())
-        }
     }
 
     /// Create a view of these deprecation notes that can annotate a struct.
