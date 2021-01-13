@@ -79,7 +79,7 @@ impl<'a> BuilderField<'a> {
     /// Emits a struct field initializer that initializes the field to `Default::default`.
     pub fn default_initializer_tokens(&self) -> TokenStream {
         let ident = self.field_ident;
-        quote!{ #ident : ::derive_builder::export::core::default::Default::default(), }
+        quote! { #ident : ::derive_builder::export::core::default::Default::default(), }
     }
 }
 
