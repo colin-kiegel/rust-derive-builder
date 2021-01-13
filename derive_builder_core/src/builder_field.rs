@@ -50,7 +50,6 @@ pub struct BuilderField<'a> {
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.field_enabled {
-            trace!("Deriving builder field for `{}`.", self.field_ident);
             let vis = &self.field_visibility;
             let ident = self.field_ident;
             let ty = self.field_type;
@@ -60,10 +59,6 @@ impl<'a> ToTokens for BuilderField<'a> {
                 #(#attrs)* #vis #ident: ::derive_builder::export::core::option::Option<#ty>,
             ));
         } else {
-            trace!(
-                "Skipping builder field for `{}`, fallback to PhantomData.",
-                self.field_ident
-            );
             let ident = self.field_ident;
             let ty = self.field_type;
             let attrs = self.attrs;
@@ -79,7 +74,7 @@ impl<'a> BuilderField<'a> {
     /// Emits a struct field initializer that initializes the field to `Default::default`.
     pub fn default_initializer_tokens(&self) -> TokenStream {
         let ident = self.field_ident;
-        quote!{ #ident : ::derive_builder::export::core::default::Default::default(), }
+        quote! { #ident : ::derive_builder::export::core::default::Default::default(), }
     }
 }
 

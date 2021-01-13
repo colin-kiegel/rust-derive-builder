@@ -1,14 +1,6 @@
-#[macro_use]
-extern crate log;
-#[cfg(feature = "logging")]
-extern crate env_logger;
 extern crate skeptic;
 
 fn main() {
-    println!("INFO: Run with `RUST_LOG=build_script_build=trace` for debug information.");
-    #[cfg(feature = "logging")]
-    env_logger::init();
-
     let mut files = generate_doc_tpl_tests().unwrap();
     files.push("README.md".to_string());
 
@@ -46,67 +38,63 @@ fn main() {{
 "###;
 
 use std::error::Error;
-use std::path::PathBuf;
+use std::path::Path;
 use std::env;
-use std::fs::{File, DirBuilder};
-use std::ffi::OsStr;
-use std::io::{Write, Read};
+use std::fs::{File, DirBuilder, read_to_string};
+use std::io::Write;
 
 const DOC_TPL_DIR: &'static str = "src/doc_tpl/";
 const DOC_TPL_OUT_DIR: &'static str = "doc_tpl/";
 
 fn generate_doc_tpl_tests() -> Result<Vec<String>, Box<dyn Error>> {
-    trace!("Generating doc template tests");
-    let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
-    let mut tpl_dir = root_dir;
-    tpl_dir.push(DOC_TPL_DIR);
-    let mut out_dir = PathBuf::from(env::var("OUT_DIR")?);
-    out_dir.push(DOC_TPL_OUT_DIR);
+    let tpl_dir = Path::new(&env::var("CARGO_MANIFEST_DIR")?).join(DOC_TPL_DIR);
+    let out_dir = Path::new(&env::var("OUT_DIR")?).join(DOC_TPL_OUT_DIR);
 
     if !out_dir.is_dir() {
-        trace!("Create out dir {:?}", out_dir);
         DirBuilder::new().create(&out_dir)?;
     }
 
-    let docs = tpl_dir.read_dir().expect(&format!("Could not open {}", tpl_dir.display()));
+    let docs = tpl_dir.read_dir()
+        .map_err(|e| format!("Could not open {}: {}.", tpl_dir.display(), e))?;
 
     let mut files = Vec::<String>::new();
 
     for doc in docs {
-        let path: PathBuf = doc?.path();
+        let path = doc?.path();
+
+        if !is_markdown(&path) {
+            continue;
+        }
 
         let filename = match path.file_name() {
-            Some(filename) if path.extension() == Some(&OsStr::new("md")) => filename,
-            _ => {
-                trace!("Skipping dir entry {:?}", path.display());
-                continue;
-            }
+            Some(filename) => filename,
+            None => continue,
         };
 
-        trace!("Create tests for {:?}", path.display());
-        let mut reader = File::open(&path)?;
+        let tpl = read_to_string(&path)
+            .map_err(|e| format!("Cannot read file {}: {}.", path.display(), e))?;
 
         println!("cargo:rerun-if-changed={}", path.display());
-        let mut out_file = out_dir.clone();
-        out_file.push(filename);
+        let out_file = out_dir.join(filename);
 
-        trace!("Will write into {:?}", out_file.display());
-
-        let mut out = File::create(&out_file)?;
+        let mut out = File::create(&out_file)
+            .map_err(|e| format!("Cannot create file {}: {}.", out_file.display(), e))?;
         out.write_all(DOC_TPL_HEADER.as_bytes())?;
 
-        let mut tpl = String::new();
-        reader.read_to_string(&mut tpl)?;
         let tpl = tpl.replace("{struct_name}", "Foo")
             .replace("{builder_name}", "FooBuilder")
             .replace("{field_name}", "default");
         out.write_all(tpl.as_ref())?;
 
-        trace!("{:?}",
-               &[&out_file.to_str().expect("Path must not be empty")]);
-
-        files.push(out_file.to_str().expect("Path must not be empty").to_string());
+        files.push(out_file.to_str()
+            .ok_or_else(|| "Path must not be empty")?
+            .to_string()
+        );
     }
 
     Ok(files)
+}
+
+fn is_markdown(path: &Path) -> bool {
+    path.extension().map_or(false, |extension| extension == "md")
 }

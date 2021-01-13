@@ -17,12 +17,8 @@ env:
   matrix:
   - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES=""
   - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="skeptic_tests"
-  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="logging"
-  - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="skeptic_tests logging"
   - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES=""
   - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="skeptic_tests"
-  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="logging"
-  - JOB=test CARGO_DEFAULT_FEATURES="--no-default-features" CARGO_FEATURES="skeptic_tests logging"
   - JOB=test CARGO_DEFAULT_FEATURES="" CARGO_FEATURES="clippy"
   global:
   - RUST_BACKTRACE=1

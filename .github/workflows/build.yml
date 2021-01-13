@@ -16,12 +16,8 @@ jobs:
         features:
           - ""
           - --features skeptic_tests
-          - --features logging
-          - --features skeptic_tests logging
           - --no-default-features
           - --no-default-features --features skeptic_tests
-          - --no-default-features --features logging
-          - --no-default-features --features skeptic_tests logging
           - --features clippy
 
     env:

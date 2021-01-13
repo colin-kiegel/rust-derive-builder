@@ -85,7 +85,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let error_ty = &self.error_ty;
 
         if self.enabled {
-            trace!("Deriving build method `{}`.", self.ident);
             tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
@@ -98,8 +97,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
                     })
                 }
             ))
-        } else {
-            trace!("Skipping build method.");
         }
     }
 }

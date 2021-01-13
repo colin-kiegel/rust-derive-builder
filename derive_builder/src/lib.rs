@@ -528,16 +528,6 @@
 //!   dependency would occur. To break it you could try to depend on the
 //!   [`derive_builder_core`] crate instead.
 //!
-//! ## Debugging Info
-//!
-//! If you experience any problems during compilation, you can enable additional debug output in
-//! two steps:
-//!
-//! 1. Add `features = ["logging"]` to the `derive_builder` dependency in `Cargo.toml`.
-//! 2. Set this environment variable before calling cargo or rustc `RUST_LOG=derive_builder=trace`.
-//!
-//! Example: `env RUST_LOG=derive_builder=trace cargo test`.
-//!
 //! ## Report Issues and Ideas
 //!
 //! [Open an issue on GitHub](https://github.com/colin-kiegel/rust-derive-builder/issues)

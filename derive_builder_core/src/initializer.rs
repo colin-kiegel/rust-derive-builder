@@ -52,8 +52,6 @@ pub struct Initializer<'a> {
 
 impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        trace!("Deriving initializer for `{}`.", self.field_ident);
-
         let struct_field = &self.field_ident;
 
         if self.field_enabled {
