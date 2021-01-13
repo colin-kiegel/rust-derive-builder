@@ -4,7 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 - Requires Rust 1.40.0 or newer (was 1.37.0) #169
-- Logging feature is removed.
+- Logging feature is removed #177
+- Type parameters no longer have the `Default` bound #178
+- Make most of `derive_builder_core` private #189
 
 ## [0.9.0] - 2019-11-07
 - Add `setter(custom)` to allow implementing a custom setter #154
