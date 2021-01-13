@@ -1,4 +1,4 @@
-use doc_comment::doc_comment_from;
+use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
@@ -14,7 +14,7 @@ use DEFAULT_STRUCT_NAME;
 ///
 /// Will expand to something like the following (depending on settings):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;

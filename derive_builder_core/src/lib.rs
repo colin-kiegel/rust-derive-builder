@@ -4,20 +4,13 @@
 //!
 //! * You are probably looking for the [`derive_builder`] crate,
 //!   which wraps this crate and is much more ergonomic to use.
-//! * The API of this crate might **change frequently** in the near future.
-//!   The [`derive_builder`] crate also provides a much more stable API.
 //!
 //! ## Purpose
 //!
-//! This is an internal helper library of [`derive_builder`]. Its purpose is to
-//! allow [`derive_builder`] to use its own code generation technique, if
-//! needed.
+//! This is an internal helper library of [`derive_builder`], which allows for
+//! all the logic of builder creation to be decoupled from the proc-macro entry
+//! point.
 //!
-//! [`derive_builder_core`] might also be used in crates that
-//! [`derive_builder`] depends on - again to break a dependency cycle.
-//!
-//! If [`derive_builder`] does not itself depend on _your_ crate, then you
-//! should consider using [`derive_builder`] instead of [`derive_builder_core`].
 //!
 //! [`derive_builder`]: https://!crates.io/crates/derive_builder
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
@@ -49,16 +42,16 @@ mod macro_options;
 mod options;
 mod setter;
 
-pub use block::Block;
-pub use build_method::BuildMethod;
-pub use builder::Builder;
-pub use builder_field::BuilderField;
+pub(crate) use block::Block;
+pub(crate) use build_method::BuildMethod;
+pub(crate) use builder::Builder;
+pub(crate) use builder_field::BuilderField;
 use darling::FromDeriveInput;
-pub use deprecation_notes::DeprecationNotes;
-pub use doc_comment::doc_comment_from;
-pub use initializer::Initializer;
-pub use options::BuilderPattern;
-pub use setter::Setter;
+pub(crate) use deprecation_notes::DeprecationNotes;
+pub(crate) use doc_comment::doc_comment_from;
+pub(crate) use initializer::Initializer;
+pub(crate) use options::BuilderPattern;
+pub(crate) use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
 

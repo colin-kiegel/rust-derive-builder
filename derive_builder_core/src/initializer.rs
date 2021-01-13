@@ -13,7 +13,7 @@ use DEFAULT_STRUCT_NAME;
 ///
 /// Will expand to something like the following (depending on settings):
 ///
-/// ```rust
+/// ```rust,ignore
 /// # extern crate proc_macro2;
 /// # #[macro_use]
 /// # extern crate quote;
