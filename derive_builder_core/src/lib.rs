@@ -34,8 +34,6 @@ extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
-#[macro_use]
-extern crate log;
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
@@ -66,8 +64,6 @@ const DEFAULT_STRUCT_NAME: &str = "__default";
 
 /// Derive a builder for a struct
 pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
-    debug!("Deriving Builder for `{}`.", ast.ident);
-
     let opts = match macro_options::Options::from_derive_input(&ast) {
         Ok(val) => val,
         Err(err) => {

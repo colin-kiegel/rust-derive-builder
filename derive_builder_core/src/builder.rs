@@ -140,7 +140,6 @@ pub struct Builder<'a> {
 impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
-            trace!("Deriving builder `{}`.", self.ident);
             let builder_vis = &self.visibility;
             let builder_ident = &self.ident;
             let bounded_generics = self.compute_impl_bounds();
@@ -173,11 +172,6 @@ impl<'a> ToTokens for Builder<'a> {
 
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
-
-            debug!(
-                "ty_generics={:?}, where_clause={:?}, struct_generics={:?}",
-                ty_generics, where_clause, struct_generics
-            );
 
             #[cfg(not(feature = "clippy"))]
             tokens.append_all(quote!(#[allow(clippy::all)]));
@@ -236,7 +230,7 @@ impl<'a> ToTokens for Builder<'a> {
                     #(#functions)*
                     #deprecation_notes
                 }
-                
+
                 impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
                     fn default() -> Self {
                         Self {
@@ -245,8 +239,6 @@ impl<'a> ToTokens for Builder<'a> {
                     }
                 }
             ));
-        } else {
-            trace!("Skipping builder `{}`.", self.ident);
         }
     }
 }
@@ -400,7 +392,7 @@ mod tests {
                             unimplemented!()
                         }
                     }
-                    
+
                     impl ::derive_builder::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self {
@@ -761,7 +753,7 @@ mod tests {
                             unimplemented!()
                         }
                     }
-                    
+
                     impl ::derive_builder::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self {

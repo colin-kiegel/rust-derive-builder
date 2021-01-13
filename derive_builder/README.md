@@ -98,7 +98,6 @@ with [cargo-edit](https://github.com/killercup/cargo-edit):
 * **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 * **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
 *  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `#![feature(alloc)] extern crate alloc` to your crate. The latter requires the _nightly_ toolchain.
-* **Logging**: If anything works unexpectedly you can enable detailed logs in two steps. First, add `features = ["logging"]` to the `derive_builder` dependency in `Cargo.toml`. Second, set this environment variable before calling cargo `RUST_LOG=derive_builder=trace`.
 
 For more information and examples please take a look at our [documentation][doc].
 

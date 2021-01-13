@@ -22,7 +22,6 @@ travis-ci = { repository = "colin-kiegel/rust-derive-builder" }
 [features]
 default = ["std"]
 std = []
-logging = ["derive_builder_macro/logging", "derive_builder_core/logging"]
 skeptic_tests = ["skeptic", "derive_builder_macro/skeptic_tests", "derive_builder_core/skeptic_tests"]
 clippy = ["derive_builder_macro/clippy", "derive_builder_core/clippy"]
 

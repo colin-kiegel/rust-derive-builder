@@ -33,7 +33,7 @@ use syn;
 /// This will emit a deprecation warning in the downstream crate. Cool stuff. ^^
 ///
 /// Proof of concept:
-/// - https://play.rust-lang.org/?gist=8394141c07d1f6d75d314818389eb4d8
+/// - <https://play.rust-lang.org/?gist=8394141c07d1f6d75d314818389eb4d8>
 #[derive(Debug, Default, Clone)]
 pub struct DeprecationNotes(Vec<String>);
 

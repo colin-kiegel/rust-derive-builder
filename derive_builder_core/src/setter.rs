@@ -67,7 +67,6 @@ pub struct Setter<'a> {
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
-            trace!("Deriving setter for `{}`.", self.field_ident);
             let field_type = self.field_type;
             let pattern = self.pattern;
             let vis = &self.visibility;
@@ -153,11 +152,7 @@ impl<'a> ToTokens for Setter<'a> {
                         new.#field_ident = ::derive_builder::export::core::option::Option::Some(converted);
                         Ok(new)
                 }));
-            } else {
-                trace!("Skipping try_setter for `{}`.", self.field_ident);
             }
-        } else {
-            trace!("Skipping setter for `{}`.", self.field_ident);
         }
     }
 }
