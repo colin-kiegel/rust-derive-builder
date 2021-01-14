@@ -17,7 +17,7 @@ use crate::Block;
 
 mod darling_opts;
 
-pub use self::darling_opts::Options;
+pub use self::darling_opts::{FieldWithDefaults, Options};
 
 /// A `DefaultExpression` can be either explicit or refer to the canonical trait.
 #[derive(Debug, Clone)]

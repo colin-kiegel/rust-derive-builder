@@ -48,6 +48,8 @@ pub struct Initializer<'a> {
     pub default_value: Option<Block>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
+    /// Error constructor
+    pub error_constructor: &'a TokenStream,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -90,7 +92,10 @@ impl<'a> Initializer<'a> {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
                 } else {
-                    MatchNone::ReturnError(self.field_ident.to_string())
+                    MatchNone::ReturnError {
+                        field_ident: self.field_ident,
+                        error_constructor: self.error_constructor,
+                    }
                 }
             }
         }
@@ -118,7 +123,10 @@ enum MatchNone<'a> {
     /// The default struct must be in scope in the build_method.
     UseDefaultStructField(&'a syn::Ident),
     /// Inner value must be the field name
-    ReturnError(String),
+    ReturnError {
+        field_ident: &'a syn::Ident,
+        error_constructor: &'a TokenStream,
+    },
 }
 
 impl<'a> ToTokens for MatchNone<'a> {
@@ -133,9 +141,15 @@ impl<'a> ToTokens for MatchNone<'a> {
                     None => #struct_ident.#field_ident
                 ))
             }
-            MatchNone::ReturnError(ref err) => tokens.append_all(quote!(
-                None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(#err))
-            )),
+            MatchNone::ReturnError {
+                ref field_ident,
+                ref error_constructor,
+            } => {
+                let field_name = field_ident.to_string();
+                tokens.append_all(quote!(
+                    None => return ::derive_builder::export::core::result::Result::Err(#error_constructor(#field_name))
+                ))
+            }
         }
     }
 }
@@ -171,6 +185,7 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
+            error_constructor: &syn::parse_str("FooError::UninitializedField").unwrap(),
         }
     };
 }
@@ -190,9 +205,7 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
-                    )),
+                    None => return ::derive_builder::export::core::result::Result::Err(FooError::UninitializedField("foo")),
                 },
             )
             .to_string()
@@ -209,9 +222,7 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
-                    )),
+                    None => return ::derive_builder::export::core::result::Result::Err(FooError::UninitializedField("foo")),
                 },
             )
             .to_string()
@@ -228,9 +239,7 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(value) => value,
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
-                    )),
+                    None => return ::derive_builder::export::core::result::Result::Err(FooError::UninitializedField("foo")),
                 },
             )
             .to_string()
@@ -291,9 +300,7 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
-                    )),
+                    None => return ::derive_builder::export::core::result::Result::Err(FooError::UninitializedField("foo")),
                 },
             )
             .to_string()

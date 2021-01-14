@@ -64,24 +64,24 @@ pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
         }
     };
 
-    let mut builder = opts.as_builder();
-    let mut build_fn = opts.as_build_method();
+    let fields = opts.fields().collect::<Vec<_>>();
 
-    builder.doc_comment(format!(
-        include_str!("doc_tpl/builder_struct.md"),
-        struct_name = ast.ident
-    ));
+    let mut build_fn = opts.as_build_method();
     build_fn.doc_comment(format!(
         include_str!("doc_tpl/builder_method.md"),
         struct_name = ast.ident
     ));
+    build_fn.fields(&fields);
 
+    let mut builder = opts.as_builder();
+    builder.doc_comment(format!(
+        include_str!("doc_tpl/builder_struct.md"),
+        struct_name = ast.ident
+    ));
     for field in opts.fields() {
         builder.push_field(field.as_builder_field());
         builder.push_setter_fn(field.as_setter());
-        build_fn.push_initializer(field.as_initializer());
     }
-
     builder.push_build_fn(build_fn);
 
     quote!(#builder)

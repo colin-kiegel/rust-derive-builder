@@ -51,12 +51,6 @@ use Setter;
 ///     ValidationError(String),
 /// }
 ///
-/// impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-///     fn from(s: &'static str) -> Self {
-///         Self::UninitializedField(s)
-///     }
-/// }
-///
 /// impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
 ///     fn from(s: String) -> Self {
 ///         Self::ValidationError(s)
@@ -196,15 +190,11 @@ impl<'a> ToTokens for Builder<'a> {
                     ValidationError(String),
                 }
 
-                impl ::derive_builder::export::core::convert::From<&'static str> for #builder_error_ident {
-                    fn from(s: &'static str) -> Self {
-                        Self::UninitializedField(s)
-                    }
-                }
-
-                impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
-                    fn from(s: String) -> Self {
-                        Self::ValidationError(s)
+                impl<E> ::derive_builder::export::core::convert::From<E> for #builder_error_ident
+                    where E: ::derive_builder::export::core::convert::AsRef<str>
+                {
+                    fn from(s: E) -> Self {
+                        Self::ValidationError(s.as_ref().to_string())
                     }
                 }
 
@@ -357,15 +347,11 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
+                    impl<E> ::derive_builder::export::core::convert::From<E> for FooBuilderError
+                        where E: ::derive_builder::export::core::convert::AsRef<str>
+                    {
+                        fn from(s: E) -> Self {
+                            Self::ValidationError(s.as_ref().to_string())
                         }
                     }
 
@@ -446,15 +432,11 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
+                    impl<E> ::derive_builder::export::core::convert::From<E> for FooBuilderError
+                        where E: ::derive_builder::export::core::convert::AsRef<str>
+                    {
+                        fn from(s: E) -> Self {
+                            Self::ValidationError(s.as_ref().to_string())
                         }
                     }
 
@@ -535,15 +517,11 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
+                    impl<E> ::derive_builder::export::core::convert::From<E> for FooBuilderError
+                        where E: ::derive_builder::export::core::convert::AsRef<str>
+                    {
+                        fn from(s: E) -> Self {
+                            Self::ValidationError(s.as_ref().to_string())
                         }
                     }
 
@@ -627,15 +605,11 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
+                    impl<E> ::derive_builder::export::core::convert::From<E> for FooBuilderError
+                        where E: ::derive_builder::export::core::convert::AsRef<str>
+                    {
+                        fn from(s: E) -> Self {
+                            Self::ValidationError(s.as_ref().to_string())
                         }
                     }
 
@@ -718,15 +692,11 @@ mod tests {
                         ValidationError(String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
+                    impl<E> ::derive_builder::export::core::convert::From<E> for FooBuilderError
+                        where E: ::derive_builder::export::core::convert::AsRef<str>
+                    {
+                        fn from(s: E) -> Self {
+                            Self::ValidationError(s.as_ref().to_string())
                         }
                     }
 

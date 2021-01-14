@@ -1,10 +1,10 @@
+use crate::macro_options::FieldWithDefaults;
 use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
 use Block;
 use BuilderPattern;
-use Initializer;
 use DEFAULT_STRUCT_NAME;
 
 /// Initializer for the struct fields in the build method, implementing
@@ -52,8 +52,8 @@ pub struct BuildMethod<'a> {
     pub target_ty_generics: Option<syn::TypeGenerics<'a>>,
     /// Type of error.
     pub error_ty: syn::Ident,
-    /// Field initializers for the target type.
-    pub initializers: Vec<TokenStream>,
+    /// Fields for the target type.
+    pub fields: Vec<FieldWithDefaults<'a>>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Default value for the whole struct.
@@ -71,7 +71,13 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let vis = &self.visibility;
         let target_ty = &self.target_ty;
         let target_ty_generics = &self.target_ty_generics;
-        let initializers = &self.initializers;
+        let error_ty = &self.error_ty;
+        let error_constructor = quote!(#error_ty::UninitializedField);
+        let initializers = &self
+            .fields
+            .iter()
+            .map(|field| field.as_initializer(&error_constructor))
+            .collect::<Vec<_>>();
         let self_param = match self.pattern {
             BuilderPattern::Owned => quote!(self),
             BuilderPattern::Mutable | BuilderPattern::Immutable => quote!(&self),
@@ -82,7 +88,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
         let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
-        let error_ty = &self.error_ty;
 
         if self.enabled {
             tokens.append_all(quote!(
@@ -108,13 +113,9 @@ impl<'a> BuildMethod<'a> {
         self
     }
 
-    /// Populate the `BuildMethod` with appropriate initializers of the
-    /// underlying struct.
-    ///
-    /// For each struct field this must be called with the appropriate
-    /// initializer.
-    pub fn push_initializer(&mut self, init: Initializer) -> &mut Self {
-        self.initializers.push(quote!(#init));
+    /// Set fields for this item.
+    pub fn fields(&mut self, fields: &[FieldWithDefaults<'a>]) -> &mut Self {
+        self.fields = fields.to_vec();
         self
     }
 }
@@ -133,7 +134,7 @@ macro_rules! default_build_method {
             target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,
             error_ty: syn::Ident::new("FooBuilderError", ::proc_macro2::Span::call_site()),
-            initializers: vec![quote!(foo: self.foo,)],
+            fields: vec![],
             doc_comment: None,
             default_struct: None,
             validate_fn: None,
@@ -155,9 +156,7 @@ mod tests {
             quote!(#build_method).to_string(),
             quote!(
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
-                    Ok(Foo {
-                        foo: self.foo,
-                    })
+                    Ok(Foo {})
                 }
             )
             .to_string()
@@ -175,9 +174,7 @@ mod tests {
             quote!(
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     let __default: Foo = { Default::default() };
-                    Ok(Foo {
-                        foo: self.foo,
-                    })
+                    Ok(Foo {})
                 }
             )
             .to_string()
@@ -204,9 +201,7 @@ mod tests {
             quote!(#build_method).to_string(),
             quote!(
                 pub fn finish(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
-                    Ok(Foo {
-                        foo: self.foo,
-                    })
+                    Ok(Foo {})
                 }
             )
             .to_string()
@@ -227,10 +222,7 @@ mod tests {
             quote!(
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     IpsumBuilder::validate(&self)?;
-
-                    Ok(Foo {
-                        foo: self.foo,
-                    })
+                    Ok(Foo {})
                 }
             )
             .to_string()

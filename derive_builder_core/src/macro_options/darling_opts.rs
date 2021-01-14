@@ -4,7 +4,7 @@ use crate::BuildMethod;
 
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use syn::{self, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
@@ -394,7 +394,7 @@ impl Options {
             target_ty: &self.ident,
             target_ty_generics: Some(ty_generics),
             error_ty: self.builder_error_ident(),
-            initializers: Vec::with_capacity(self.field_count()),
+            fields: Vec::with_capacity(self.field_count()),
             doc_comment: None,
             default_struct: self
                 .default
@@ -407,6 +407,7 @@ impl Options {
 
 /// Accessor for field data which can pull through options from the parent
 /// struct.
+#[derive(Debug, Clone)]
 pub struct FieldWithDefaults<'a> {
     parent: &'a Options,
     field: &'a Field,
@@ -545,7 +546,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// # Panics
     ///
     /// if `default_expression` can not be parsed as `Block`.
-    pub fn as_initializer(&'a self) -> Initializer<'a> {
+    pub fn as_initializer(&'a self, error_constructor: &'a TokenStream) -> Initializer<'a> {
         Initializer {
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
@@ -556,6 +557,7 @@ impl<'a> FieldWithDefaults<'a> {
                 .as_ref()
                 .map(|x| x.parse_block(self.parent.no_std.into())),
             use_default_struct: self.use_parent_default(),
+            error_constructor,
         }
     }
 

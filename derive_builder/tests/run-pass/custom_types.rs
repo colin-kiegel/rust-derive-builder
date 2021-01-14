@@ -10,7 +10,6 @@ type Into = Unit;
 type Option = Unit;
 type Result = Unit;
 type Some = Unit;
-type String = Unit;
 
 impl core::fmt::Debug for Unit {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
