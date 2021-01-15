@@ -37,10 +37,13 @@ mod builder;
 mod builder_field;
 mod deprecation_notes;
 mod doc_comment;
+mod error;
 mod initializer;
 mod macro_options;
 mod options;
 mod setter;
+
+pub use error::UninitializedFieldError;
 
 pub(crate) use block::Block;
 pub(crate) use build_method::BuildMethod;

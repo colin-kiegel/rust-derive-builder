@@ -196,9 +196,9 @@ impl<'a> ToTokens for Builder<'a> {
                     ValidationError(String),
                 }
 
-                impl ::derive_builder::export::core::convert::From<&'static str> for #builder_error_ident {
-                    fn from(s: &'static str) -> Self {
-                        Self::UninitializedField(s)
+                impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
+                    fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                        Self::UninitializedField(s.field_name())
                     }
                 }
 

@@ -133,8 +133,12 @@ impl<'a> ToTokens for MatchNone<'a> {
                     None => #struct_ident.#field_ident
                 ))
             }
-            MatchNone::ReturnError(ref err) => tokens.append_all(quote!(
-                None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(#err))
+            MatchNone::ReturnError(ref field_name) => tokens.append_all(quote!(
+                None => return ::derive_builder::export::core::result::Result::Err(
+                    ::derive_builder::export::core::convert::Into::into(
+                        ::derive_builder::UninitializedFieldError::from(#field_name)
+                    )
+                )
             )),
         }
     }
