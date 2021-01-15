@@ -2,6 +2,7 @@ use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
+use syn::spanned::Spanned;
 use Block;
 use BuilderPattern;
 use Initializer;
@@ -81,7 +82,10 @@ impl<'a> ToTokens for BuildMethod<'a> {
             let ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
-        let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
+        let validate_fn = self
+            .validate_fn
+            .as_ref()
+            .map(|vfn| quote_spanned!(vfn.span() => #vfn(&self)?;));
         let error_ty = &self.error_ty;
 
         if self.enabled {
