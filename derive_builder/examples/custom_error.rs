@@ -12,7 +12,7 @@ use std::fmt;
 fn validate_age(builder: &ExampleBuilder) -> Result<(), Error> {
     match builder.age {
         Some(age) if age > 150 => Err(Error::UnrealisticAge(age)),
-        _ => Ok(())
+        _ => Ok(()),
     }
 }
 
