@@ -7,6 +7,7 @@
 #[macro_use]
 extern crate derive_builder;
 
+use derive_builder::UninitializedFieldError;
 use std::fmt;
 
 fn validate_age(builder: &ExampleBuilder) -> Result<(), Error> {
@@ -17,13 +18,14 @@ fn validate_age(builder: &ExampleBuilder) -> Result<(), Error> {
 }
 
 #[derive(Debug, Builder)]
-#[builder(setter(into), build_fn(validate = "validate_age"))]
+#[builder(setter(into), build_fn(validate = "validate_age", error = "Error"))]
 struct Example {
     name: String,
     age: usize,
 }
 
 enum Error {
+    UninitializedField(&'static str),
     UnrealisticAge(usize),
 }
 
@@ -31,14 +33,14 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::UnrealisticAge(age) => write!(f, "Nobody is {} years old", age),
+            Self::UninitializedField(field) => write!(f, "Required field '{}' not set", field),
         }
     }
 }
 
-// Without this conversion, the example will fail to compile
-impl From<Error> for ExampleBuilderError {
-    fn from(error: Error) -> Self {
-        ExampleBuilderError::ValidationError(error.to_string())
+impl From<UninitializedFieldError> for Error {
+    fn from(e: UninitializedFieldError) -> Self {
+        Self::UninitializedField(e.field_name())
     }
 }
 

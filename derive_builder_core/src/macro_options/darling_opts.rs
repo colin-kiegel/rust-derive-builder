@@ -44,6 +44,15 @@ pub struct BuildFn {
     validate: Option<Path>,
     public: Flag,
     private: Flag,
+    /// The path to an existing error type that the build method should return.
+    ///
+    /// Setting this will prevent `derive_builder` from generating an error type for the build
+    /// method.
+    ///
+    /// # Type Bounds
+    /// This error type must `impl From<UninitializedFieldError>` and must support conversion
+    /// from the error returned by the `validate` function if one was specified.
+    error: Option<Path>,
 }
 
 impl Default for BuildFn {
@@ -54,6 +63,7 @@ impl Default for BuildFn {
             validate: None,
             public: Default::default(),
             private: Default::default(),
+            error: None,
         }
     }
 }
@@ -317,11 +327,13 @@ impl Options {
             .expect("Struct name with Builder suffix should be an ident")
     }
 
-    pub fn builder_error_ident(&self) -> Ident {
-        if let Some(ref custom) = self.name {
-            format_ident!("{}Error", custom)
+    pub fn builder_error_ident(&self) -> Path {
+        if let Some(existing) = self.build_fn.error.as_ref() {
+            existing.clone()
+        } else if let Some(ref custom) = self.name {
+            format_ident!("{}Error", custom).into()
         } else {
-            format_ident!("{}BuilderError", self.ident)
+            format_ident!("{}BuilderError", self.ident).into()
         }
     }
 
@@ -378,6 +390,7 @@ impl Options {
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
+            generate_error: self.build_fn.error.is_none(),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),

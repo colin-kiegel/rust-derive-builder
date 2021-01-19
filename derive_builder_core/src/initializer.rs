@@ -195,7 +195,7 @@ mod tests {
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
                     None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
+                        ::derive_builder::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -214,7 +214,7 @@ mod tests {
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
                     None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
+                        ::derive_builder::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -233,7 +233,7 @@ mod tests {
                 foo: match self.foo {
                     Some(value) => value,
                     None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
+                        ::derive_builder::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -296,7 +296,7 @@ mod tests {
                 foo: match self.foo {
                     Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
                     None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        "foo"
+                        ::derive_builder::UninitializedFieldError::from("foo")
                     )),
                 },
             )

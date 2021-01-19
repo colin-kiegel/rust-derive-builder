@@ -126,6 +126,10 @@ pub struct Builder<'a> {
     pub field_initializers: Vec<TokenStream>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<TokenStream>,
+    /// Whether or not a generated error type is required.
+    ///
+    /// This would be `false` in the case where an already-existing error is to be used.
+    pub generate_error: bool,
     /// Whether this builder must derive `Clone`.
     ///
     /// This is true even for a builder using the `owned` pattern if there is a field whose setter
@@ -176,49 +180,12 @@ impl<'a> ToTokens for Builder<'a> {
             #[cfg(not(feature = "clippy"))]
             tokens.append_all(quote!(#[allow(clippy::all)]));
 
-            let builder_error_ident = format_ident!("{}Error", builder_ident);
-            let builder_error_doc = format!("Error type for {}", builder_ident);
-
             tokens.append_all(quote!(
                 #derive_attr
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
                     #(#builder_fields)*
                 }
-
-                #[doc=#builder_error_doc]
-                #[derive(Debug)]
-                #[non_exhaustive]
-                #builder_vis enum #builder_error_ident {
-                    /// Uninitialized field
-                    UninitializedField(&'static str),
-                    /// Custom validation error
-                    ValidationError(String),
-                }
-
-                impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
-                    fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
-                        Self::UninitializedField(s.field_name())
-                    }
-                }
-
-                impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
-                    fn from(s: String) -> Self {
-                        Self::ValidationError(s)
-                    }
-                }
-
-                impl ::derive_builder::export::core::fmt::Display for #builder_error_ident {
-                    fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                        match self {
-                            Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                            Self::ValidationError(ref error) => write!(f, "{}", error),
-                        }
-                    }
-                }
-
-                #[cfg(not(no_std))]
-                impl std::error::Error for #builder_error_ident {}
             ));
 
             #[cfg(not(feature = "clippy"))]
@@ -239,6 +206,47 @@ impl<'a> ToTokens for Builder<'a> {
                     }
                 }
             ));
+
+            if self.generate_error {
+                let builder_error_ident = format_ident!("{}Error", builder_ident);
+                let builder_error_doc = format!("Error type for {}", builder_ident);
+
+                tokens.append_all(quote!(
+                    #[doc=#builder_error_doc]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    #builder_vis enum #builder_error_ident {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                        /// Custom validation error
+                        ValidationError(String),
+                    }
+
+                    impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
+                        fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                            Self::UninitializedField(s.field_name())
+                        }
+                    }
+
+                    impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
+                        fn from(s: String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+
+                    impl ::derive_builder::export::core::fmt::Display for #builder_error_ident {
+                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                            }
+                        }
+                    }
+
+                    #[cfg(not(no_std))]
+                    impl std::error::Error for #builder_error_ident {}
+            ));
+            }
         }
     }
 }
@@ -315,6 +323,7 @@ macro_rules! default_builder {
             fields: vec![quote!(foo: u32,)],
             field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
+            generate_error: true,
             must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
@@ -326,6 +335,45 @@ macro_rules! default_builder {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+    use proc_macro2::TokenStream;
+
+    fn add_generated_error(result: &mut TokenStream) {
+        result.append_all(quote!(
+            #[doc="Error type for FooBuilder"]
+            #[derive(Debug)]
+            #[non_exhaustive]
+            pub enum FooBuilderError {
+                /// Uninitialized field
+                UninitializedField(&'static str),
+                /// Custom validation error
+                ValidationError(String),
+            }
+
+            impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
+                fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                    Self::UninitializedField(s.field_name())
+                }
+            }
+
+            impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
+                fn from(s: String) -> Self {
+                    Self::ValidationError(s)
+                }
+            }
+
+            impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+                    match self {
+                        Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                        Self::ValidationError(ref error) => write!(f, "{}", error),
+                    }
+                }
+            }
+
+            #[cfg(not(no_std))]
+            impl std::error::Error for FooBuilderError {}
+        ));
+    }
 
     #[test]
     fn simple() {
@@ -344,42 +392,6 @@ mod tests {
                     pub struct FooBuilder {
                         foo: u32,
                     }
-                ));
-
-                result.append_all(quote!(
-                    #[doc="Error type for FooBuilder"]
-                    #[derive(Debug)]
-                    #[non_exhaustive]
-                    pub enum FooBuilderError {
-                        /// Uninitialized field
-                        UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                            match self {
-                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
-                            }
-                        }
-                    }
-
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for FooBuilderError {}
                 ));
 
                 #[cfg(not(feature = "clippy"))]
@@ -401,6 +413,8 @@ mod tests {
                         }
                     }
                 ));
+
+                add_generated_error(&mut result);
 
                 result
             }
@@ -435,42 +449,6 @@ mod tests {
                     }
                 ));
 
-                result.append_all(quote!(
-                    #[doc="Error type for FooBuilder"]
-                    #[derive(Debug)]
-                    #[non_exhaustive]
-                    pub enum FooBuilderError {
-                        /// Uninitialized field
-                        UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                            match self {
-                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
-                            }
-                        }
-                    }
-
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for FooBuilderError {}
-                ));
-
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -490,6 +468,8 @@ mod tests {
                         }
                     }
                 ));
+
+                add_generated_error(&mut result);
 
                 result
             }.to_string()
@@ -524,42 +504,6 @@ mod tests {
                     }
                 ));
 
-                result.append_all(quote!(
-                    #[doc="Error type for FooBuilder"]
-                    #[derive(Debug)]
-                    #[non_exhaustive]
-                    pub enum FooBuilderError {
-                        /// Uninitialized field
-                        UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                            match self {
-                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
-                            }
-                        }
-                    }
-
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for FooBuilderError {}
-                ));
-
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -582,6 +526,8 @@ mod tests {
                         }
                     }
                 ));
+
+                add_generated_error(&mut result);
 
                 result
             }.to_string()
@@ -616,42 +562,6 @@ mod tests {
                     }
                 ));
 
-                result.append_all(quote!(
-                    #[doc="Error type for FooBuilder"]
-                    #[derive(Debug)]
-                    #[non_exhaustive]
-                    pub enum FooBuilderError {
-                        /// Uninitialized field
-                        UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                            match self {
-                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
-                            }
-                        }
-                    }
-
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for FooBuilderError {}
-                ));
-
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -672,6 +582,8 @@ mod tests {
                         }
                     }
                 ));
+
+                add_generated_error(&mut result);
 
                 result
             }.to_string()
@@ -707,42 +619,6 @@ mod tests {
                     }
                 ));
 
-                result.append_all(quote!(
-                    #[doc="Error type for FooBuilder"]
-                    #[derive(Debug)]
-                    #[non_exhaustive]
-                    pub enum FooBuilderError {
-                        /// Uninitialized field
-                        UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-                        fn from(s: &'static str) -> Self {
-                            Self::UninitializedField(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
-                    impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                            match self {
-                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
-                            }
-                        }
-                    }
-
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for FooBuilderError {}
-                ));
-
                 #[cfg(not(feature = "clippy"))]
                 result.append_all(quote!(#[allow(clippy::all)]));
 
@@ -762,6 +638,8 @@ mod tests {
                         }
                     }
                 ));
+
+                add_generated_error(&mut result);
 
                 result
             }
