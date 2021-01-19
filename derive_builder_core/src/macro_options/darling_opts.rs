@@ -50,8 +50,13 @@ pub struct BuildFn {
     /// method.
     ///
     /// # Type Bounds
-    /// This error type must `impl From<UninitializedFieldError>` and must support conversion
-    /// from the error returned by the `validate` function if one was specified.
+    /// This type's bounds depend on other settings of the builder.
+    ///
+    /// * If uninitialized fields cause `build()` to fail, then this type
+    ///   must `impl From<UninitializedFieldError>`. Uninitialized fields do not cause errors
+    ///   when default values are provided for every field or at the struct level.
+    /// * If `validate` is specified, then this type must provide a conversion from the specified
+    ///   function's error type.
     error: Option<Path>,
 }
 
