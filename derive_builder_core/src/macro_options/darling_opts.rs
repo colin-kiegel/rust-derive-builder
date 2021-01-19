@@ -5,7 +5,7 @@ use crate::BuildMethod;
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use proc_macro2::Span;
-use syn::{self, Attribute, Generics, Ident, Path, Visibility};
+use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
 use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
@@ -569,6 +569,12 @@ impl<'a> FieldWithDefaults<'a> {
                 .as_ref()
                 .map(|x| x.parse_block(self.parent.no_std.into())),
             use_default_struct: self.use_parent_default(),
+            custom_error_type_span: self
+                .parent
+                .build_fn
+                .error
+                .as_ref()
+                .map(|err_ty| err_ty.span()),
         }
     }
 

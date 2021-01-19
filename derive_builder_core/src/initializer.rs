@@ -48,6 +48,16 @@ pub struct Initializer<'a> {
     pub default_value: Option<Block>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
+    /// Span where the macro was told to use a preexisting error type, instead of creating one,
+    /// to represent failures of the `build` method.
+    ///
+    /// An initializer can force early-return if a field has no set value and no default is
+    /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
+    /// into the return type of its enclosing `build` method. That conversion is guaranteed to
+    /// work for generated error types, but if the caller specified an error type to use instead
+    /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
+    /// error type.
+    pub custom_error_type_span: Option<Span>,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -90,7 +100,7 @@ impl<'a> Initializer<'a> {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
                 } else {
-                    MatchNone::ReturnError(self.field_ident.to_string())
+                    MatchNone::ReturnError(self.field_ident.to_string(), self.custom_error_type_span)
                 }
             }
         }
@@ -118,7 +128,7 @@ enum MatchNone<'a> {
     /// The default struct must be in scope in the build_method.
     UseDefaultStructField(&'a syn::Ident),
     /// Inner value must be the field name
-    ReturnError(String),
+    ReturnError(String, Option<Span>),
 }
 
 impl<'a> ToTokens for MatchNone<'a> {
@@ -133,13 +143,15 @@ impl<'a> ToTokens for MatchNone<'a> {
                     None => #struct_ident.#field_ident
                 ))
             }
-            MatchNone::ReturnError(ref field_name) => tokens.append_all(quote!(
-                None => return ::derive_builder::export::core::result::Result::Err(
-                    ::derive_builder::export::core::convert::Into::into(
-                        ::derive_builder::UninitializedFieldError::from(#field_name)
-                    )
-                )
-            )),
+            MatchNone::ReturnError(ref field_name, ref span) => {
+                let conv_span = span.unwrap_or_else(Span::call_site);
+                let err_conv = quote_spanned!(conv_span => ::derive_builder::export::core::convert::Into::into(
+                    ::derive_builder::UninitializedFieldError::from(#field_name)
+                ));
+                tokens.append_all(quote!(
+                    None => return ::derive_builder::export::core::result::Result::Err(#err_conv)
+                ));
+            }
         }
     }
 }
@@ -175,6 +187,7 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
+            custom_error_type_span: None,
         }
     };
 }
