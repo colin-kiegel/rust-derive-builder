@@ -100,7 +100,10 @@ impl<'a> Initializer<'a> {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
                 } else {
-                    MatchNone::ReturnError(self.field_ident.to_string(), self.custom_error_type_span)
+                    MatchNone::ReturnError(
+                        self.field_ident.to_string(),
+                        self.custom_error_type_span,
+                    )
                 }
             }
         }
