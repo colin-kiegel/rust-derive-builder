@@ -5,7 +5,7 @@ use crate::BuildMethod;
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use proc_macro2::Span;
-use syn::{self, Attribute, Generics, Ident, Path, Visibility};
+use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
 use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
@@ -44,6 +44,20 @@ pub struct BuildFn {
     validate: Option<Path>,
     public: Flag,
     private: Flag,
+    /// The path to an existing error type that the build method should return.
+    ///
+    /// Setting this will prevent `derive_builder` from generating an error type for the build
+    /// method.
+    ///
+    /// # Type Bounds
+    /// This type's bounds depend on other settings of the builder.
+    ///
+    /// * If uninitialized fields cause `build()` to fail, then this type
+    ///   must `impl From<UninitializedFieldError>`. Uninitialized fields do not cause errors
+    ///   when default values are provided for every field or at the struct level.
+    /// * If `validate` is specified, then this type must provide a conversion from the specified
+    ///   function's error type.
+    error: Option<Path>,
 }
 
 impl Default for BuildFn {
@@ -54,6 +68,7 @@ impl Default for BuildFn {
             validate: None,
             public: Default::default(),
             private: Default::default(),
+            error: None,
         }
     }
 }
@@ -317,11 +332,13 @@ impl Options {
             .expect("Struct name with Builder suffix should be an ident")
     }
 
-    pub fn builder_error_ident(&self) -> Ident {
-        if let Some(ref custom) = self.name {
-            format_ident!("{}Error", custom)
+    pub fn builder_error_ident(&self) -> Path {
+        if let Some(existing) = self.build_fn.error.as_ref() {
+            existing.clone()
+        } else if let Some(ref custom) = self.name {
+            format_ident!("{}Error", custom).into()
         } else {
-            format_ident!("{}BuilderError", self.ident)
+            format_ident!("{}BuilderError", self.ident).into()
         }
     }
 
@@ -378,6 +395,7 @@ impl Options {
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
+            generate_error: self.build_fn.error.is_none(),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
@@ -556,6 +574,12 @@ impl<'a> FieldWithDefaults<'a> {
                 .as_ref()
                 .map(|x| x.parse_block(self.parent.no_std.into())),
             use_default_struct: self.use_parent_default(),
+            custom_error_type_span: self
+                .parent
+                .build_fn
+                .error
+                .as_ref()
+                .map(|err_ty| err_ty.span()),
         }
     }
 

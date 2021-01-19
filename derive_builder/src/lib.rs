@@ -541,9 +541,13 @@
 #![deny(warnings)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate derive_builder_core;
 extern crate derive_builder_macro;
 
 pub use derive_builder_macro::Builder;
+
+#[doc(inline)]
+pub use derive_builder_core::UninitializedFieldError;
 
 #[doc(hidden)]
 pub mod export {

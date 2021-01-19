@@ -2,6 +2,7 @@ use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
+use syn::spanned::Spanned;
 use Block;
 use BuilderPattern;
 use Initializer;
@@ -51,7 +52,7 @@ pub struct BuildMethod<'a> {
     /// Type parameters and lifetimes attached to this builder struct.
     pub target_ty_generics: Option<syn::TypeGenerics<'a>>,
     /// Type of error.
-    pub error_ty: syn::Ident,
+    pub error_ty: syn::Path,
     /// Field initializers for the target type.
     pub initializers: Vec<TokenStream>,
     /// Doc-comment of the builder struct.
@@ -81,7 +82,10 @@ impl<'a> ToTokens for BuildMethod<'a> {
             let ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
-        let validate_fn = self.validate_fn.as_ref().map(|vfn| quote!(#vfn(&self)?;));
+        let validate_fn = self
+            .validate_fn
+            .as_ref()
+            .map(|vfn| quote_spanned!(vfn.span() => #vfn(&self)?;));
         let error_ty = &self.error_ty;
 
         if self.enabled {
@@ -119,6 +123,11 @@ impl<'a> BuildMethod<'a> {
     }
 }
 
+// pub struct BuildMethodError {
+//     is_generated: bool,
+//     ident: syn::Ident,
+// }
+
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
 #[doc(hidden)]
@@ -132,7 +141,7 @@ macro_rules! default_build_method {
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,
-            error_ty: syn::Ident::new("FooBuilderError", ::proc_macro2::Span::call_site()),
+            error_ty: syn::parse_quote!(FooBuilderError),
             initializers: vec![quote!(foo: self.foo,)],
             doc_comment: None,
             default_struct: None,
