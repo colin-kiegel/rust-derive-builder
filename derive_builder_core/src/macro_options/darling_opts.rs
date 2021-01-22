@@ -238,6 +238,8 @@ pub struct Field {
     try_setter: Flag,
     #[darling(default)]
     field: FieldMeta,
+    #[darling(default)]
+    extend: Flag,
 }
 
 impl FlagVisibility for Field {
@@ -442,6 +444,11 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(true)
     }
 
+    /// Check if this field should emit a setter for extend.
+    pub fn setter_extend_enabled(&self) -> bool {
+        self.field.extend.into()
+    }
+
     pub fn field_enabled(&self) -> bool {
         self.field
             .setter
@@ -555,6 +562,7 @@ impl<'a> FieldWithDefaults<'a> {
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
+            extend: self.setter_extend_enabled(),
         }
     }
 
