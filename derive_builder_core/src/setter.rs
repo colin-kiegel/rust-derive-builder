@@ -62,6 +62,8 @@ pub struct Setter<'a> {
     pub strip_option: bool,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
+    /// Emit extend method.
+    pub each: Option<&'a syn::Ident>,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -135,7 +137,8 @@ impl<'a> ToTokens for Setter<'a> {
                     let mut new = #self_into_return_ty;
                     new.#field_ident = ::derive_builder::export::core::option::Option::Some(#into_value);
                     new
-            }));
+                }
+            ));
 
             if self.try_setter {
                 let try_ty_params =
@@ -151,7 +154,26 @@ impl<'a> ToTokens for Setter<'a> {
                         let mut new = #self_into_return_ty;
                         new.#field_ident = ::derive_builder::export::core::option::Option::Some(converted);
                         Ok(new)
-                }));
+                    }
+                ));
+            }
+
+            if let Some(ref ident_each) = self.each {
+                tokens.append_all(quote!(
+                    #(#attrs)*
+                    #[allow(unused_mut)]
+                    #vis fn #ident_each <VALUE>(#self_param, item: VALUE) -> #return_ty
+                    where
+                        #ty: ::derive_builder::export::core::default::Default + ::derive_builder::export::core::iter::Extend<VALUE>,
+                    {
+                        #deprecation_notes
+                        let mut new = #self_into_return_ty;
+                        new.#field_ident
+                            .get_or_insert_with(::derive_builder::export::core::default::Default::default)
+                            .extend(::derive_builder::export::core::option::Option::Some(item));
+                        new
+                    }
+                ));
             }
         }
     }
@@ -222,6 +244,7 @@ macro_rules! default_setter {
             generic_into: false,
             strip_option: false,
             deprecation_notes: &Default::default(),
+            each: None,
         };
     };
 }

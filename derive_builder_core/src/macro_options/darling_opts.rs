@@ -130,6 +130,7 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
+    each: Option<Ident>,
 }
 
 impl FieldLevelSetter {
@@ -156,6 +157,7 @@ impl FieldLevelSetter {
             || self.name.is_some()
             || self.into.is_some()
             || self.strip_option.is_some()
+            || self.each.is_some()
         {
             return Some(true);
         }
@@ -555,6 +557,7 @@ impl<'a> FieldWithDefaults<'a> {
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
+            each: self.field.setter.each.as_ref(),
         }
     }
 
