@@ -1,5 +1,5 @@
 ![Build](https://github.com/colin-kiegel/rust-derive-builder/workflows/Build/badge.svg)
-[![Rust version]( https://img.shields.io/badge/rust-1.40+-blue.svg)]()
+[![Rust version](https://img.shields.io/badge/rust-1.40+-blue.svg)]()
 [![Documentation](https://docs.rs/derive_builder/badge.svg)](https://docs.rs/derive_builder)
 [![Latest version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
 [![All downloads](https://img.shields.io/crates/d/derive_builder.svg)](https://crates.io/crates/derive_builder)
@@ -57,56 +57,86 @@ impl ChannelBuilder {
         new.special_info = Some(value.into());
         new
     }
-    fn build(&self) -> Result<Channel, String> {
+    fn build(
+        &self,
+    ) -> Result<Channel, ChannelBuilderError> {
         Ok(Channel {
-            token: Clone::clone(self.token
-                .as_ref()
-                .ok_or(
-                       "token must be initialized")?),
-            special_info: Clone::clone(self.special_info
-                .as_ref()
-                .ok_or("special_info must be initialized")?),
+            id: match self.id {
+                Some(ref value) => Clone::clone(value),
+                None => {
+                    return Err(
+                        Into::into(
+                            ::derive_builder::UninitializedFieldError::from("id"),
+                        ),
+                    )
+                }
+            },
+            token: match self.token {
+                Some(ref value) => Clone::clone(value),
+                None => {
+                    return Err(
+                        Into::into(
+                            ::derive_builder::UninitializedFieldError::from("token"),
+                        ),
+                    )
+                }
+            },
+            special_info: match self.special_info {
+                Some(ref value) => Clone::clone(value),
+                None => {
+                    return Err(
+                        Into::into(
+                            ::derive_builder::UninitializedFieldError::from("special_info"),
+                        ),
+                    )
+                }
+            },
         })
     }
 }
 ```
 
+_Note: This is edited for readability. The generated code doesn't assume traits such as `Into` are in-scope, and uses full paths to access them._
+
 ## Get Started
 
-It's as simple as two steps:
+It's as simple as three steps:
 
 1. Add `derive_builder` to your `Cargo.toml` either manually or
-with [cargo-edit](https://github.com/killercup/cargo-edit):
+   with [cargo-edit](https://github.com/killercup/cargo-edit):
 
-  * `cargo add derive_builder`
-2. Annotate your struct with `#[derive(Builder)]`
+- `cargo add derive_builder`
+
+2. Add `use derive_builder::Builder;`
+3. Annotate your struct with `#[derive(Builder)]`
 
 ## Usage and Features
 
-* **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
-* **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern = "owned")]` or `#[builder(pattern = "immutable")]`.
-* **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
-* **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
-* **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
-* **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
-* **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
-* **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter'type for field of type `Option<T>`.
-* **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
-* **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
-* **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via ` = ".."`. This works both on the struct and field level.
-* **Pre-build validation**: You can use `#[builder(build_fn(validate = "path::to::fn"))]` to add your own validation before the target struct is generated.
-* **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
-* **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
-*  **no_std support**: Just add `#[builder(no_std)]` to your struct and add `#![feature(alloc)] extern crate alloc` to your crate. The latter requires the _nightly_ toolchain.
+- **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
+- **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern = "owned")]` or `#[builder(pattern = "immutable")]`.
+- **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
+- **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
+- **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
+- **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
+- **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
+- **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter'type for field of type `Option<T>`.
+- **Collection setters**: Adding `#[builder(setter(each = "method_name"))]` to fields whose types implement `Default` and `Extend` will generate a setter which adds items to the builder collection for that field.
+- **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
+- **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
+- **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via ` = ".."`. This works both on the struct and field level.
+- **Pre-build validation**: You can use `#[builder(build_fn(validate = "path::to::fn"))]` to add your own validation before the target struct is generated.
+- **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
+- **Custom build method error types**: You can use `#[builder(build_fn(error = "path::to::Error"))]` to have your builder return an error type of your choosing. By default, the macro will emit an error type alongside the builder.
+- **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
+- **no_std support**: Just add `#[builder(no_std)]` to your struct and add `#![feature(alloc)] extern crate alloc` to your crate. The latter requires the _nightly_ toolchain.
 
 For more information and examples please take a look at our [documentation][doc].
 
-This is a work in progress. So expect even more features in the future. :-)
-
 ## Gotchas
 
-* Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
-* When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
+- Renaming `derive_builder` in `Cargo.toml` is not supported.
+- Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
+- When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
 
 ## [Documentation][doc]
 
