@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.10.0] - 2021-03-31
+- Requires Rust 1.40.0 or newer (was 1.37.0) #169
+- Logging feature is removed #177
+- Type parameters no longer have the `Default` bound #178
+- Make most of `derive_builder_core` private #189
+- Add `setter(each = "name")` for extension of collection-like fields #199
+
 ## [0.10.0-alpha] - 2021-01-13
 - Requires Rust 1.40.0 or newer (was 1.37.0) #169
 - Logging feature is removed #177
