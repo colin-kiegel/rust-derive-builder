@@ -1,7 +1,19 @@
+use derive_builder::UninitializedFieldError;
+
 #[macro_use]
 extern crate derive_builder;
 
+/// Marker function that tells `derive_builder` to emit a `ValidationError` variant.
+///
+/// Without this, `derive_builder` would believe that only uninitialized field errors
+/// are possible in the `build()` method, and there would be a cryptic error message
+/// about a missing conversion from `String`.
+fn phantom_validate<T>(_: T) -> Result<(), String> {
+    Ok(())
+}
+
 #[derive(Builder, PartialEq, Debug)]
+#[builder(build_fn(validate = "phantom_validate"))]
 struct Lorem {
     ipsum: String,
     #[builder(default = "self.default_dolor()?")]
@@ -13,10 +25,10 @@ struct Lorem {
 }
 
 impl LoremBuilder {
-    fn default_dolor(&self) -> Result<String, String> {
+    fn default_dolor(&self) -> Result<String, UninitializedFieldError> {
         self.ipsum
             .clone()
-            .ok_or_else(|| "ipsum must be initialized to build dolor".to_string())
+            .ok_or_else(|| UninitializedFieldError::new("ipsum"))
     }
 
     fn default_sit(&self) -> Result<String, String> {

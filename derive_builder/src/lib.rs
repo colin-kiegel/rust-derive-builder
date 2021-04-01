@@ -342,22 +342,26 @@
 //! ```rust
 //! # #[macro_use]
 //! # extern crate derive_builder;
+//! # use derive_builder::UninitializedFieldError;
 //! #
 //! # #[derive(Builder, PartialEq, Debug)]
 //! struct Lorem {
 //!     ipsum: String,
 //!     // Custom defaults can delegate to helper methods
 //!     // and pass errors to the enclosing `build()` method via `?`.
+//!     //
+//!     // When doing this, it is recommended that you use a custom error type
+//!     // unless you are only returning UninitializedFieldError.
 //!     #[builder(default = "self.default_dolor()?")]
 //!     dolor: String,
 //! }
 //!
 //! impl LoremBuilder {
 //!     // Private helper method with access to the builder struct.
-//!     fn default_dolor(&self) -> Result<String, String> {
+//!     fn default_dolor(&self) -> Result<String, UninitializedFieldError> {
 //!         match self.ipsum {
-//!             Some(ref x) if x.chars().count() > 3 => Ok(format!("dolor {}", x)),
-//!             _ => Err("ipsum must at least 3 chars to build dolor".to_string()),
+//!             Some(ref x) => Ok(format!("dolor {}", x)),
+//!             _ => Err(UninitializedFieldError::new("ipsum")),
 //!         }
 //!     }
 //! }

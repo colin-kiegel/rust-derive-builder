@@ -8,7 +8,9 @@ use proc_macro2::Span;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
-use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
+use crate::{
+    Builder, BuilderField, BuilderPattern, DeprecationNotes, GeneratedError, Initializer, Setter,
+};
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to
@@ -58,6 +60,22 @@ pub struct BuildFn {
     /// * If `validate` is specified, then this type must provide a conversion from the specified
     ///   function's error type.
     error: Option<Path>,
+}
+
+impl BuildFn {
+    /// Get the error type the build method needs generated.
+    fn generated_error(&self) -> Option<GeneratedError> {
+        // If the caller provided an error type, no generation is needed
+        if self.error.is_some() {
+            None
+        } else {
+            Some(GeneratedError {
+                // The generated error only needs to include a variant for validation failures
+                // if the caller has provided a custom validation function.
+                validation_error: self.validate.is_some(),
+            })
+        }
+    }
 }
 
 impl Default for BuildFn {
@@ -397,7 +415,7 @@ impl Options {
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
-            generate_error: self.build_fn.error.is_none(),
+            generated_error: self.build_fn.generated_error(),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),

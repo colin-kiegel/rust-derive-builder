@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+- Only generate a validation error variant when necessary #201
+
 ## [0.10.0] - 2021-03-31
 - Requires Rust 1.40.0 or newer (was 1.37.0) #169
 - Logging feature is removed #177

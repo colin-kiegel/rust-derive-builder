@@ -4,7 +4,8 @@ extern crate derive_builder;
 use std::convert::TryFrom;
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
-use std::string::ToString;
+
+use derive_builder::UninitializedFieldError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MyAddr(IpAddr);
@@ -23,8 +24,29 @@ impl<'a> TryFrom<&'a str> for MyAddr {
     }
 }
 
+#[derive(Debug)]
+enum LoremBuilderError {
+    UninitializedField(&'static str),
+    InvalidValue { field: &'static str, error: String },
+}
+
+impl LoremBuilderError {
+    fn invalid_value(field: &'static str, error: impl std::fmt::Display) -> Self {
+        Self::InvalidValue {
+            field,
+            error: format!("{}", error),
+        }
+    }
+}
+
+impl From<UninitializedFieldError> for LoremBuilderError {
+    fn from(e: UninitializedFieldError) -> Self {
+        Self::UninitializedField(e.field_name())
+    }
+}
+
 #[derive(Debug, PartialEq, Builder)]
-#[builder(try_setter, setter(into))]
+#[builder(try_setter, setter(into), build_fn(error = "LoremBuilderError"))]
 struct Lorem {
     pub source: MyAddr,
     pub dest: MyAddr,
@@ -46,9 +68,9 @@ fn exact_helper() -> Result<Lorem, LoremBuilderError> {
 fn try_helper() -> Result<Lorem, LoremBuilderError> {
     LoremBuilder::default()
         .try_source("1.2.3.4")
-        .map_err(|e| e.to_string())?
+        .map_err(|e| LoremBuilderError::invalid_value("source", e))?
         .try_dest("0.0.0.0")
-        .map_err(|e| e.to_string())?
+        .map_err(|e| LoremBuilderError::invalid_value("dest", e))?
         .build()
 }
 

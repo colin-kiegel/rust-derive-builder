@@ -47,7 +47,7 @@ pub use error::UninitializedFieldError;
 
 pub(crate) use block::Block;
 pub(crate) use build_method::BuildMethod;
-pub(crate) use builder::Builder;
+pub(crate) use builder::{Builder, GeneratedError};
 pub(crate) use builder_field::BuilderField;
 use darling::FromDeriveInput;
 pub(crate) use deprecation_notes::DeprecationNotes;

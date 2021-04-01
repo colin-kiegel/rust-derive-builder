@@ -10,6 +10,13 @@ use BuilderPattern;
 use DeprecationNotes;
 use Setter;
 
+#[derive(Debug)]
+pub struct GeneratedError {
+    /// Whether the generated error needs a variant for errors produced by a caller-provided
+    /// validation function.
+    pub validation_error: bool,
+}
+
 /// Builder, implementing `quote::ToTokens`.
 ///
 /// # Examples
@@ -126,10 +133,10 @@ pub struct Builder<'a> {
     pub field_initializers: Vec<TokenStream>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<TokenStream>,
-    /// Whether or not a generated error type is required.
+    /// The required generated error type.
     ///
-    /// This would be `false` in the case where an already-existing error is to be used.
-    pub generate_error: bool,
+    /// This would be `None` in the case where an already-existing error is to be used.
+    pub generated_error: Option<GeneratedError>,
     /// Whether this builder must derive `Clone`.
     ///
     /// This is true even for a builder using the `owned` pattern if there is a field whose setter
@@ -207,9 +214,25 @@ impl<'a> ToTokens for Builder<'a> {
                 }
             ));
 
-            if self.generate_error {
+            if let Some(generated_error) = &self.generated_error {
+                let validate = generated_error.validation_error;
                 let builder_error_ident = format_ident!("{}Error", builder_ident);
                 let builder_error_doc = format!("Error type for {}", builder_ident);
+
+                let validation_variant = if validate {
+                    quote! {
+                        /// Custom validation error
+                        ValidationError(::std::string::String),
+                    }
+                } else {
+                    quote!()
+                };
+
+                let validation_display = if validate {
+                    quote!(Self::ValidationError(ref error) => write!(f, "{}", error),)
+                } else {
+                    quote!()
+                };
 
                 tokens.append_all(quote!(
                     #[doc=#builder_error_doc]
@@ -218,8 +241,7 @@ impl<'a> ToTokens for Builder<'a> {
                     #builder_vis enum #builder_error_ident {
                         /// Uninitialized field
                         UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(String),
+                        #validation_variant
                     }
 
                     impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
@@ -228,24 +250,28 @@ impl<'a> ToTokens for Builder<'a> {
                         }
                     }
 
-                    impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
-                        fn from(s: String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
-
                     impl ::derive_builder::export::core::fmt::Display for #builder_error_ident {
                         fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                                #validation_display
                             }
                         }
                     }
 
                     #[cfg(not(no_std))]
-                    impl std::error::Error for #builder_error_ident {}
+                    impl ::std::error::Error for #builder_error_ident {}
             ));
+
+                if validate {
+                    tokens.append_all(quote!(
+                    impl ::derive_builder::export::core::convert::From<::std::string::String> for #builder_error_ident {
+                        fn from(s: ::std::string::String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+                ));
+                }
             }
         }
     }
@@ -323,7 +349,7 @@ macro_rules! default_builder {
             fields: vec![quote!(foo: u32,)],
             field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
-            generate_error: true,
+            generated_error: Some(GeneratedError { validation_error: true }),
             must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
@@ -337,42 +363,71 @@ mod tests {
     use super::*;
     use proc_macro2::TokenStream;
 
-    fn add_generated_error(result: &mut TokenStream) {
-        result.append_all(quote!(
-            #[doc="Error type for FooBuilder"]
-            #[derive(Debug)]
-            #[non_exhaustive]
-            pub enum FooBuilderError {
-                /// Uninitialized field
-                UninitializedField(&'static str),
-                /// Custom validation error
-                ValidationError(String),
-            }
-
-            impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
-                fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
-                    Self::UninitializedField(s.field_name())
+    fn add_generated_error(result: &mut TokenStream, generated_error: GeneratedError) {
+        if generated_error.validation_error {
+            result.append_all(quote!(
+                #[doc="Error type for FooBuilder"]
+                #[derive(Debug)]
+                #[non_exhaustive]
+                pub enum FooBuilderError {
+                    /// Uninitialized field
+                    UninitializedField(&'static str),
+                    /// Custom validation error
+                    ValidationError(::std::string::String),
                 }
-            }
-
-            impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                fn from(s: String) -> Self {
-                    Self::ValidationError(s)
-                }
-            }
-
-            impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-                    match self {
-                        Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                        Self::ValidationError(ref error) => write!(f, "{}", error),
+    
+                impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
+                    fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                        Self::UninitializedField(s.field_name())
                     }
                 }
-            }
+    
+                impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                    fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+                        match self {
+                            Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                            Self::ValidationError(ref error) => write!(f, "{}", error),
+                        }
+                    }
+                }
+    
+                #[cfg(not(no_std))]
+                impl ::std::error::Error for FooBuilderError {}
 
-            #[cfg(not(no_std))]
-            impl std::error::Error for FooBuilderError {}
-        ));
+                impl ::derive_builder::export::core::convert::From<::std::string::String> for FooBuilderError {
+                    fn from(s: ::std::string::String) -> Self {
+                        Self::ValidationError(s)
+                    }
+                }
+            ));
+        } else {
+            result.append_all(quote!(
+                #[doc="Error type for FooBuilder"]
+                #[derive(Debug)]
+                #[non_exhaustive]
+                pub enum FooBuilderError {
+                    /// Uninitialized field
+                    UninitializedField(&'static str),
+                }
+    
+                impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
+                    fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                        Self::UninitializedField(s.field_name())
+                    }
+                }
+    
+                impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
+                    fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+                        match self {
+                            Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                        }
+                    }
+                }
+    
+                #[cfg(not(no_std))]
+                impl ::std::error::Error for FooBuilderError {}
+            ));
+        }
     }
 
     #[test]
@@ -414,7 +469,7 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result);
+                add_generated_error(&mut result, GeneratedError { validation_error: true });
 
                 result
             }
@@ -469,7 +524,7 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result);
+                add_generated_error(&mut result, GeneratedError { validation_error: true });
 
                 result
             }.to_string()
@@ -527,7 +582,7 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result);
+                add_generated_error(&mut result, GeneratedError { validation_error: true });
 
                 result
             }.to_string()
@@ -583,7 +638,7 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result);
+                add_generated_error(&mut result, GeneratedError { validation_error: true });
 
                 result
             }.to_string()
@@ -639,7 +694,7 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result);
+                add_generated_error(&mut result, GeneratedError { validation_error: true });
 
                 result
             }
