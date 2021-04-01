@@ -375,13 +375,13 @@ mod tests {
                     /// Custom validation error
                     ValidationError(::std::string::String),
                 }
-    
+
                 impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
                     fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
                         Self::UninitializedField(s.field_name())
                     }
                 }
-    
+
                 impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
                     fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                         match self {
@@ -390,7 +390,7 @@ mod tests {
                         }
                     }
                 }
-    
+
                 #[cfg(not(no_std))]
                 impl ::std::error::Error for FooBuilderError {}
 
@@ -409,13 +409,13 @@ mod tests {
                     /// Uninitialized field
                     UninitializedField(&'static str),
                 }
-    
+
                 impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
                     fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
                         Self::UninitializedField(s.field_name())
                     }
                 }
-    
+
                 impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
                     fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                         match self {
@@ -423,7 +423,7 @@ mod tests {
                         }
                     }
                 }
-    
+
                 #[cfg(not(no_std))]
                 impl ::std::error::Error for FooBuilderError {}
             ));
@@ -469,7 +469,12 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result, GeneratedError { validation_error: true });
+                add_generated_error(
+                    &mut result,
+                    GeneratedError {
+                        validation_error: true,
+                    },
+                );
 
                 result
             }
@@ -694,7 +699,12 @@ mod tests {
                     }
                 ));
 
-                add_generated_error(&mut result, GeneratedError { validation_error: true });
+                add_generated_error(
+                    &mut result,
+                    GeneratedError {
+                        validation_error: true,
+                    },
+                );
 
                 result
             }
