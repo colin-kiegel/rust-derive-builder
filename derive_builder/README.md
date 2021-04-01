@@ -128,7 +128,7 @@ It's as simple as three steps:
 - **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 - **Custom build method error types**: You can use `#[builder(build_fn(error = "path::to::Error"))]` to have your builder return an error type of your choosing. By default, the macro will emit an error type alongside the builder.
 - **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
-- **no_std support**: Just add `#[builder(no_std)]` to your struct and add `#![feature(alloc)] extern crate alloc` to your crate. The latter requires the _nightly_ toolchain.
+- **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate alloc` to your crate.
 
 For more information and examples please take a look at our [documentation][doc].
 
