@@ -401,6 +401,10 @@ impl Options {
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
+            std: {
+                let no_std: bool = self.no_std.into();
+                !no_std
+            },
         }
     }
 
