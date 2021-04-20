@@ -541,6 +541,9 @@
 #![deny(warnings)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 extern crate derive_builder_core;
 extern crate derive_builder_macro;
 
@@ -552,6 +555,8 @@ pub use derive_builder_core::UninitializedFieldError;
 #[doc(hidden)]
 pub mod export {
     pub mod core {
+        #[cfg(not(feature = "std"))]
+        pub use alloc::string;
         #[cfg(not(feature = "std"))]
         pub use core::*;
         #[cfg(feature = "std")]

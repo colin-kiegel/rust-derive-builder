@@ -48,7 +48,7 @@ use Setter;
 ///     /// Uninitialized field
 ///     UninitializedField(&'static str),
 ///     /// Custom validation error
-///     ValidationError(String),
+///     ValidationError(::derive_builder::export::core::string::String),
 /// }
 ///
 /// impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
@@ -57,8 +57,8 @@ use Setter;
 ///     }
 /// }
 ///
-/// impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-///     fn from(s: String) -> Self {
+/// impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for FooBuilderError {
+///     fn from(s: ::derive_builder::export::core::string::String) -> Self {
 ///         Self::ValidationError(s)
 ///     }
 /// }
@@ -139,6 +139,8 @@ pub struct Builder<'a> {
     pub doc_comment: Option<syn::Attribute>,
     /// Emit deprecation notes to the user.
     pub deprecation_notes: DeprecationNotes,
+    /// Whether or not a libstd is used.
+    pub std: bool,
 }
 
 impl<'a> ToTokens for Builder<'a> {
@@ -219,7 +221,7 @@ impl<'a> ToTokens for Builder<'a> {
                         /// Uninitialized field
                         UninitializedField(&'static str),
                         /// Custom validation error
-                        ValidationError(String),
+                        ValidationError(::derive_builder::export::core::string::String),
                     }
 
                     impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
@@ -228,8 +230,8 @@ impl<'a> ToTokens for Builder<'a> {
                         }
                     }
 
-                    impl ::derive_builder::export::core::convert::From<String> for #builder_error_ident {
-                        fn from(s: String) -> Self {
+                    impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for #builder_error_ident {
+                        fn from(s: ::derive_builder::export::core::string::String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
@@ -242,10 +244,13 @@ impl<'a> ToTokens for Builder<'a> {
                             }
                         }
                     }
+                ));
 
-                    #[cfg(not(no_std))]
-                    impl std::error::Error for #builder_error_ident {}
-            ));
+                if self.std {
+                    tokens.append_all(quote!(
+                        impl std::error::Error for #builder_error_ident {}
+                    ));
+                }
             }
         }
     }
@@ -327,6 +332,7 @@ macro_rules! default_builder {
             must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
+            std: true,
         }
     };
 }
@@ -346,7 +352,7 @@ mod tests {
                 /// Uninitialized field
                 UninitializedField(&'static str),
                 /// Custom validation error
-                ValidationError(String),
+                ValidationError(::derive_builder::export::core::string::String),
             }
 
             impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
@@ -355,8 +361,8 @@ mod tests {
                 }
             }
 
-            impl ::derive_builder::export::core::convert::From<String> for FooBuilderError {
-                fn from(s: String) -> Self {
+            impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for FooBuilderError {
+                fn from(s: ::derive_builder::export::core::string::String) -> Self {
                     Self::ValidationError(s)
                 }
             }
@@ -370,7 +376,6 @@ mod tests {
                 }
             }
 
-            #[cfg(not(no_std))]
             impl std::error::Error for FooBuilderError {}
         ));
     }
