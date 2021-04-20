@@ -67,7 +67,7 @@ mod test {
     use super::*;
 
     #[test]
-    #[should_panic(expected = r#"LexError"#)]
+    #[should_panic(expected = r#"lex error"#)]
     fn block_invalid_token_trees() {
         Block::from_str("let x = 2; { x+1").unwrap();
     }

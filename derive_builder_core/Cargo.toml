@@ -20,7 +20,7 @@ clippy = []
 darling = "0.12.0"
 proc-macro2 = "1.0.24"
 quote = "1.0.8"
-syn = { version = "1.0.58", features = ["full", "extra-traits"] }
+syn = { version = "1.0.69", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"
