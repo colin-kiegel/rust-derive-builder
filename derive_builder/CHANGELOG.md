@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.10.2] - 2021-04-21
+- Don't reference `derive_builder_core` from `derive_builder` #206
+
 ## [0.10.1] - 2021-04-20
 - Don't reference `std` in no_std contexts #204
 
