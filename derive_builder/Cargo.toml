@@ -18,11 +18,10 @@ readme = "README.md"
 [features]
 default = ["std"]
 std = []
-clippy = ["derive_builder_macro/clippy", "derive_builder_core/clippy"]
+clippy = ["derive_builder_macro/clippy"]
 
 [dependencies]
 derive_builder_macro = { version = "=0.10.1", path = "../derive_builder_macro" }
-derive_builder_core = { version = "=0.10.1", path = "../derive_builder_core" }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"
