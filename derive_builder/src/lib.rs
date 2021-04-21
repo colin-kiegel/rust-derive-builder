@@ -544,13 +544,14 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
-extern crate derive_builder_core;
 extern crate derive_builder_macro;
+
+mod error;
 
 pub use derive_builder_macro::Builder;
 
 #[doc(inline)]
-pub use derive_builder_core::UninitializedFieldError;
+pub use error::UninitializedFieldError;
 
 #[doc(hidden)]
 pub mod export {

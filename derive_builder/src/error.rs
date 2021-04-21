@@ -1,4 +1,8 @@
+#[cfg(feature = "std")]
 use std::{error::Error, fmt};
+
+#[cfg(not(feature = "std"))]
+use core::fmt;
 
 /// Runtime error when a `build()` method is called and one or more required fields
 /// do not have a value.
@@ -23,6 +27,7 @@ impl fmt::Display for UninitializedFieldError {
     }
 }
 
+#[cfg(feature = "std")]
 impl Error for UninitializedFieldError {}
 
 impl From<&'static str> for UninitializedFieldError {
