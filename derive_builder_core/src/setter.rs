@@ -162,10 +162,24 @@ impl<'a> ToTokens for Setter<'a> {
             if let Some(ref each) = self.each {
                 let ident_each = &each.name;
 
+                let ty_params: TokenStream;
+                let param_ty: TokenStream;
+                let into_item: TokenStream;
+
+                if each.into {
+                    ty_params = quote!(<VALUE, FROM_VALUE: ::derive_builder::export::core::convert::Into<VALUE>>);
+                    param_ty = quote!(FROM_VALUE);
+                    into_item = quote!(item.into());
+                } else {
+                    ty_params = quote!(<VALUE>);
+                    param_ty = quote!(VALUE);
+                    into_item = quote!(item);
+                }
+
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #[allow(unused_mut)]
-                    #vis fn #ident_each <VALUE>(#self_param, item: VALUE) -> #return_ty
+                    #vis fn #ident_each #ty_params(#self_param, item: #param_ty) -> #return_ty
                     where
                         #ty: ::derive_builder::export::core::default::Default + ::derive_builder::export::core::iter::Extend<VALUE>,
                     {
@@ -173,7 +187,7 @@ impl<'a> ToTokens for Setter<'a> {
                         let mut new = #self_into_return_ty;
                         new.#field_ident
                             .get_or_insert_with(::derive_builder::export::core::default::Default::default)
-                            .extend(::derive_builder::export::core::option::Option::Some(item));
+                            .extend(::derive_builder::export::core::option::Option::Some(#into_item));
                         new
                     }
                 ));
