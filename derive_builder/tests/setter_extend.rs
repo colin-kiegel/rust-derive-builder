@@ -7,22 +7,22 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 struct Lorem {
-    #[builder(setter(each = "foo_append"))]
+    #[builder(setter(each(name = "foo_append")))]
     foo: String,
-    #[builder(setter(each = "bar"))]
+    #[builder(setter(each(name = "bar")))]
     bars: Vec<String>,
-    #[builder(setter(each = "baz"))]
+    #[builder(setter(each(name = "baz")))]
     bazes: HashMap<String, i32>,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(pattern = "mutable")]
 struct Ipsum {
-    #[builder(setter(each = "foo_append"))]
+    #[builder(setter(each(name = "foo_append")))]
     foo: String,
-    #[builder(setter(each = "bar"))]
+    #[builder(setter(each(name = "bar")))]
     bars: Vec<String>,
-    #[builder(setter(each = "baz"))]
+    #[builder(setter(each(name = "baz")))]
     bazes: HashMap<String, i32>,
 }
 
@@ -83,7 +83,7 @@ fn extend_field_mutable() {
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(setter(skip))]
 struct Dolor {
-    #[builder(setter(each = "foo"))]
+    #[builder(setter(each(name = "foo")))]
     foos: Vec<i32>,
 }
 

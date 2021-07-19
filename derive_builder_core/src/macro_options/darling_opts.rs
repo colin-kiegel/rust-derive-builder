@@ -8,7 +8,7 @@ use proc_macro2::Span;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::macro_options::DefaultExpression;
-use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
+use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Each, Initializer, Setter};
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to
@@ -130,7 +130,7 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    each: Option<Ident>,
+    each: Option<Each>,
 }
 
 impl FieldLevelSetter {

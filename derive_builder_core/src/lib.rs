@@ -50,7 +50,7 @@ use darling::FromDeriveInput;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
 pub(crate) use initializer::Initializer;
-pub(crate) use options::BuilderPattern;
+pub(crate) use options::{BuilderPattern, Each};
 pub(crate) use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
