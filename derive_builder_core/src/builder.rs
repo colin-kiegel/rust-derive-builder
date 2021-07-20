@@ -95,6 +95,14 @@ use Setter;
 ///     }
 /// }
 ///
+/// impl ::derive_builder::export::core::convert::From<Foo> for FooBuilder {
+///     fn from(value: Foo) -> Self {
+///         Self {
+///             foo: Some(value.foo),
+///         }
+///     }
+/// }
+///
 /// #           ));
 /// #           result
 /// #       }.to_string()

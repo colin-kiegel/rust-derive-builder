@@ -504,6 +504,46 @@
 //! # fn main() {}
 //! ```
 //!
+//! ## Create builder from instance
+//!
+//! `#[derive(Builder)]` implements the [`From`] trait for the builder, e.g. `From<Lorem> for LoremBuilder`.
+//!
+//! This allows you to convert an instance to a builder, update fields, and construct an instance again.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Lorem {
+//!     pub ipsum: u32,
+//!     pub dolor: u32,
+//! }
+//!
+//! fn main() {
+//!     let lorem = LoremBuilder::default()
+//!         .ipsum(1u32)
+//!         .dolor(42u32)
+//!         .build()
+//!         .unwrap();
+//!
+//!     let mut builder: LoremBuilder = lorem.into();
+//!
+//!     let lorem = builder
+//!         .ipsum(2u32)
+//!         .build()
+//!         .unwrap();
+//!
+//!     assert_eq!(
+//!         lorem,
+//!         Lorem {
+//!             ipsum: 2,
+//!             dolor: 42
+//!         }
+//!     );
+//! }
+//! ```
+//!
 //! # **`#![no_std]`** Support (on Nightly)
 //!
 //! You can activate support for `#![no_std]` by adding `#[builder(no_std)]` to your struct
