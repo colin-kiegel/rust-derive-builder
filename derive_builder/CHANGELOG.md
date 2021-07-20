@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+- Implement `From<Foo> for FooBuilder` to create a builder from an instance #215
+
 ## [0.10.2] - 2021-04-21
 - Don't reference `derive_builder_core` from `derive_builder` #206
 
