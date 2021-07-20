@@ -389,6 +389,7 @@ impl Options {
     pub fn as_builder(&self) -> Builder {
         Builder {
             enabled: true,
+            struct_ident: &self.ident,
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
@@ -396,6 +397,7 @@ impl Options {
             visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
+            field_to_builder_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
             generate_error: self.build_fn.error.is_none(),
             must_derive_clone: self.requires_clone(),

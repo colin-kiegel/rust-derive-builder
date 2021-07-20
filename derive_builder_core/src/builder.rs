@@ -105,6 +105,8 @@ use Setter;
 pub struct Builder<'a> {
     /// Enables code generation for this builder struct.
     pub enabled: bool,
+    /// Name of the target struct.
+    pub struct_ident: &'a syn::Ident,
     /// Name of this builder struct.
     pub ident: syn::Ident,
     /// Pattern of this builder struct.
@@ -124,6 +126,11 @@ pub struct Builder<'a> {
     ///
     /// Expects each entry to be terminated by a comma.
     pub field_initializers: Vec<TokenStream>,
+    /// Builder field initializers from an instance of `Struct`, e.g. `foo: Some(value.foo),`.
+    /// Used to turn an instance of `Struct` back into a builder.
+    ///
+    /// Expects each entry to be terminated by a comma.
+    pub field_to_builder_initializers: Vec<TokenStream>,
     /// Functions of the builder struct, e.g. `fn bar() -> { unimplemented!() }`
     pub functions: Vec<TokenStream>,
     /// Whether or not a generated error type is required.
@@ -146,6 +153,7 @@ pub struct Builder<'a> {
 impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
+            let struct_ident = self.struct_ident;
             let builder_vis = &self.visibility;
             let builder_ident = &self.ident;
             let bounded_generics = self.compute_impl_bounds();
@@ -157,6 +165,7 @@ impl<'a> ToTokens for Builder<'a> {
                 .unwrap_or((None, None, None));
             let builder_fields = &self.fields;
             let builder_field_initializers = &self.field_initializers;
+            let builder_field_to_builder_initializers = &self.field_to_builder_initializers;
             let functions = &self.functions;
 
             // Create the comma-separated set of derived traits for the builder
@@ -204,6 +213,14 @@ impl<'a> ToTokens for Builder<'a> {
                     fn default() -> Self {
                         Self {
                             #(#builder_field_initializers)*
+                        }
+                    }
+                }
+
+                impl #impl_generics ::derive_builder::export::core::convert::From<#struct_ident #ty_generics> for #builder_ident #ty_generics #where_clause {
+                    fn from(value: #struct_ident #ty_generics) -> Self {
+                        Self {
+                            #(#builder_field_to_builder_initializers)*
                         }
                     }
                 }
@@ -267,6 +284,8 @@ impl<'a> Builder<'a> {
     pub fn push_field(&mut self, f: BuilderField) -> &mut Self {
         self.fields.push(quote!(#f));
         self.field_initializers.push(f.default_initializer_tokens());
+        self.field_to_builder_initializers
+            .push(f.to_builder_initializer_tokens());
         self
     }
 
@@ -320,6 +339,7 @@ macro_rules! default_builder {
     () => {
         Builder {
             enabled: true,
+            struct_ident: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),
             derives: &vec![],
@@ -327,6 +347,7 @@ macro_rules! default_builder {
             visibility: syn::parse_str("pub").unwrap(),
             fields: vec![quote!(foo: u32,)],
             field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
+            field_to_builder_initializers: vec![quote!(foo: Some(value.foo), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             generate_error: true,
             must_derive_clone: true,
@@ -417,6 +438,14 @@ mod tests {
                             }
                         }
                     }
+
+                    impl ::derive_builder::export::core::convert::From<Foo> for FooBuilder {
+                        fn from(value: Foo) -> Self {
+                            Self {
+                                foo: Some(value.foo),
+                            }
+                        }
+                    }
                 ));
 
                 add_generated_error(&mut result);
@@ -469,6 +498,14 @@ mod tests {
                         fn default() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
+
+                    impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::convert::From<Foo<'a, T> > for FooBuilder<'a, T> where T: PartialEq {
+                        fn from(value: Foo<'a, T>) -> Self {
+                            Self {
+                                foo: Some(value.foo),
                             }
                         }
                     }
@@ -530,6 +567,14 @@ mod tests {
                             }
                         }
                     }
+
+                    impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::convert::From<Foo<'a, T> > for FooBuilder<'a, T> where T: PartialEq {
+                        fn from(value: Foo<'a, T>) -> Self {
+                            Self {
+                                foo: Some(value.foo),
+                            }
+                        }
+                    }
                 ));
 
                 add_generated_error(&mut result);
@@ -586,6 +631,16 @@ mod tests {
                             }
                         }
                     }
+
+
+                    impl<'a, T: Debug> ::derive_builder::export::core::convert::From<Foo<'a, T> > for FooBuilder<'a, T>
+                    where T: PartialEq {
+                        fn from(value: Foo<'a, T>) -> Self {
+                            Self {
+                                foo: Some(value.foo),
+                            }
+                        }
+                    }
                 ));
 
                 add_generated_error(&mut result);
@@ -639,6 +694,14 @@ mod tests {
                         fn default() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
+
+                    impl ::derive_builder::export::core::convert::From<Foo> for FooBuilder {
+                        fn from(value: Foo) -> Self {
+                            Self {
+                                foo: Some(value.foo),
                             }
                         }
                     }

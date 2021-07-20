@@ -76,6 +76,18 @@ impl<'a> BuilderField<'a> {
         let ident = self.field_ident;
         quote! { #ident : ::derive_builder::export::core::default::Default::default(), }
     }
+
+    /// Emits a builder field initializer that initializes the field to `Some(source.field)` or
+    /// `Default::default` in the case the field is not enabled.
+    /// Used to turn an instance of `Struct` back into a builder.
+    pub fn to_builder_initializer_tokens(&self) -> TokenStream {
+        if self.field_enabled {
+            let ident = self.field_ident;
+            quote! { #ident : Some(value.#ident), }
+        } else {
+            self.default_initializer_tokens()
+        }
+    }
 }
 
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
