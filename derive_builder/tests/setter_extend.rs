@@ -13,6 +13,10 @@ struct Lorem {
     bars: Vec<String>,
     #[builder(setter(each = "baz"))]
     bazes: HashMap<String, i32>,
+    #[builder(setter(strip_option, each = "qux"))]
+    quxes: Option<Vec<String>>,
+    #[builder(setter(strip_option, each = "quux"))]
+    quuxes: Option<HashMap<String, i32>>,
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
@@ -24,6 +28,10 @@ struct Ipsum {
     bars: Vec<String>,
     #[builder(setter(each = "baz"))]
     bazes: HashMap<String, i32>,
+    #[builder(setter(strip_option, each = "qux"))]
+    quxes: Option<Vec<String>>,
+    #[builder(setter(strip_option, each = "quux"))]
+    quuxes: Option<HashMap<String, i32>>,
 }
 
 #[test]
@@ -38,6 +46,10 @@ fn extend_field() {
         .baz(("bazz".into(), 2))
         .baz(("bazzz".into(), 3))
         .foo_append("foo")
+        .qux("qux".into())
+        .qux("qux qux".into())
+        .quux(("quux".into(), 1))
+        .quux(("quuxx".into(), 2))
         .build()
         .unwrap();
 
@@ -49,6 +61,12 @@ fn extend_field() {
             bazes: vec![("baz".into(), 1), ("bazz".into(), 2), ("bazzz".into(), 3)]
                 .into_iter()
                 .collect(),
+            quxes: Some(vec!["qux".into(), "qux qux".into()]),
+            quuxes: Some(
+                vec![("quux".into(), 1), ("quuxx".into(), 2)]
+                    .into_iter()
+                    .collect()
+            ),
         }
     );
 }
@@ -65,6 +83,10 @@ fn extend_field_mutable() {
         .baz(("bazz".into(), 2))
         .baz(("bazzz".into(), 3))
         .foo_append("foo")
+        .qux("qux".into())
+        .qux("qux qux".into())
+        .quux(("quux".into(), 1))
+        .quux(("quuxx".into(), 2))
         .build()
         .unwrap();
 
@@ -76,6 +98,12 @@ fn extend_field_mutable() {
             bazes: vec![("baz".into(), 1), ("bazz".into(), 2), ("bazzz".into(), 3)]
                 .into_iter()
                 .collect(),
+            quxes: Some(vec!["qux".into(), "qux qux".into()]),
+            quuxes: Some(
+                vec![("quux".into(), 1), ("quuxx".into(), 2)]
+                    .into_iter()
+                    .collect()
+            ),
         }
     );
 }
