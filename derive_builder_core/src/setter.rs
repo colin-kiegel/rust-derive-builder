@@ -169,7 +169,7 @@ impl<'a> ToTokens for Setter<'a> {
                 if each.into {
                     ty_params = quote!(<VALUE, FROM_VALUE: ::derive_builder::export::core::convert::Into<VALUE>>);
                     param_ty = quote!(FROM_VALUE);
-                    into_item = quote!(item.into());
+                    into_item = quote!(::derive_builder::export::core::convert::Into::into(item));
                 } else {
                     ty_params = quote!(<VALUE>);
                     param_ty = quote!(VALUE);
