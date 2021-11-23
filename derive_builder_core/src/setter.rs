@@ -257,7 +257,7 @@ macro_rules! default_setter {
             strip_option: false,
             deprecation_notes: &Default::default(),
             each: None,
-        };
+        }
     };
 }
 

@@ -1,5 +1,5 @@
 #![no_std]
-#![allow(unused)]
+#![allow(unused, clippy::blacklisted_name)]
 
 extern crate alloc;
 #[macro_use]
