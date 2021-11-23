@@ -556,7 +556,7 @@ impl<'a> FieldWithDefaults<'a> {
             pattern: self.pattern(),
             attrs: &self.field.attrs,
             ident: self.setter_ident(),
-            field_ident: &self.field_ident(),
+            field_ident: self.field_ident(),
             field_type: &self.field.ty,
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
