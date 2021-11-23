@@ -159,6 +159,20 @@ impl<'a> ToTokens for Setter<'a> {
             }
 
             if let Some(ref ident_each) = self.each {
+                // Access the collection to extend, initialising with default value if necessary.
+                let field_inner = if stripped_option {
+                    // Outer (builder) Option -> Inner (field) Option -> collection.
+                    quote!(get_or_insert_with(|| Some(
+                        ::derive_builder::export::core::default::Default::default()
+                    ))
+                    .get_or_insert_with(::derive_builder::export::core::default::Default::default))
+                } else {
+                    // Outer (builder) Option -> collection.
+                    quote!(get_or_insert_with(
+                        ::derive_builder::export::core::default::Default::default
+                    ))
+                };
+
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #[allow(unused_mut)]
@@ -168,9 +182,7 @@ impl<'a> ToTokens for Setter<'a> {
                     {
                         #deprecation_notes
                         let mut new = #self_into_return_ty;
-                        new.#field_ident
-                            .get_or_insert_with(::derive_builder::export::core::default::Default::default)
-                            .extend(::derive_builder::export::core::option::Option::Some(item));
+                        new.#field_ident.#field_inner.extend(::derive_builder::export::core::option::Option::Some(item));
                         new
                     }
                 ));
