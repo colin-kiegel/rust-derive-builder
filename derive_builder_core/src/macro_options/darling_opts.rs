@@ -210,7 +210,6 @@ impl FromMeta for FieldSetterMeta {
 pub struct Field {
     ident: Option<Ident>,
     attrs: Vec<Attribute>,
-    vis: syn::Visibility,
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
@@ -261,8 +260,10 @@ impl FlagVisibility for Field {
 pub struct Options {
     ident: Ident,
 
-    attrs: Vec<Attribute>,
-
+    // These are currently unused, but that means the generated builder cannot have
+    // inherited the cfg or allow attributes from the base struct.
+    // see https://github.com/colin-kiegel/rust-derive-builder/issues/222
+    // attrs: Vec<Attribute>,
     vis: Visibility,
 
     generics: Generics,
