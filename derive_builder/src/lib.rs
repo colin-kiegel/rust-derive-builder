@@ -186,6 +186,25 @@
 //! Otherwise precede your struct (or field) with `#[builder(private)]` to opt into private
 //! setters.
 //!
+//! ## Generated builder struct name
+//!
+//! By default, the builder struct for `struct Foo` is `FooBuilder`.
+//! You can override this:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #
+//! #[derive(Builder)]
+//! #[builder(name = "FooConstructor")]
+//! struct Foo { }
+//!
+//! # fn main() -> Result<(), FooConstructorError> {
+//! let foo: Foo = FooConstructor::default().build()?;
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! ## Setter Name/Prefix
 //!
 //! Setter methods are named after their corresponding field by default.
