@@ -223,7 +223,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
     }
 
     extract_type_path(ty)
-        .and_then(|path| extract_option_segment(path))
+        .and_then(extract_option_segment)
         .and_then(|pair_path_segment| {
             let type_params = &pair_path_segment.into_value().arguments;
             // It should have only on angle-bracketed param ("<String>"):
