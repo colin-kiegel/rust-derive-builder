@@ -111,6 +111,11 @@ pub struct Builder<'a> {
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [Path],
+    /// When true, generate `impl Default for #ident` which sets all fields to `None`.
+    ///
+    /// Builders unconditionally include a private inherent method, `create_empty`, which
+    /// `impl Default` will leverage if this is `true`.
+    pub impl_default: bool,
     /// Type parameters and lifetimes attached to this builder's struct
     /// definition.
     pub generics: Option<&'a syn::Generics>,
@@ -198,16 +203,24 @@ impl<'a> ToTokens for Builder<'a> {
                 impl #impl_generics #builder_ident #ty_generics #where_clause {
                     #(#functions)*
                     #deprecation_notes
-                }
 
-                impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
-                    fn default() -> Self {
+                    fn create_empty() -> Self {
                         Self {
                             #(#builder_field_initializers)*
                         }
                     }
                 }
             ));
+
+            if self.impl_default {
+                tokens.append_all(quote!(
+                    impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
+                        fn default() -> Self {
+                            Self::create_empty()
+                        }
+                    }
+                ));
+            }
 
             if self.generate_error {
                 let builder_error_ident = format_ident!("{}Error", builder_ident);
@@ -323,6 +336,7 @@ macro_rules! default_builder {
             ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),
             derives: &vec![],
+            impl_default: true,
             generics: None,
             visibility: parse_quote!(pub),
             fields: vec![quote!(foo: u32,)],
@@ -408,13 +422,17 @@ mod tests {
                         fn bar () -> {
                             unimplemented!()
                         }
+
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
                     }
 
                     impl ::derive_builder::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
-                            Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
-                            }
+                            Self::create_empty()
                         }
                     }
                 ));
@@ -463,13 +481,17 @@ mod tests {
                         fn bar() -> {
                             unimplemented!()
                         }
+
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
                     }
 
                     impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
-                            Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
-                            }
+                            Self::create_empty()
                         }
                     }
                 ));
@@ -521,13 +543,17 @@ mod tests {
                         fn bar() -> {
                             unimplemented!()
                         }
+                        
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
                     }
 
                     impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
-                            Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
-                            }
+                            Self::create_empty()
                         }
                     }
                 ));
@@ -576,14 +602,18 @@ mod tests {
                         fn bar() -> {
                             unimplemented!()
                         }
+
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
                     }
 
                     impl<'a, T: Debug> ::derive_builder::export::core::default::Default for FooBuilder<'a, T>
                     where T: PartialEq {
                         fn default() -> Self {
-                            Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
-                            }
+                            Self::create_empty()
                         }
                     }
                 ));
@@ -633,13 +663,17 @@ mod tests {
                         fn bar () -> {
                             unimplemented!()
                         }
+
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
                     }
 
                     impl ::derive_builder::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
-                            Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
-                            }
+                            Self::create_empty()
                         }
                     }
                 ));

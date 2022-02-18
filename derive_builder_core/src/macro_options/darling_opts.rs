@@ -284,6 +284,9 @@ pub struct Options {
     #[darling(default)]
     derive: PathList,
 
+    #[darling(default)]
+    custom_constructor: Flag,
+
     /// Setter options applied to all field setters in the struct.
     #[darling(default)]
     setter: StructLevelSetter,
@@ -394,6 +397,10 @@ impl Options {
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
+            impl_default: {
+                let custom_constructor: bool = self.custom_constructor.into();
+                !custom_constructor
+            },
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
