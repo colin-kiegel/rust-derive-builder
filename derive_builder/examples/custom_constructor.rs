@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate derive_builder;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ContentType {
     Json,
     Xml,
@@ -15,8 +15,12 @@ impl Default for ContentType {
     }
 }
 
-#[derive(Builder)]
-#[builder(custom_constructor, build_fn(private, name = "fallible_build"))]
+#[derive(Debug, Builder)]
+#[builder(
+    custom_constructor,
+    create_empty = "empty",
+    build_fn(private, name = "fallible_build")
+)]
 pub struct ApiClient {
     // To make sure `host` and `key` are not changed after creation, tell derive_builder
     // to create the fields but not to generate setters.
@@ -35,7 +39,7 @@ impl ApiClient {
         ApiClientBuilder {
             host: Some(host.into()),
             key: Some(key.into()),
-            ..ApiClientBuilder::create_empty()
+            ..ApiClientBuilder::empty()
         }
     }
 }
@@ -48,9 +52,9 @@ impl ApiClientBuilder {
 }
 
 fn main() {
-    ApiClient::new("hello", "world")
+    dbg!(ApiClient::new("hello", "world")
         .content_type(ContentType::Xml)
-        .build();
+        .build());
 }
 
 #[cfg(test)]

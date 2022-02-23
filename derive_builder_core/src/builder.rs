@@ -111,11 +111,16 @@ pub struct Builder<'a> {
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [Path],
-    /// When true, generate `impl Default for #ident` which sets all fields to `None`.
+    /// When true, generate `impl Default for #ident` which calls the `create_empty` inherent method.
     ///
-    /// Builders unconditionally include a private inherent method, `create_empty`, which
-    /// `impl Default` will leverage if this is `true`.
+    /// Note that the name of `create_empty` can be overridden; see the `create_empty` field for more.
     pub impl_default: bool,
+    /// The identifier of the inherent method that creates a builder with all fields set to
+    /// `None` or `PhantomData`.
+    ///
+    /// This method will be invoked by `impl Default` for the builder, but it is also accessible
+    /// to `impl` blocks on the builder that expose custom constructors.
+    pub create_empty: syn::Ident,
     /// Type parameters and lifetimes attached to this builder's struct
     /// definition.
     pub generics: Option<&'a syn::Generics>,
@@ -162,6 +167,7 @@ impl<'a> ToTokens for Builder<'a> {
                 .unwrap_or((None, None, None));
             let builder_fields = &self.fields;
             let builder_field_initializers = &self.field_initializers;
+            let create_empty = &self.create_empty;
             let functions = &self.functions;
 
             // Create the comma-separated set of derived traits for the builder
@@ -204,7 +210,8 @@ impl<'a> ToTokens for Builder<'a> {
                     #(#functions)*
                     #deprecation_notes
 
-                    fn create_empty() -> Self {
+                    /// Create an empty builder, with all fields set to `None` or `PhantomData`.
+                    fn #create_empty() -> Self {
                         Self {
                             #(#builder_field_initializers)*
                         }
@@ -216,7 +223,7 @@ impl<'a> ToTokens for Builder<'a> {
                 tokens.append_all(quote!(
                     impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
                         fn default() -> Self {
-                            Self::create_empty()
+                            Self::#create_empty()
                         }
                     }
                 ));
@@ -337,6 +344,7 @@ macro_rules! default_builder {
             pattern: Default::default(),
             derives: &vec![],
             impl_default: true,
+            create_empty: syn::Ident::new("create_empty", ::proc_macro2::Span::call_site()),
             generics: None,
             visibility: parse_quote!(pub),
             fields: vec![quote!(foo: u32,)],
@@ -356,6 +364,7 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
     use proc_macro2::TokenStream;
+    use syn::Ident;
 
     fn add_generated_error(result: &mut TokenStream) {
         result.append_all(quote!(
@@ -423,6 +432,7 @@ mod tests {
                             unimplemented!()
                         }
 
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
@@ -433,6 +443,59 @@ mod tests {
                     impl ::derive_builder::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self::create_empty()
+                        }
+                    }
+                ));
+
+                add_generated_error(&mut result);
+
+                result
+            }
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn rename_create_empty() {
+        let mut builder = default_builder!();
+        builder.create_empty = Ident::new("empty", proc_macro2::Span::call_site());
+
+        assert_eq!(
+            quote!(#builder).to_string(),
+            {
+                let mut result = quote!();
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Clone)]
+                    pub struct FooBuilder {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl FooBuilder {
+                        fn bar () -> {
+                            unimplemented!()
+                        }
+
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
+                        fn empty() -> Self {
+                            Self {
+                                foo: ::derive_builder::export::core::default::Default::default(),
+                            }
+                        }
+                    }
+
+                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                        fn default() -> Self {
+                            Self::empty()
                         }
                     }
                 ));
@@ -482,6 +545,7 @@ mod tests {
                             unimplemented!()
                         }
 
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
@@ -544,6 +608,7 @@ mod tests {
                             unimplemented!()
                         }
                         
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
@@ -603,6 +668,7 @@ mod tests {
                             unimplemented!()
                         }
 
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
@@ -664,6 +730,7 @@ mod tests {
                             unimplemented!()
                         }
 
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
                                 foo: ::derive_builder::export::core::default::Default::default(),
