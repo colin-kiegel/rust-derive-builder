@@ -3,6 +3,7 @@
 //! This relies on how the generated build function is constructed; the validator
 //! is invoked in conjunction with the `?` operator, so anything that converts to
 //! the generated `FooBuilderError` type is valid.
+#![allow(dead_code)]
 
 #[macro_use]
 extern crate derive_builder;

@@ -1,6 +1,7 @@
 //! This example shows combining generics with custom errors and validation.
 //!
 //! Note the use of the type parameter in the `#[builder(...)]` attribute.
+#![allow(dead_code)]
 
 #[macro_use]
 extern crate derive_builder;

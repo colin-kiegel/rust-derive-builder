@@ -1,6 +1,7 @@
 // NOTE: generate fully expanded version with `cargo expand`.
 //
 //       cargo expand --example readme_example
+#![allow(dead_code)]
 
 #[macro_use]
 extern crate derive_builder;
