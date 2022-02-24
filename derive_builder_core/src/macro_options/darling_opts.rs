@@ -470,7 +470,7 @@ impl<'a> FieldWithDefaults<'a> {
             .setter
             .prefix
             .as_ref()
-            .or_else(|| self.parent.setter.prefix.as_ref())
+            .or(self.parent.setter.prefix.as_ref())
     }
 
     /// Get the ident of the emitted setter method
