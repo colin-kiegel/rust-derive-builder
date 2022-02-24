@@ -1,80 +1,70 @@
-use std::str::FromStr;
+use std::convert::TryFrom;
 
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt};
-use syn;
+use quote::ToTokens;
+use syn::{self, spanned::Spanned, Block, LitStr};
 
-/// A permissive wrapper for expressions/blocks, implementing `quote::ToTokens`.
+/// A wrapper for expressions/blocks which automatically adds the start and end
+/// braces.
 ///
 /// - **full access** to variables environment.
 /// - **full access** to control-flow of the environment via `return`, `?` etc.
-///
-/// # Examples
-///
-/// Will expand to something like the following (depending on settings):
-///
-/// ```rust,ignore
-/// # #[macro_use]
-/// # extern crate quote;
-/// # extern crate derive_builder_core;
-/// # use std::str::FromStr;
-/// # use derive_builder_core::Block;
-/// # fn main() {
-/// #    let expr = Block::from_str("x+1").unwrap();
-/// #    assert_eq!(quote!(#expr).to_string(), quote!(
-/// { x + 1 }
-/// #    ).to_string());
-/// # }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Block(Vec<syn::Stmt>);
+pub struct BlockContents(Block);
 
-impl Default for Block {
-    fn default() -> Self {
-        "".parse().unwrap()
+impl BlockContents {
+    pub fn is_empty(&self) -> bool {
+        self.0.stmts.is_empty()
     }
 }
 
-impl ToTokens for Block {
+impl ToTokens for BlockContents {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let inner = &self.0;
-        tokens.append_all(quote!(
-            { #( #inner )* }
-        ));
+        self.0.to_tokens(tokens)
     }
 }
 
-impl FromStr for Block {
-    type Err = String;
+impl TryFrom<&'_ LitStr> for BlockContents {
+    type Error = syn::Error;
 
-    /// Parses a string `s` to return a `Block`.
-    ///
-    /// # Errors
-    ///
-    /// When `expr` cannot be parsed as `Vec<syn::TokenTree>`. E.g. unbalanced
-    /// opening/closing delimiters like `{`, `(` and `[` will be _rejected_ as
-    /// parsing error.
-    fn from_str(expr: &str) -> Result<Self, Self::Err> {
-        let b: syn::Block =
-            syn::parse_str(&format!("{{{}}}", expr)).map_err(|e| format!("{}", e))?;
-        Ok(Self(b.stmts))
+    fn try_from(s: &LitStr) -> Result<Self, Self::Error> {
+        let mut block_str = s.value();
+        block_str.insert(0, '{');
+        block_str.push('}');
+        LitStr::new(&block_str, s.span()).parse().map(Self)
+    }
+}
+
+impl From<syn::Expr> for BlockContents {
+    fn from(v: syn::Expr) -> Self {
+        Self(Block {
+            brace_token: syn::token::Brace(v.span()),
+            stmts: vec![syn::Stmt::Expr(v)],
+        })
     }
 }
 
 #[cfg(test)]
 mod test {
-    #[allow(unused_imports)]
+    use std::convert::TryInto;
+
     use super::*;
+    use proc_macro2::Span;
+
+    fn parse(s: &str) -> Result<BlockContents, syn::Error> {
+        (&LitStr::new(s, Span::call_site())).try_into()
+    }
 
     #[test]
     #[should_panic(expected = r#"lex error"#)]
     fn block_invalid_token_trees() {
-        Block::from_str("let x = 2; { x+1").unwrap();
+        parse("let x = 2; { x+1").unwrap();
     }
 
     #[test]
     fn block_delimited_token_tree() {
-        let expr = Block::from_str("let x = 2; { x+1 }").unwrap();
+        let expr = parse("let x = 2; { x+1 }").unwrap();
         assert_eq!(
             quote!(#expr).to_string(),
             quote!({
@@ -89,7 +79,7 @@ mod test {
 
     #[test]
     fn block_single_token_tree() {
-        let expr = Block::from_str("42").unwrap();
+        let expr = parse("42").unwrap();
         assert_eq!(quote!(#expr).to_string(), quote!({ 42 }).to_string());
     }
 }

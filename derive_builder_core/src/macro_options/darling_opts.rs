@@ -7,8 +7,9 @@ use darling::{self, FromMeta};
 use proc_macro2::Span;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
-use crate::macro_options::DefaultExpression;
-use crate::{Builder, BuilderField, BuilderPattern, DeprecationNotes, Initializer, Setter};
+use crate::{
+    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Initializer, Setter,
+};
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to
@@ -421,10 +422,7 @@ impl Options {
             error_ty: self.builder_error_ident(),
             initializers: Vec::with_capacity(self.field_count()),
             doc_comment: None,
-            default_struct: self
-                .default
-                .as_ref()
-                .map(|x| x.parse_block(self.no_std.into())),
+            default_struct: self.default.as_ref(),
             validate_fn: self.build_fn.validate.as_ref(),
         }
     }
@@ -576,11 +574,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
-            default_value: self
-                .field
-                .default
-                .as_ref()
-                .map(|x| x.parse_block(self.parent.no_std.into())),
+            default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
             custom_error_type_span: self
                 .parent
