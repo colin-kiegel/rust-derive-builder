@@ -3,10 +3,11 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
 use syn::spanned::Spanned;
-use Block;
 use BuilderPattern;
 use Initializer;
 use DEFAULT_STRUCT_NAME;
+
+use crate::DefaultExpression;
 
 /// Initializer for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -60,7 +61,7 @@ pub struct BuildMethod<'a> {
     /// Default value for the whole struct.
     ///
     /// This will be in scope for all initializers as `__default`.
-    pub default_struct: Option<Block>,
+    pub default_struct: Option<&'a DefaultExpression>,
     /// Validation function with signature `&FooBuilder -> Result<(), String>`
     /// to call before the macro-provided struct buildout.
     pub validate_fn: Option<&'a syn::Path>,
@@ -176,7 +177,9 @@ mod tests {
     #[test]
     fn default_struct() {
         let mut build_method = default_build_method!();
-        build_method.default_struct = Some("Default::default()".parse().unwrap());
+        let alt_default =
+            DefaultExpression::explicit::<syn::Expr>(parse_quote!(Default::default()));
+        build_method.default_struct = Some(&alt_default);
 
         #[rustfmt::skip]
         assert_eq!(

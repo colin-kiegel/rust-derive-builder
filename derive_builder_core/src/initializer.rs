@@ -1,9 +1,10 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
-use Block;
 use BuilderPattern;
 use DEFAULT_STRUCT_NAME;
+
+use crate::DefaultExpression;
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -45,7 +46,7 @@ pub struct Initializer<'a> {
     /// Default value for the target field.
     ///
     /// This takes precedence over a default struct identifier.
-    pub default_value: Option<Block>,
+    pub default_value: Option<&'a DefaultExpression>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
     /// Span where the macro was told to use a preexisting error type, instead of creating one,
@@ -95,7 +96,7 @@ impl<'a> Initializer<'a> {
     /// To be used inside of `#struct_field: match self.#builder_field { ... }`
     fn match_none(&'a self) -> MatchNone<'a> {
         match self.default_value {
-            Some(ref expr) => MatchNone::DefaultTo(expr),
+            Some(expr) => MatchNone::DefaultTo(expr),
             None => {
                 if self.use_default_struct {
                     MatchNone::UseDefaultStructField(self.field_ident)
@@ -125,7 +126,7 @@ impl<'a> Initializer<'a> {
 /// To be used inside of `#struct_field: match self.#builder_field { ... }`
 enum MatchNone<'a> {
     /// Inner value must be a valid Rust expression
-    DefaultTo(&'a Block),
+    DefaultTo(&'a DefaultExpression),
     /// Inner value must be the field identifier
     ///
     /// The default struct must be in scope in the build_method.
@@ -260,7 +261,8 @@ mod tests {
     #[test]
     fn default_value() {
         let mut initializer = default_initializer!();
-        initializer.default_value = Some("42".parse().unwrap());
+        let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
+        initializer.default_value = Some(&default_value);
 
         assert_eq!(
             quote!(#initializer).to_string(),
