@@ -6,7 +6,7 @@ Applied to the struct.
 
 ```rust
 #[derive(Builder)]
-#[builder(OPTIONS HERE)]
+#[builder(OPTIONS)]
 pub struct Example {
     // ... fields elided
 }
@@ -16,9 +16,54 @@ pub struct Example {
 
 These attributes control the generated function that converts an instance of the builder into an instance of the deriving struct.
 
+```rust
+#[builder(build_fn(OPTIONS))]
+struct Request {}
+```
+
 ### error
 
-...
+Path of the error type returned by the build method.
+
+```rust
+enum RequestError {
+    MalformedUrl(String),
+    UninitializedField(&'static str),
+}
+
+// The generated build method will use this conversion to create
+// an error when a required field has not been initialized.
+impl From<derive_builder::UninitializedFieldError> for RequestError {
+    fn from(e: derive_builder::UninitializedFieldError) -> Self {
+        Self::UninitializedField(e.field_name())
+    }
+}
+
+#[builder(build_fn(error = "RequestError"))]
+struct Request {
+    url: String
+}
+```
+
+If `error` is not set, the following error enum will be automatically generated:
+
+```rust
+// deriving struct...
+struct Request {}
+
+// generated error
+#[derive(Debug)]
+#[non_exhaustive]
+enum RequestBuilderError {
+    UninitializedField(&'static str),
+    ValidationError(String),
+}
+```
+
+Note that the `ValidationError` variant is always included, even if `validate` was not specified; this ensures there will not be a visible API change from the later addition of a `validate` function.
+If that variant is not desired, a custom error should be used instead.
+
+It is not recommended to directly use `UninitializedFieldError` in your builder's API, as that tightly couples your builder's API to the `derive_builder` crate.
 
 ### name
 
@@ -55,8 +100,8 @@ Prevent generation of the build method.
 **Note:** This is rarely desirable, as it requires manual implementation of all defaulting.
 In most cases, you should instead either:
 
-* Use `#[builder(build_fn(validate = "..."))]` to add custom validation to the generated method OR 
-* Use `#[builder(build_fn(private))]` to hide the generated method and then wrap it in your own public inherent build method
+-   Use `#[builder(build_fn(validate = "..."))]` to add custom validation to the generated method OR
+-   Use `#[builder(build_fn(private))]` to hide the generated method and then wrap it in your own public inherent build method
 
 ```rust
 #[builder(build_fn(skip))]
@@ -65,21 +110,20 @@ struct Request {}
 
 ### validate
 
-Path to a validation function with signature `(TDeriving) -> Result<TDeriving, TError>`, where `TError` converts to either the generated builder error or the type specified in `#[builder(build_fn(error = "..."))]`.
+Path to a validation function with signature `(&Self) -> Result<(), TError>`, where `TError` converts to either the generated builder error or the type specified in `#[builder(build_fn(error = "..."))]`.
 
 ```rust
-#[builder(build_fn(validate = "Noise::not_loud_silence"))]
+#[builder(build_fn(validate = "NoiseBuilder::not_loud_silence"))]
 struct Noise {
     letter: char,
     volume: u8,
 }
 
-impl Noise {
-    fn not_loud_silence(self) -> Result<Self, String> {
-        if self.letter.is_whitespace() && self.volume > 100 {
-            Err("Loud silence".into())
-        } else {
-            Ok(self)
+impl NoiseBuilder {
+    fn not_loud_silence(self) -> Result<(), String> {
+        match (self.letter.as_ref(), self.volume.as_ref()) {
+            (Some(letter), Some(volume)) if letter.is_whitespace() && volume > 100 => Err("Loud silence".into()),
+            (_, _) => Ok(())
         }
     }
 }
