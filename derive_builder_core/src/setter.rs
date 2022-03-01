@@ -159,8 +159,22 @@ impl<'a> ToTokens for Setter<'a> {
                 ));
             }
 
-            if let Some(ref each) = self.each {
+            if let Some(each) = self.each {
                 let ident_each = &each.name;
+
+                // Access the collection to extend, initialising with default value if necessary.
+                let get_initialized_collection = if stripped_option {
+                    // Outer (builder) Option -> Inner (field) Option -> collection.
+                    quote!(get_or_insert_with(|| Some(
+                        ::derive_builder::export::core::default::Default::default()
+                    ))
+                    .get_or_insert_with(::derive_builder::export::core::default::Default::default))
+                } else {
+                    // Outer (builder) Option -> collection.
+                    quote!(get_or_insert_with(
+                        ::derive_builder::export::core::default::Default::default
+                    ))
+                };
 
                 let ty_params: TokenStream;
                 let param_ty: TokenStream;
@@ -186,7 +200,7 @@ impl<'a> ToTokens for Setter<'a> {
                         #deprecation_notes
                         let mut new = #self_into_return_ty;
                         new.#field_ident
-                            .get_or_insert_with(::derive_builder::export::core::default::Default::default)
+                            .#get_initialized_collection
                             .extend(::derive_builder::export::core::option::Option::Some(#into_item));
                         new
                     }
