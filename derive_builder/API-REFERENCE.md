@@ -22,19 +22,68 @@ These attributes control the generated function that converts an instance of the
 
 ### name
 
-...
+Set the name of the generated build method.
+
+If not specified, defaults to `build`.
+
+```rust
+#[builder(build_fn(name = "finish"))]
+struct Request {}
+
+fn demo() {
+    RequestBuilder::default().finish();
+}
+```
 
 ### public/private
 
-...
+The visibility of the generated build method.
+
+If not set, this will inherit the visibility of the builder struct.
+
+Declaring both `public` and `private` will result in a compile error.
+
+```rust
+#[builder(build_fn(private))]
+pub struct Request {}
+```
 
 ### skip
 
-...
+Prevent generation of the build method.
+
+**Note:** This is rarely desirable, as it requires manual implementation of all defaulting.
+In most cases, you should instead either:
+
+* Use `#[builder(build_fn(validate = "..."))]` to add custom validation to the generated method OR 
+* Use `#[builder(build_fn(private))]` to hide the generated method and then wrap it in your own public inherent build method
+
+```rust
+#[builder(build_fn(skip))]
+struct Request {}
+```
 
 ### validate
 
-...
+Path to a validation function with signature `(TDeriving) -> Result<TDeriving, TError>`, where `TError` converts to either the generated builder error or the type specified in `#[builder(build_fn(error = "..."))]`.
+
+```rust
+#[builder(build_fn(validate = "Noise::not_loud_silence"))]
+struct Noise {
+    letter: char,
+    volume: u8,
+}
+
+impl Noise {
+    fn not_loud_silence(self) -> Result<Self, String> {
+        if self.letter.is_whitespace() && self.volume > 100 {
+            Err("Loud silence".into())
+        } else {
+            Ok(self)
+        }
+    }
+}
+```
 
 ## default
 
@@ -179,7 +228,36 @@ fn demo() {
 
 ## default
 
-...
+The value to use for this field if the caller does not provide one.
+
+If not set, the field will inherit from the struct-level `#[builder(default)]` declaration.
+If that is also not set, then this field is required and will produce an `UninitializedFieldError` during the build step.
+
+If set without a value, the `Default` impl for the field's data type will be used.
+
+```rust
+struct Request {
+    // This will default to ""
+    #[builder(default)]
+    user: String
+}
+```
+
+If set with a value, the value is a Rust expression that will be inserted when the default value is needed.
+Note that unlike `serde`, this is not a path.
+
+```rust
+struct Request {
+    // This is valid
+    #[builder(default = "45"))]
+    timeout_sec: u16,
+    // Note that parentheses are required here
+    #[builder(default = "infer_from_env()")]
+    retry_limit: u8,
+}
+```
+
+Unlike the struct-level default expression, field-level default expressions are only executed if the builder does not have a value for that field.
 
 ## setter
 
@@ -189,7 +267,22 @@ Note: If `#[builder(setter(skip))]` has been declared on the struct, an individu
 
 ### custom
 
-...
+This attribute causes the builder to include the field as an `Option`, but not to generate any setter.
+
+```rust
+struct Request {
+    #[builder(setter(custom))]
+    timeout_ms: u16
+}
+
+// Note that this is an impl block on RequestBuilder, not Request
+impl RequestBuilder {
+    fn timeout_sec(&mut self, timeout: u16) -> &mut Self {
+        self.timeout_ms = Some(timeout * 1000);
+        self
+    }
+}
+```
 
 ### each
 
@@ -221,11 +314,38 @@ fn result() {
 
 ### skip
 
-...
+This attribute causes the builder to include the field as a `PhantomData`, and to not generate a setter.
+If the field type does not impl `Default` and no field-level or struct-level default is provided, a compile error will be produced.
+
+```rust
+struct Request {
+    #[builder(setter(skip))]
+    http_client: Client,
+}
+```
 
 ### strip_option
 
-...
+If the field is of type `Option<T>`, make the generated setter accept `T` rather than `Option<T>`.
+
+```rust
+struct Request {
+    #[builder(setter(strip_option))]
+    keep_alive: Option<bool>,
+    user: Option<String>,
+    url: String,
+}
+
+fn demo() {
+    RequestBuilder::default()
+        .keep_alive(true)
+        // strip_option was not applied to this field
+        .user(Some("alice".into()))
+        .url("https://crates.io".into());
+}
+```
+
+Note that this setting does not work if a type alias is used for `Option`.
 
 ## public/private
 
