@@ -8,7 +8,8 @@ use proc_macro2::Span;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::{
-    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Initializer, Setter,
+    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
+    Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -131,7 +132,7 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    each: Option<Ident>,
+    each: Option<Each>,
 }
 
 impl FieldLevelSetter {

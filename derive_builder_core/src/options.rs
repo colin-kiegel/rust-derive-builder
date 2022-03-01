@@ -33,3 +33,10 @@ impl Default for BuilderPattern {
         Self::Mutable
     }
 }
+
+#[derive(Debug, Clone, FromMeta)]
+pub struct Each {
+    pub name: syn::Ident,
+    #[darling(default)]
+    pub into: bool,
+}

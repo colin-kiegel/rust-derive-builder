@@ -5,6 +5,7 @@ use syn;
 
 use BuilderPattern;
 use DeprecationNotes;
+use Each;
 
 /// Setter for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -63,7 +64,7 @@ pub struct Setter<'a> {
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
     /// Emit extend method.
-    pub each: Option<&'a syn::Ident>,
+    pub each: Option<&'a Each>,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -158,7 +159,9 @@ impl<'a> ToTokens for Setter<'a> {
                 ));
             }
 
-            if let Some(ref ident_each) = self.each {
+            if let Some(ref each) = self.each {
+                let ident_each = &each.name;
+
                 // Access the collection to extend, initialising with default value if necessary.
                 let field_inner = if stripped_option {
                     // Outer (builder) Option -> Inner (field) Option -> collection.
