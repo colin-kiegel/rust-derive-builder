@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-- Compatibility between `setter(strip_option`) and `setter(each = "name")` #213
+- Support shorthand and long-form collection setters; `#[builder(setter(each = "..."))]` and `#[builder(setter(each(name = "...")))]` #234
+- Allow collection setters to be generic over `Into` using `#[builder(setter(each(name = "...", into)))] #234 and #214
 
 ## [0.10.2] - 2021-04-21
 - Don't reference `derive_builder_core` from `derive_builder` #206

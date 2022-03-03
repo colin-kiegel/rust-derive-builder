@@ -8,7 +8,8 @@ use proc_macro2::Span;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::{
-    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Initializer, Setter,
+    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
+    Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -119,6 +120,40 @@ impl StructLevelSetter {
     }
 }
 
+/// Adapter that enables:
+///
+/// 1. Use of a derived `FromMeta` on `Each`,
+/// 2. Support for `each = "..."` and `each(name = "...")`
+/// 3. The rest of the builder crate to directly access fields on `Each`
+struct EachLongOrShort(Each);
+
+/// Create `Each` from an attribute's `Meta`.
+///
+/// Two formats are supported:
+///
+/// * `each = "..."`, which provides the name of the `each` setter and otherwise uses default values
+/// * `each(name = "...")`, which allows setting additional options on the `each` setter
+impl FromMeta for EachLongOrShort {
+    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
+        if let syn::Lit::Str(v) = value {
+            v.parse::<Ident>()
+                .map(Each::from)
+                .map(Self)
+                .map_err(|_| darling::Error::unknown_value(&v.value()).with_span(value))
+        } else {
+            Err(darling::Error::unexpected_lit_type(value))
+        }
+    }
+
+    fn from_list(items: &[syn::NestedMeta]) -> darling::Result<Self> {
+        Each::from_list(items).map(Self)
+    }
+}
+
+fn unpack_each_shorthand(input: Option<EachLongOrShort>) -> Option<Each> {
+    input.map(|v| v.0)
+}
+
 /// The `setter` meta item on fields in the input type.
 /// Unlike the `setter` meta item at the struct level, this allows specific
 /// name overrides.
@@ -131,7 +166,8 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    each: Option<Ident>,
+    #[darling(map = "unpack_each_shorthand")]
+    each: Option<Each>,
 }
 
 impl FieldLevelSetter {

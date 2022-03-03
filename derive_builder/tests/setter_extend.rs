@@ -22,16 +22,27 @@ struct Lorem {
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(pattern = "mutable")]
 struct Ipsum {
-    #[builder(setter(each = "foo_append"))]
+    #[builder(setter(each(name = "foo_append")))]
     foo: String,
-    #[builder(setter(each = "bar"))]
+    #[builder(setter(each(name = "bar")))]
     bars: Vec<String>,
-    #[builder(setter(each = "baz"))]
+    #[builder(setter(each(name = "baz")))]
     bazes: HashMap<String, i32>,
     #[builder(setter(strip_option, each = "qux"))]
     quxes: Option<Vec<String>>,
     #[builder(setter(strip_option, each = "quux"))]
     quuxes: Option<HashMap<String, i32>>,
+}
+
+#[derive(Debug, PartialEq, Default, Builder, Clone)]
+#[builder]
+struct Dolor {
+    #[builder(setter(each(name = "foo_append")))]
+    foo: String,
+    #[builder(setter(each(name = "bar", into)))]
+    bars: Vec<String>,
+    #[builder(setter(each(name = "baz")))]
+    bazes: HashMap<String, i32>,
 }
 
 #[test]
@@ -67,6 +78,33 @@ fn extend_field() {
                     .into_iter()
                     .collect()
             ),
+        }
+    );
+}
+
+#[test]
+fn extend_field_into() {
+    let x = DolorBuilder::default()
+        .foo("foo".into())
+        .bar("bar")
+        .bar("bar bar")
+        .bar("bar bar bar")
+        .foo_append('-')
+        .baz(("baz".into(), 1))
+        .baz(("bazz".into(), 2))
+        .baz(("bazzz".into(), 3))
+        .foo_append("foo")
+        .build()
+        .unwrap();
+
+    assert_eq!(
+        x,
+        Dolor {
+            foo: "foo-foo".into(),
+            bars: vec!["bar".into(), "bar bar".into(), "bar bar bar".into()],
+            bazes: vec![("baz".into(), 1), ("bazz".into(), 2), ("bazzz".into(), 3)]
+                .into_iter()
+                .collect(),
         }
     );
 }
@@ -110,13 +148,13 @@ fn extend_field_mutable() {
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 #[builder(setter(skip))]
-struct Dolor {
-    #[builder(setter(each = "foo"))]
+struct Sit {
+    #[builder(setter(each(name = "foo")))]
     foos: Vec<i32>,
 }
 
 #[test]
 fn extend_field_enabled() {
-    let x = DolorBuilder::default().foo(1).foo(2).build().unwrap();
-    assert_eq!(x, Dolor { foos: vec![1, 2] });
+    let x = SitBuilder::default().foo(1).foo(2).build().unwrap();
+    assert_eq!(x, Sit { foos: vec![1, 2] });
 }

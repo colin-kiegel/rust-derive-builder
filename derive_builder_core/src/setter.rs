@@ -5,6 +5,7 @@ use syn;
 
 use BuilderPattern;
 use DeprecationNotes;
+use Each;
 
 /// Setter for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -63,7 +64,7 @@ pub struct Setter<'a> {
     /// Emit deprecation notes to the user.
     pub deprecation_notes: &'a DeprecationNotes,
     /// Emit extend method.
-    pub each: Option<&'a syn::Ident>,
+    pub each: Option<&'a Each>,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -158,9 +159,11 @@ impl<'a> ToTokens for Setter<'a> {
                 ));
             }
 
-            if let Some(ref ident_each) = self.each {
+            if let Some(each) = self.each {
+                let ident_each = &each.name;
+
                 // Access the collection to extend, initialising with default value if necessary.
-                let field_inner = if stripped_option {
+                let get_initialized_collection = if stripped_option {
                     // Outer (builder) Option -> Inner (field) Option -> collection.
                     quote!(get_or_insert_with(|| Some(
                         ::derive_builder::export::core::default::Default::default()
@@ -173,16 +176,32 @@ impl<'a> ToTokens for Setter<'a> {
                     ))
                 };
 
+                let ty_params: TokenStream;
+                let param_ty: TokenStream;
+                let into_item: TokenStream;
+
+                if each.into {
+                    ty_params = quote!(<VALUE, FROM_VALUE: ::derive_builder::export::core::convert::Into<VALUE>>);
+                    param_ty = quote!(FROM_VALUE);
+                    into_item = quote!(::derive_builder::export::core::convert::Into::into(item));
+                } else {
+                    ty_params = quote!(<VALUE>);
+                    param_ty = quote!(VALUE);
+                    into_item = quote!(item);
+                }
+
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #[allow(unused_mut)]
-                    #vis fn #ident_each <VALUE>(#self_param, item: VALUE) -> #return_ty
+                    #vis fn #ident_each #ty_params(#self_param, item: #param_ty) -> #return_ty
                     where
                         #ty: ::derive_builder::export::core::default::Default + ::derive_builder::export::core::iter::Extend<VALUE>,
                     {
                         #deprecation_notes
                         let mut new = #self_into_return_ty;
-                        new.#field_ident.#field_inner.extend(::derive_builder::export::core::option::Option::Some(item));
+                        new.#field_ident
+                            .#get_initialized_collection
+                            .extend(::derive_builder::export::core::option::Option::Some(#into_item));
                         new
                     }
                 ));
