@@ -5,6 +5,7 @@ use crate::BuildMethod;
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use proc_macro2::Span;
+use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
 use crate::{
@@ -120,38 +121,25 @@ impl StructLevelSetter {
     }
 }
 
-/// Adapter that enables:
-///
-/// 1. Use of a derived `FromMeta` on `Each`,
-/// 2. Support for `each = "..."` and `each(name = "...")`
-/// 3. The rest of the builder crate to directly access fields on `Each`
-struct EachLongOrShort(Each);
-
 /// Create `Each` from an attribute's `Meta`.
 ///
 /// Two formats are supported:
 ///
 /// * `each = "..."`, which provides the name of the `each` setter and otherwise uses default values
 /// * `each(name = "...")`, which allows setting additional options on the `each` setter
-impl FromMeta for EachLongOrShort {
-    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
-        if let syn::Lit::Str(v) = value {
+fn parse_each(meta: &Meta) -> darling::Result<Option<Each>> {
+    if let Meta::NameValue(mnv) = meta {
+        if let syn::Lit::Str(v) = &mnv.lit {
             v.parse::<Ident>()
                 .map(Each::from)
-                .map(Self)
-                .map_err(|_| darling::Error::unknown_value(&v.value()).with_span(value))
+                .map(Some)
+                .map_err(|_| darling::Error::unknown_value(&v.value()).with_span(v))
         } else {
-            Err(darling::Error::unexpected_lit_type(value))
+            Err(darling::Error::unexpected_lit_type(&mnv.lit))
         }
+    } else {
+        Each::from_meta(meta).map(Some)
     }
-
-    fn from_list(items: &[syn::NestedMeta]) -> darling::Result<Self> {
-        Each::from_list(items).map(Self)
-    }
-}
-
-fn unpack_each_shorthand(input: Option<EachLongOrShort>) -> Option<Each> {
-    input.map(|v| v.0)
 }
 
 /// The `setter` meta item on fields in the input type.
@@ -166,7 +154,7 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    #[darling(map = "unpack_each_shorthand")]
+    #[darling(with = "parse_each")]
     each: Option<Each>,
 }
 
