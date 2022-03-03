@@ -120,7 +120,7 @@ struct Noise {
 }
 
 impl NoiseBuilder {
-    fn not_loud_silence(self) -> Result<(), String> {
+    fn not_loud_silence(&self) -> Result<(), String> {
         match (self.letter.as_ref(), self.volume.as_ref()) {
             (Some(letter), Some(volume)) if letter.is_whitespace() && volume > 100 => Err("Loud silence".into()),
             (_, _) => Ok(())
