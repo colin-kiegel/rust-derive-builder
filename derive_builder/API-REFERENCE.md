@@ -101,7 +101,7 @@ Prevent generation of the build method.
 In most cases, you should instead either:
 
 -   Use `#[builder(build_fn(validate = "..."))]` to add custom validation to the generated method OR
--   Use `#[builder(build_fn(private))]` to hide the generated method and then wrap it in your own public inherent build method
+-   Use `#[builder(build_fn(private))]` to hide the generated method and then wrap it in your own public inherent build method which has any necessary additional logic
 
 ```rust
 #[builder(build_fn(skip))]
@@ -330,11 +330,43 @@ impl RequestBuilder {
 
 ### each
 
-...
+When a field is an extensible collection, using `each` generates a second setter for adding items to that collection.
+
+This attribute can be a key-value pair, or a nested list.
+
+```rust
+struct Request {
+    // Key-value pair (shorthand)
+    #[builder(setter(each = "with_header"))]
+    headers: Vec<Header>
+}
+
+struct Request {
+    // Nested list (long-form)
+    #[builder(setter(each(name = "with_header", into)))]
+    headers: Vec<Header>
+}
+```
+
+The long-form is necessary for specifying `into` on the each setter. If not specifying `into`, the two forms are equivalent.
+
+`setter/each/into` has an analogous effect as `setter/into`; if set, the `each` setter will accept an iterable of items that can be converted into members of the extended collection's type.
 
 ### into
 
-...
+Make the setter accept a value that converts into that field's type, rather than requiring exactly the field's type.
+
+```rust
+struct Request {
+    #[builder(setter(into))]
+    method: String
+}
+
+fn demo() {
+    // This works because `&'static str: Into<String>`
+    RequestBuilder::default().method("get");
+}
+```
 
 ### prefix
 
