@@ -136,10 +136,10 @@ struct EachLongOrShort(Each);
 impl FromMeta for EachLongOrShort {
     fn from_value(value: &syn::Lit) -> darling::Result<Self> {
         if let syn::Lit::Str(v) = value {
-            Ok(Self(Each {
-                name: v.parse()?,
-                into: false,
-            }))
+            v.parse::<Ident>()
+                .map(Each::from)
+                .map(Self)
+                .map_err(|_| darling::Error::unknown_value(&v.value()).with_span(value))
         } else {
             Err(darling::Error::unexpected_lit_type(value))
         }

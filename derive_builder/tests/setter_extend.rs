@@ -7,11 +7,11 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 struct Lorem {
-    #[builder(setter(each(name = "foo_append")))]
+    #[builder(setter(each = "foo_append"))]
     foo: String,
-    #[builder(setter(each(name = "bar")))]
+    #[builder(setter(each = "bar"))]
     bars: Vec<String>,
-    #[builder(setter(each(name = "baz")))]
+    #[builder(setter(each = "baz"))]
     bazes: HashMap<String, i32>,
     #[builder(setter(strip_option, each = "qux"))]
     quxes: Option<Vec<String>>,
