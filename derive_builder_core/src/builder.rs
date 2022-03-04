@@ -298,7 +298,7 @@ impl<'a> Builder<'a> {
                 paren_token: None,
                 modifier: TraitBoundModifier::None,
                 lifetimes: None,
-                path: syn::parse_str("::derive_builder::export::core::clone::Clone").unwrap(),
+                path: syn::parse_quote!(::derive_builder::export::core::clone::Clone),
             });
 
             for typ in generics.type_params_mut() {
@@ -324,7 +324,7 @@ macro_rules! default_builder {
             pattern: Default::default(),
             derives: &vec![],
             generics: None,
-            visibility: syn::parse_str("pub").unwrap(),
+            visibility: parse_quote!(pub),
             fields: vec![quote!(foo: u32,)],
             field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
@@ -432,9 +432,9 @@ mod tests {
     #[rustfmt::skip]
     #[test]
     fn generic() {
-        let ast: syn::DeriveInput = syn::parse_str(stringify!(
+        let ast: syn::DeriveInput = parse_quote! {
             struct Lorem<'a, T: Debug> where T: PartialEq { }
-        )).expect("Couldn't parse item");
+        };
         let generics = ast.generics;
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
@@ -486,9 +486,9 @@ mod tests {
     #[rustfmt::skip]
     #[test]
     fn generic_reference() {
-        let ast: syn::DeriveInput = syn::parse_str(stringify!(
+        let ast: syn::DeriveInput = parse_quote! {
             struct Lorem<'a, T: 'a + Default> where T: PartialEq{ }
-        )).expect("Couldn't parse item");
+        };
 
         let generics = ast.generics;
         let mut builder = default_builder!();
@@ -544,9 +544,9 @@ mod tests {
     #[rustfmt::skip]
     #[test]
     fn owned_generic() {
-        let ast: syn::DeriveInput = syn::parse_str(stringify!(
+        let ast: syn::DeriveInput = parse_quote! {
             struct Lorem<'a, T: Debug> where T: PartialEq { }
-        )).expect("Couldn't parse item");
+        };
         let generics = ast.generics;
         let mut builder = default_builder!();
         builder.generics = Some(&generics);
@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn add_derives() {
-        let derives = vec![syn::parse_str("Serialize").unwrap()];
+        let derives = vec![parse_quote!(Serialize)];
         let mut builder = default_builder!();
         builder.derives = &derives;
 

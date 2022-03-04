@@ -86,9 +86,9 @@ macro_rules! default_builder_field {
     () => {{
         BuilderField {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &syn::parse_str("String").unwrap(),
+            field_type: &parse_quote!(String),
             field_enabled: true,
-            field_visibility: syn::parse_str("pub").unwrap(),
+            field_visibility: parse_quote!(pub),
             attrs: &[parse_quote!(#[some_attr])],
         }
     }};

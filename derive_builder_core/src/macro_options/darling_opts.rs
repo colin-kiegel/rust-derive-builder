@@ -29,7 +29,7 @@ trait FlagVisibility {
     fn as_expressed_vis(&self) -> Option<Visibility> {
         match (self.public().is_some(), self.private().is_some()) {
             (true, true) => panic!("A field cannot be both public and private"),
-            (true, false) => Some(syn::parse_str("pub").unwrap()),
+            (true, false) => Some(syn::parse_quote!(pub)),
             (false, true) => Some(Visibility::Inherited),
             (false, false) => None,
         }
@@ -333,8 +333,7 @@ impl Options {
             return custom.clone();
         }
 
-        syn::parse_str(&format!("{}Builder", self.ident))
-            .expect("Struct name with Builder suffix should be an ident")
+        format_ident!("{}Builder", self.ident)
     }
 
     pub fn builder_error_ident(&self) -> Path {
@@ -481,7 +480,7 @@ impl<'a> FieldWithDefaults<'a> {
         let ident = &self.field.ident;
 
         if let Some(ref prefix) = self.setter_prefix() {
-            return syn::parse_str(&format!("{}_{}", prefix, ident.as_ref().unwrap())).unwrap();
+            return format_ident!("{}_{}", prefix, ident.as_ref().unwrap());
         }
 
         ident.clone().unwrap()
@@ -512,7 +511,7 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .as_expressed_vis()
             .or_else(|| self.parent.as_expressed_vis())
-            .unwrap_or_else(|| syn::parse_str("pub").unwrap())
+            .unwrap_or_else(|| syn::parse_quote!(pub))
     }
 
     /// Get the ident of the input field. This is also used as the ident of the
