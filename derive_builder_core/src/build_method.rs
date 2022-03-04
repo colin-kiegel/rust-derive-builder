@@ -138,7 +138,7 @@ macro_rules! default_build_method {
         BuildMethod {
             enabled: true,
             ident: &syn::Ident::new("build", ::proc_macro2::Span::call_site()),
-            visibility: syn::parse_str("pub").unwrap(),
+            visibility: syn::parse_quote!(pub),
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,
@@ -227,8 +227,7 @@ mod tests {
 
     #[test]
     fn validation() {
-        let validate_path: syn::Path = syn::parse_str("IpsumBuilder::validate")
-            .expect("Statically-entered path should be valid");
+        let validate_path: syn::Path = parse_quote!(IpsumBuilder::validate);
 
         let mut build_method: BuildMethod = default_build_method!();
         build_method.validate_fn = Some(&validate_path);

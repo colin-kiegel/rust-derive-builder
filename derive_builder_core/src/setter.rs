@@ -266,12 +266,12 @@ macro_rules! default_setter {
         Setter {
             setter_enabled: true,
             try_setter: false,
-            visibility: syn::parse_str("pub").unwrap(),
+            visibility: parse_quote!(pub),
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
             ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &syn::parse_str("Foo").unwrap(),
+            field_type: &parse_quote!(Foo),
             generic_into: false,
             strip_option: false,
             deprecation_notes: &Default::default(),
@@ -388,7 +388,7 @@ mod tests {
 
     #[test]
     fn strip_option() {
-        let ty = syn::parse_str("Option<Foo>").unwrap();
+        let ty = parse_quote!(Option<Foo>);
         let mut setter = default_setter!();
         setter.strip_option = true;
         setter.field_type = &ty;
@@ -412,7 +412,7 @@ mod tests {
 
     #[test]
     fn strip_option_into() {
-        let ty = syn::parse_str("Option<Foo>").unwrap();
+        let ty = parse_quote!(Option<Foo>);
         let mut setter = default_setter!();
         setter.strip_option = true;
         setter.generic_into = true;
@@ -561,18 +561,17 @@ mod tests {
 
     #[test]
     fn extract_type_from_option_on_simple_type() {
-        let ty_foo = syn::parse_str("Foo").unwrap();
+        let ty_foo = parse_quote!(Foo);
         assert_eq!(extract_type_from_option(&ty_foo), None);
 
         for s in vec![
-            "Option<Foo>",
-            "std::option::Option<Foo>",
-            "::std::option::Option<Foo>",
-            "core::option::Option<Foo>",
-            "::core::option::Option<Foo>",
+            parse_quote!(Option<Foo>),
+            parse_quote!(std::option::Option<Foo>),
+            parse_quote!(::std::option::Option<Foo>),
+            parse_quote!(core::option::Option<Foo>),
+            parse_quote!(::core::option::Option<Foo>),
         ] {
-            let ty_foo_opt = syn::parse_str(s).unwrap();
-            assert_eq!(extract_type_from_option(&ty_foo_opt), Some(&ty_foo));
+            assert_eq!(extract_type_from_option(&s), Some(&ty_foo));
         }
     }
 }
