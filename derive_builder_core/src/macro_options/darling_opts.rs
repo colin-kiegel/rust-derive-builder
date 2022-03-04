@@ -193,39 +193,16 @@ impl FieldLevelSetter {
 
 /// `derive_builder` allows the calling code to use `setter` as a word to enable
 /// setters when they've been disabled at the struct level.
-/// `darling` doesn't provide that out of the box, so we read the user input
-/// into this enum then convert it into the `FieldLevelSetter`.
-#[derive(Debug, Clone)]
-enum FieldSetterMeta {
-    /// The keyword in isolation.
-    /// This is equivalent to `setter(skip = false)`.
-    Shorthand,
-    Longhand(FieldLevelSetter),
-}
-
-impl From<FieldSetterMeta> for FieldLevelSetter {
-    fn from(v: FieldSetterMeta) -> Self {
-        match v {
-            FieldSetterMeta::Shorthand => FieldLevelSetter {
-                skip: Some(false),
-                ..Default::default()
-            },
-            FieldSetterMeta::Longhand(val) => val,
-        }
-    }
-}
-
-impl FromMeta for FieldSetterMeta {
-    fn from_word() -> darling::Result<Self> {
-        Ok(FieldSetterMeta::Shorthand)
-    }
-
-    fn from_meta(value: &syn::Meta) -> darling::Result<Self> {
-        if let syn::Meta::Path(_) = *value {
-            FieldSetterMeta::from_word()
-        } else {
-            FieldLevelSetter::from_meta(value).map(FieldSetterMeta::Longhand)
-        }
+fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
+    // it doesn't matter what the path is; the fact that this function
+    // has been called means that a valueless path is the shorthand case.
+    if let Meta::Path(_) = meta {
+        Ok(FieldLevelSetter {
+            skip: Some(false),
+            ..Default::default()
+        })
+    } else {
+        FieldLevelSetter::from_meta(meta)
     }
 }
 
@@ -246,7 +223,7 @@ pub struct Field {
     private: Flag,
     // See the documentation for `FieldSetterMeta` to understand how `darling`
     // is interpreting this field.
-    #[darling(default, map = "FieldSetterMeta::into")]
+    #[darling(default, with = "field_setter")]
     setter: FieldLevelSetter,
     /// The value for this field if the setter is never invoked.
     ///
