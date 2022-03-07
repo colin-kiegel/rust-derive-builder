@@ -152,7 +152,7 @@
 //!
 //! ## Hidden Fields
 //!
-//! You can hide fields by skipping their setters on the builder struct.
+//! You can hide fields by skipping their setters on (and presence in) the builder struct.
 //!
 //! - Opt-out — skip setters via `#[builder(setter(skip))]` on individual fields.
 //! - Opt-in — set `#[builder(setter(skip))]` on the whole struct
@@ -165,7 +165,7 @@
 //! # extern crate derive_builder;
 //! #
 //! #[derive(Builder)]
-//! struct SetterOptOut {
+//! struct HiddenField {
 //!     setter_present: u32,
 //!     #[builder(setter(skip))]
 //!     setter_skipped: u32,
