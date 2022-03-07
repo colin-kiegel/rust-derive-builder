@@ -27,3 +27,4 @@ derive_builder_macro = { version = "=0.10.2", path = "../derive_builder_macro" }
 pretty_assertions = "0.6.1"
 rustversion = "1.0.4"
 trybuild = "1.0.38"
+serde = "1"
