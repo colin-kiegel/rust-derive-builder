@@ -253,6 +253,10 @@ impl FlagVisibility for Field {
     }
 }
 
+fn default_create_empty() -> Ident {
+    Ident::new("create_empty", Span::call_site())
+}
+
 #[derive(Debug, Clone, FromDeriveInput)]
 #[darling(
     attributes(builder),
@@ -283,6 +287,14 @@ pub struct Options {
     /// Additional traits to derive on the builder.
     #[darling(default)]
     derive: PathList,
+
+    #[darling(default)]
+    custom_constructor: Flag,
+
+    /// The ident of the inherent method which takes no arguments and returns
+    /// an instance of the builder with all fields empty.
+    #[darling(default = "default_create_empty")]
+    create_empty: Ident,
 
     /// Setter options applied to all field setters in the struct.
     #[darling(default)]
@@ -394,6 +406,11 @@ impl Options {
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
+            impl_default: {
+                let custom_constructor: bool = self.custom_constructor.into();
+                !custom_constructor
+            },
+            create_empty: self.create_empty.clone(),
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
             fields: Vec::with_capacity(self.field_count()),
