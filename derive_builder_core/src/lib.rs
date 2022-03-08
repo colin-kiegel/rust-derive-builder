@@ -41,6 +41,7 @@ mod doc_comment;
 mod initializer;
 mod macro_options;
 mod options;
+mod parsed_literal;
 mod setter;
 
 pub(crate) use block::BlockContents;
