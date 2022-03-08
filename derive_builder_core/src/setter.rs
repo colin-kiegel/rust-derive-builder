@@ -5,6 +5,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
 
+use BuilderFieldType;
 use BuilderPattern;
 use DeprecationNotes;
 use Each;
@@ -57,7 +58,7 @@ pub struct Setter<'a> {
     /// Type of the target field.
     ///
     /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Type,
+    pub field_type: BuilderFieldType<'a>,
     /// Make the setter generic over `Into<T>`, where `T` is the field type.
     pub generic_into: bool,
     /// Make the setter remove the Option wrapper from the setter, remove the need to call Some(...).
@@ -72,7 +73,7 @@ pub struct Setter<'a> {
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
-            let field_type = self.field_type;
+            let field_type = self.field_type.target_type();
             let pattern = self.pattern;
             let vis = &self.visibility;
             let field_ident = self.field_ident;
@@ -273,7 +274,7 @@ macro_rules! default_setter {
             attrs: &vec![],
             ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &parse_quote!(Foo),
+            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(Foo)))),
             generic_into: false,
             strip_option: false,
             deprecation_notes: &Default::default(),
@@ -393,7 +394,7 @@ mod tests {
         let ty = parse_quote!(Option<Foo>);
         let mut setter = default_setter!();
         setter.strip_option = true;
-        setter.field_type = &ty;
+        setter.field_type = BuilderFieldType::Optional(&ty);
 
         #[rustfmt::skip]
         assert_eq!(
@@ -418,7 +419,7 @@ mod tests {
         let mut setter = default_setter!();
         setter.strip_option = true;
         setter.generic_into = true;
-        setter.field_type = &ty;
+        setter.field_type = BuilderFieldType::Optional(&ty);
 
         #[rustfmt::skip]
         assert_eq!(

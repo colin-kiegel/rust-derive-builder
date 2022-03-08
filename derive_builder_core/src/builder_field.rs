@@ -34,9 +34,7 @@ pub struct BuilderField<'a> {
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Type of the target field.
-    ///
-    /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Type,
+    pub field_type: BuilderFieldType<'a>,
     /// Whether the builder implements a setter for this field.
     ///
     /// Note: We will fallback to `PhantomData` if the setter is disabled
@@ -49,25 +47,53 @@ pub struct BuilderField<'a> {
     pub attrs: &'a [syn::Attribute],
 }
 
+/// The type of a field in the builder struct, implementing `quote::ToTokens`
+#[derive(Debug, Clone)]
+pub enum BuilderFieldType<'a> {
+    /// The corresonding builder field will be `Option<field_type>`.
+    Optional(&'a syn::Type),
+}
+
+impl<'a> BuilderFieldType<'a> { 
+    /// Some call sites want the target field type
+    pub fn target_type(&'a self) -> &'a syn::Type {
+        match self {
+            BuilderFieldType::Optional(ty) => ty,
+        }
+    }
+}
+
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.field_enabled {
             let vis = &self.field_visibility;
             let ident = self.field_ident;
-            let ty = self.field_type;
+            let ty = &self.field_type;
             let attrs = self.attrs;
 
             tokens.append_all(quote!(
-                #(#attrs)* #vis #ident: ::derive_builder::export::core::option::Option<#ty>,
+                #(#attrs)* #vis #ident: #ty,
             ));
         } else {
             let ident = self.field_ident;
-            let ty = self.field_type;
+            let ty = self.field_type.target_type();
             let attrs = self.attrs;
 
             tokens.append_all(quote!(
                 #(#attrs)* #ident: ::derive_builder::export::core::marker::PhantomData<#ty>,
             ));
+        }
+    }
+}
+
+impl<'a> ToTokens for BuilderFieldType<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            BuilderFieldType::Optional(ty) => {
+                tokens.append_all(quote!(
+                    ::derive_builder::export::core::option::Option<#ty>
+                ))
+            },
         }
     }
 }
@@ -88,7 +114,7 @@ macro_rules! default_builder_field {
     () => {{
         BuilderField {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &parse_quote!(String),
+            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
             field_enabled: true,
             field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             attrs: &[parse_quote!(#[some_attr])],

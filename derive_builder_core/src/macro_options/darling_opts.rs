@@ -10,7 +10,7 @@ use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
-    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
+    Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
     Setter,
 };
 
@@ -757,6 +757,10 @@ impl<'a> FieldWithDefaults<'a> {
             .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
     }
 
+    pub fn field_type(&'a self) -> BuilderFieldType<'a> {
+        BuilderFieldType::Optional(&self.field.ty)
+    }
+
     pub fn pattern(&self) -> BuilderPattern {
         self.field.pattern.unwrap_or(self.parent.pattern)
     }
@@ -782,7 +786,7 @@ impl<'a> FieldWithDefaults<'a> {
             attrs: &self.field.setter_attrs,
             ident: self.setter_ident(),
             field_ident: self.field_ident(),
-            field_type: &self.field.ty,
+            field_type: self.field_type(),
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
@@ -814,7 +818,7 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn as_builder_field(&'a self) -> BuilderField<'a> {
         BuilderField {
             field_ident: self.field_ident(),
-            field_type: &self.field.ty,
+            field_type: self.field_type(),
             field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
             attrs: &self.field.field_attrs,
