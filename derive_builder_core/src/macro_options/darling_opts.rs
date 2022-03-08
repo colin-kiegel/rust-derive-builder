@@ -806,6 +806,7 @@ impl<'a> FieldWithDefaults<'a> {
             builder_pattern: self.pattern(),
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
+            custom_conversion: None,
             custom_error_type_span: self
                 .parent
                 .build_fn

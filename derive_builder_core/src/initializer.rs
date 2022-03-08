@@ -4,7 +4,7 @@ use syn;
 use BuilderPattern;
 use DEFAULT_STRUCT_NAME;
 
-use crate::DefaultExpression;
+use crate::{DefaultExpression, BlockContents};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -59,6 +59,10 @@ pub struct Initializer<'a> {
     /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
     /// error type.
     pub custom_error_type_span: Option<Span>,
+    /// Method to use to to convert the builder's field to the target field
+    ///
+    /// For sub-builder fields, this will be `build` (or similar)
+    pub custom_conversion: Option<&'a BlockContents>,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -75,6 +79,8 @@ impl<'a> ToTokens for Initializer<'a> {
             tokens.append_all(quote!(
                 #default
             ));
+        } else if let Some(conv) = &self.custom_conversion {
+            conv.to_tokens(tokens);
         } else {
             let match_some = self.match_some();
             let match_none = self.match_none();
@@ -199,6 +205,7 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
+            custom_conversion: None,
             custom_error_type_span: None,
         }
     };
