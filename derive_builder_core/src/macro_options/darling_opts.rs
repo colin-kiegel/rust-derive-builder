@@ -211,7 +211,7 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 #[derive(Debug, Clone, FromField)]
 #[darling(
     attributes(builder),
-    forward_attrs(doc, cfg, allow, builder_field_attrs),
+    forward_attrs(doc, cfg, allow, builder_field_attrs, builder_setter_attrs),
     and_then = "Self::unnest_attrs"
 )]
 pub struct Field {
@@ -260,9 +260,18 @@ impl Field {
         let mut errors = vec![];
 
         for attr in self.attrs.drain(..) {
-            if attr.path.is_ident("builder_field_attrs") {
+            let unnest = {
+                if attr.path.is_ident("builder_field_attrs") {
+                    Some(&mut self.field_attrs)
+                } else if attr.path.is_ident("builder_setter_attrs") {
+                    Some(&mut self.setter_attrs)
+                } else {
+                    None
+                }
+            };
+            if let Some(unnest) = unnest {
                 match unnest_from_one_attribute(attr) {
-                    Ok(n) => self.field_attrs.extend(n),
+                    Ok(n) => unnest.extend(n),
                     Err(e) => errors.push(e),
                 }
             } else {
