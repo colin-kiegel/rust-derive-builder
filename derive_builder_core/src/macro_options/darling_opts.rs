@@ -208,10 +208,15 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 
 /// Data extracted from the fields of the input struct.
 #[derive(Debug, Clone, FromField)]
-#[darling(attributes(builder), forward_attrs(doc, cfg, allow))]
+#[darling(
+    attributes(builder),
+    forward_attrs(doc, cfg, allow),
+    and_then = "Self::unnest_attrs"
+)]
 pub struct Field {
     ident: Option<Ident>,
-    attrs: Vec<Attribute>,
+    /// Raw input attributes, for consumption by Field::unnest_attrs.  Do not use elsewhere.
+    attrs: Vec<syn::Attribute>,
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
@@ -241,6 +246,20 @@ pub struct Field {
     try_setter: Flag,
     #[darling(default)]
     field: FieldMeta,
+    #[darling(skip)]
+    field_attrs: Vec<Attribute>,
+    #[darling(skip)]
+    setter_attrs: Vec<Attribute>,
+}
+
+impl Field {
+    /// Remove the `builder_field_attrs(...)` packaging around attributes meant for fields
+    /// in the builder.
+    fn unnest_attrs(mut self) -> darling::Result<Self> {
+        self.field_attrs = self.attrs.clone();
+        self.setter_attrs = std::mem::take(&mut self.attrs);
+        Ok(self)
+    }
 }
 
 impl FlagVisibility for Field {
@@ -570,7 +589,7 @@ impl<'a> FieldWithDefaults<'a> {
             try_setter: self.try_setter(),
             visibility: self.setter_vis(),
             pattern: self.pattern(),
-            attrs: &self.field.attrs,
+            attrs: &self.field.setter_attrs,
             ident: self.setter_ident(),
             field_ident: self.field_ident(),
             field_type: &self.field.ty,
@@ -608,7 +627,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_type: &self.field.ty,
             field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
-            attrs: &self.field.attrs,
+            attrs: &self.field.field_attrs,
         }
     }
 }
