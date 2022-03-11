@@ -554,7 +554,7 @@
 //! # fn main() {}
 //! ```
 //!
-//! ### Additional attributes on fields in the builder
+//! ### Additional attributes on specifically fields in the builder, or the setter function
 //!
 //! You can set other attributes on the field in the builder:
 //!
@@ -630,6 +630,9 @@
 //! assert_eq!(&err.0, "Field not initialized: ipsum");
 //! # }
 //! ```
+//!
+//! `builder_setter_attrs` works the same way,
+//! but the contained attribute(s) are applied to the generated setter function.
 //!
 //! # **`#![no_std]`** Support (on Nightly)
 //!
