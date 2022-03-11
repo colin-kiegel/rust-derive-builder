@@ -5,6 +5,7 @@ use crate::BuildMethod;
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
 use proc_macro2::Span;
+use syn::parse::ParseStream;
 use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
@@ -210,7 +211,7 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 #[derive(Debug, Clone, FromField)]
 #[darling(
     attributes(builder),
-    forward_attrs(doc, cfg, allow),
+    forward_attrs(doc, cfg, allow, builder_field_attrs),
     and_then = "Self::unnest_attrs"
 )]
 pub struct Field {
@@ -256,10 +257,52 @@ impl Field {
     /// Remove the `builder_field_attrs(...)` packaging around attributes meant for fields
     /// in the builder.
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        self.field_attrs = self.attrs.clone();
-        self.setter_attrs = std::mem::take(&mut self.attrs);
+        let mut errors = vec![];
+
+        for attr in self.attrs.drain(..) {
+            if attr.path.is_ident("builder_field_attrs") {
+                match unnest_from_one_attribute(attr) {
+                    Ok(n) => self.field_attrs.extend(n),
+                    Err(e) => errors.push(e),
+                }
+            } else {
+                self.field_attrs.push(attr.clone());
+                self.setter_attrs.push(attr);
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(darling::Error::multiple(errors));
+        }
+
         Ok(self)
     }
+}
+
+fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attribute>> {
+    match &attr.style {
+        syn::AttrStyle::Outer => (),
+        syn::AttrStyle::Inner(bang) => {
+            return Err(darling::Error::unsupported_format(
+                "builder_field_attrs must be an outer attributes",
+            )
+            .with_span(bang))
+        }
+    };
+
+    #[derive(Debug)]
+    struct ContainedAttributes(Vec<syn::Attribute>);
+    impl syn::parse::Parse for ContainedAttributes {
+        fn parse(input: ParseStream) -> syn::Result<Self> {
+            let content;
+            let _paren_token = parenthesized!(content in input);
+            let attrs = content.call(syn::Attribute::parse_outer)?;
+            Ok(Self(attrs))
+        }
+    }
+
+    let ContainedAttributes(attrs) = syn::parse2(attr.tokens)?;
+    Ok(attrs)
 }
 
 impl FlagVisibility for Field {
