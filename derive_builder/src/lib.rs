@@ -194,7 +194,7 @@
 //!     custom_setter: u32,
 //! }
 //! impl SetterOptOutBuilder {
-//!     fn set_custom_setter(&mut self, value: u32) {
+//!     fn custom_setter(&mut self, value: u32) {
 //!         self.custom_setter = Some(value);
 //!     }
 //! }
