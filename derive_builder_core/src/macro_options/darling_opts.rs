@@ -319,6 +319,8 @@ pub struct Field {
     try_setter: Flag,
     #[darling(default)]
     field: FieldLevelFieldMeta,
+    /// Builder field is itself a nested builder.
+    sub_builder: Option<darling::util::Override<FieldSubBuilder>>,
     #[darling(skip)]
     field_attrs: Vec<Attribute>,
     #[darling(skip)]
@@ -361,6 +363,8 @@ impl Field {
             );
         };
 
+        self.resolve_sub_builder_field_type(&mut errors);
+
         errors.handle(distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
@@ -370,6 +374,36 @@ impl Field {
         ));
 
         errors.finish_with(self)
+    }
+
+    /// Check `self.sub_builder` to set `self.field.builder_type`
+    ///
+    /// Defaults to trying to add `Builder` to the last path component in the field type
+    fn resolve_sub_builder_field_type(&mut self, errors: &mut darling::error::Accumulator) {
+        if !(self.sub_builder.is_some() && self.field.builder_type.is_none()) {
+            return;
+        }
+
+        self.field.builder_type = (|| {
+            let ty = &self.ty;
+            let mut out = ty.clone();
+            let p = match &mut out {
+                syn::Type::Path(p) => p,
+                _ => return None,
+            };
+            let last_ident = &mut p.path.segments.last_mut()?.ident;
+            *last_ident = format_ident!("{}Builder", last_ident);
+            Some(out)
+        })()
+        .or_else(|| {
+            errors.push(
+                darling::Error::custom(
+                    "field type is not a non-empty path, sub-builder type must be specified",
+                )
+                .with_span(&self.ty),
+            );
+            None
+        });
     }
 }
 
@@ -479,6 +513,17 @@ impl Visibility for Field {
     fn explicit(&self) -> Option<&syn::Visibility> {
         self.visibility.as_ref()
     }
+}
+
+/// Options for the field-level `sub_builder` property
+///
+/// Presence of this option implies a different default for the builder field type.
+#[derive(Debug, Clone, Default, FromMeta)]
+#[darling(default)]
+struct FieldSubBuilder {
+    /// defaults to the same name as on the super-struct
+    #[darling(default)]
+    fn_name: Option<Ident>,
 }
 
 fn default_create_empty() -> Ident {
@@ -839,6 +884,13 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn conversion(&'a self) -> FieldConversion<'a> {
         if let Some(block) = &self.field.field.build {
             FieldConversion::Block(block)
+        } else if let Some(sub) = &self.field.sub_builder {
+            let method = sub
+                .as_ref()
+                .explicit()
+                .and_then(|sub| sub.fn_name.as_ref())
+                .unwrap_or(&self.parent.build_fn.name);
+            FieldConversion::Method(method)
         } else if self.field.field.builder_type.is_some() {
             FieldConversion::Move
         } else {
@@ -856,6 +908,14 @@ impl<'a> FieldWithDefaults<'a> {
 
     pub fn deprecation_notes(&self) -> &DeprecationNotes {
         &self.parent.deprecation_notes
+    }
+
+    pub fn sub_accessor(&self) -> bool {
+        match self.pattern() {
+            BuilderPattern::Mutable => self.field.sub_builder.is_some(),
+            BuilderPattern::Owned => false,
+            BuilderPattern::Immutable => false,
+        }
     }
 }
 
@@ -876,7 +936,7 @@ impl<'a> FieldWithDefaults<'a> {
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
             each: self.field.setter.each.as_ref(),
-            sub_accessor: false,
+            sub_accessor: self.sub_accessor(),
         }
     }
 
