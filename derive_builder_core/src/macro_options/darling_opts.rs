@@ -11,7 +11,7 @@ use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
     Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
-    BlockContents, ParsedLiteral, Setter,
+    BlockContents, ParsedLiteral, Setter, CustomConversion,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -776,9 +776,9 @@ impl<'a> FieldWithDefaults<'a> {
         }
     }
 
-    pub fn custom_conversion(&'a self) -> Option<&'a BlockContents> {
+    pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
         if let Some(custom) = &self.field.custom {
-            Some(&custom.build)
+            Some(CustomConversion::Block(&custom.build))
         } else {
             None
         }

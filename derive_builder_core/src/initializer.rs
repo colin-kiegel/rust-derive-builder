@@ -62,7 +62,13 @@ pub struct Initializer<'a> {
     /// Method to use to to convert the builder's field to the target field
     ///
     /// For sub-builder fields, this will be `build` (or similar)
-    pub custom_conversion: Option<&'a BlockContents>,
+    pub custom_conversion: Option<CustomConversion<'a>>,
+}
+
+#[derive(Debug, Clone)]
+pub enum CustomConversion<'a> {
+    /// Custom conversion is a block contents expression
+    Block(&'a BlockContents),
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -80,7 +86,11 @@ impl<'a> ToTokens for Initializer<'a> {
                 #default
             ));
         } else if let Some(conv) = &self.custom_conversion {
-            conv.to_tokens(tokens);
+            match conv {
+                CustomConversion::Block(conv) => {
+                    conv.to_tokens(tokens);
+                },
+            }
         } else {
             let match_some = self.match_some();
             let match_none = self.match_none();

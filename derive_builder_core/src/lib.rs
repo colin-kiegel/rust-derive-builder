@@ -52,7 +52,7 @@ use darling::FromDeriveInput;
 pub(crate) use default_expression::DefaultExpression;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
-pub(crate) use initializer::Initializer;
+pub(crate) use initializer::{CustomConversion, Initializer};
 pub(crate) use options::{BuilderPattern, Each};
 pub(crate) use setter::{wrap_expression_in_some, Setter};
 pub(crate) use parsed_literal::ParsedLiteral;
