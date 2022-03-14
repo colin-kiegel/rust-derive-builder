@@ -51,26 +51,7 @@ use Setter;
 ///     ValidationError(::derive_builder::export::core::string::String),
 /// }
 ///
-/// impl ::derive_builder::export::core::convert::From<&'static str> for FooBuilderError {
-///     fn from(s: &'static str) -> Self {
-///         Self::UninitializedField(s)
-///     }
-/// }
-///
-/// impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for FooBuilderError {
-///     fn from(s: ::derive_builder::export::core::string::String) -> Self {
-///         Self::ValidationError(s)
-///     }
-/// }
-///
-/// impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-///     fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
-///         match self {
-///             Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-///             Self::ValidationError(ref error) => write!(f, "{}", error),
-///         }
-///     }
-/// }
+/// impl ::derive_builder::export::core::convert::From<... various ...> for FooBuilderError {}
 ///
 /// #[cfg(not(no_std))]
 /// impl std::error::Error for FooBuilderError {}
