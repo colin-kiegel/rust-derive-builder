@@ -54,7 +54,6 @@ pub enum BuilderFieldType<'a> {
     /// The corresonding builder field will be `Option<field_type>`.
     Optional(&'a syn::Type),
     /// The corresponding builder field will be just this type
-    #[allow(dead_code)]
     Precisely(&'a syn::Type),
 }
 

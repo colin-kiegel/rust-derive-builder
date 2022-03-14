@@ -11,7 +11,7 @@ use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
     Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
-    Setter,
+    BlockContents, ParsedLiteral, Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -286,12 +286,23 @@ pub struct Field {
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     default: Option<DefaultExpression>,
     try_setter: Flag,
+    /// Custom builder field type and build method
+    #[darling(default)]
+    custom: Option<CustomField>,
     #[darling(default)]
     field: FieldMeta,
     #[darling(skip)]
     field_attrs: Vec<Attribute>,
     #[darling(skip)]
     setter_attrs: Vec<Attribute>,
+}
+
+/// Options for the field-level `custom` property
+#[derive(Debug, Clone, FromMeta)]
+pub struct CustomField {
+    #[darling(rename = "type")]
+    ty: ParsedLiteral<syn::Type>,
+    build: BlockContents,
 }
 
 impl Field {
@@ -758,7 +769,19 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
-        BuilderFieldType::Optional(&self.field.ty)
+        if let Some(custom) = self.field.custom.as_ref() {
+            BuilderFieldType::Precisely(&custom.ty.0)
+        } else {
+            BuilderFieldType::Optional(&self.field.ty)
+        }
+    }
+
+    pub fn custom_conversion(&'a self) -> Option<&'a BlockContents> {
+        if let Some(custom) = &self.field.custom {
+            Some(&custom.build)
+        } else {
+            None
+        }
     }
 
     pub fn pattern(&self) -> BuilderPattern {
@@ -806,7 +829,7 @@ impl<'a> FieldWithDefaults<'a> {
             builder_pattern: self.pattern(),
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
-            custom_conversion: None,
+            custom_conversion: self.custom_conversion(),
             custom_error_type_span: self
                 .parent
                 .build_fn
