@@ -44,6 +44,21 @@ impl From<syn::Expr> for BlockContents {
     }
 }
 
+impl darling::FromMeta for BlockContents {
+    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
+        if let syn::Lit::Str(s) = value {
+            let contents = BlockContents::try_from(s)?;
+            if contents.is_empty() {
+                Err(darling::Error::unknown_value("").with_span(s))
+            } else {
+                Ok(contents)
+            }
+        } else {
+            Err(darling::Error::unexpected_lit_type(value))
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::convert::TryInto;
