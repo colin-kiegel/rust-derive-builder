@@ -27,7 +27,7 @@ struct SetterOptOut {
 #[builder(setter(skip))]
 struct SetterOptIn {
     setter_skipped_by_shorthand_default: u32,
-    #[builder(setter(skip = "false"))]
+    #[builder(setter(skip = false))] // Should be still OK without quotes
     setter_present_by_explicit_opt_in: u32,
     #[builder(setter)]
     setter_present_by_shorthand_opt_in: u32,
