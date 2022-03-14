@@ -28,6 +28,7 @@
 //! ```rust
 //! # #[macro_use]
 //! # extern crate derive_builder;
+//! # use derive_builder::UninitializedFieldError;
 //! #
 //! # struct Lorem {
 //! #     ipsum: u32,
@@ -38,6 +39,8 @@
 //! struct LoremBuilder {
 //!     ipsum: Option<u32>,
 //! }
+//! # // bodge for testing:
+//! # type LoremBuilderError = UninitializedFieldError;
 //!
 //! #[allow(dead_code)]
 //! impl LoremBuilder {
@@ -47,11 +50,11 @@
 //!         new
 //!     }
 //!
-//!     fn build(&self) -> Result<Lorem, String> {
+//!     fn build(&self) -> Result<Lorem, LoremBuilderError> {
 //!         Ok(Lorem {
 //!             ipsum: Clone::clone(self.ipsum
 //!                 .as_ref()
-//!                 .ok_or("ipsum must be initialized")?),
+//!                 .ok_or(UninitializedFieldError::new("ipsum"))?),
 //!         })
 //!     }
 //! }
