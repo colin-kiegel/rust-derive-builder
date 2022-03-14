@@ -54,7 +54,7 @@
 //!         Ok(Lorem {
 //!             ipsum: Clone::clone(self.ipsum
 //!                 .as_ref()
-//!                 .ok_or(UninitializedFieldError::new("ipsum"))?),
+//!                 .ok_or(LoremBuilderError::from(UninitializedFieldError::new("ipsum")))?),
 //!         })
 //!     }
 //! }
