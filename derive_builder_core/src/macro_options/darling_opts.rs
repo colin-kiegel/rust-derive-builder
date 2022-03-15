@@ -4,8 +4,8 @@ use crate::BuildMethod;
 
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
-use proc_macro2::Span;
-use syn::parse::ParseStream;
+use proc_macro2::{Span, TokenStream};
+use syn::parse::{ParseStream, Parser};
 use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
@@ -303,9 +303,18 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attrib
     struct ContainedAttributes(Vec<syn::Attribute>);
     impl syn::parse::Parse for ContainedAttributes {
         fn parse(input: ParseStream) -> syn::Result<Self> {
+            // Strip parentheses, and save the span of the parenthesis token
             let content;
-            let _paren_token = parenthesized!(content in input);
-            let attrs = content.call(syn::Attribute::parse_outer)?;
+            let paren_token = parenthesized!(content in input);
+            let wrap_span = paren_token.span;
+
+            // Wrap up in #[ ] instead.
+            let pound = Token![#](wrap_span); // We can't write a literal # inside quote
+            let content: TokenStream = content.parse()?;
+            let content = quote_spanned!(wrap_span=> #pound [ #content ]);
+
+            let parser = syn::Attribute::parse_outer;
+            let attrs = parser.parse2(content)?;
             Ok(Self(attrs))
         }
     }

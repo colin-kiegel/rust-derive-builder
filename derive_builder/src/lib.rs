@@ -565,9 +565,7 @@
 //! #[derive(Builder)]
 //! #[builder(derive(serde::Serialize))]
 //! struct Lorem {
-//!     #[builder_field_attrs(
-//!         #[serde(rename="dolor")]
-//!     )]
+//!     #[builder_field_attrs(serde(rename="dolor"))]
 //!     ipsum: String,
 //! }
 //!

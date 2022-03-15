@@ -1,7 +1,7 @@
 error: unused return value of `LoremBuilder::broken` that must be used
-  --> tests/compile-fail/builder_setter_attrs.rs:18:5
+  --> tests/compile-fail/builder_setter_attrs.rs:16:5
    |
-18 |     LoremBuilder::default().broken(42);
+16 |     LoremBuilder::default().broken(42);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
 note: lint level defined here
