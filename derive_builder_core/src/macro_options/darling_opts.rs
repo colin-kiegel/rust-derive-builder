@@ -254,8 +254,7 @@ pub struct Field {
 }
 
 impl Field {
-    /// Remove the `builder_field_attr(...)` packaging around attributes meant for fields
-    /// in the builder.
+    /// Remove the `builder_field_attr(...)` packaging around an attribute
     fn unnest_attrs(mut self) -> darling::Result<Self> {
         let mut errors = vec![];
 
@@ -292,8 +291,10 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
     match &attr.style {
         syn::AttrStyle::Outer => (),
         syn::AttrStyle::Inner(bang) => {
+            // We think this error can never actually happen,
+            // since struct fields don't allow inner attributes.
             return Err(darling::Error::unsupported_format(
-                "builder_field_attr must be an outer attributes",
+                "builder_field_attr/builder_setter_attr must be an outer attribute"
             )
             .with_span(bang))
         }
