@@ -11,10 +11,7 @@ extern crate derive_builder_core;
 use proc_macro::TokenStream;
 
 #[doc(hidden)]
-#[proc_macro_derive(
-    Builder,
-    attributes(builder, builder_field_attr, builder_setter_attr)
-)]
+#[proc_macro_derive(Builder, attributes(builder, builder_field_attr, builder_setter_attr))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     derive_builder_core::builder_for_struct(ast).into()

@@ -294,9 +294,9 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
             // We think this error can never actually happen,
             // since struct fields don't allow inner attributes.
             return Err(darling::Error::unsupported_format(
-                "builder_field_attr/builder_setter_attr must be an outer attribute"
+                "builder_field_attr/builder_setter_attr must be an outer attribute",
             )
-            .with_span(bang))
+            .with_span(bang));
         }
     };
 
@@ -320,7 +320,7 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
             // We think this error can never actually happen, since `#[...]` ought to make just one Attribute
             let attr = match (attrs.next(), attrs.next()) {
                 (Some(attr), None) => attr,
-                _ => return Err(input.error("expected exactly one attribute"))
+                _ => return Err(input.error("expected exactly one attribute")),
             };
             Ok(Self(attr))
         }
