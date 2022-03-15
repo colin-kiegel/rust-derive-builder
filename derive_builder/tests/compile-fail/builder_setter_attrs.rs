@@ -7,7 +7,6 @@ extern crate derive_builder;
 pub struct Lorem {
     ok: String,
 
-    // This foolish repr() attribute generates an unused attribute warning
     #[builder_setter_attrs(must_use)]
     broken: usize,
 }

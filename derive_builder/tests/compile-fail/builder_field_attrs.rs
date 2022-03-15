@@ -5,7 +5,6 @@ extern crate derive_builder;
 pub struct Lorem {
     ok: String,
 
-    // This foolish repr() attribute generates an unused attribute warning
     #[builder_field_attrs(no_such_attribute)]
     broken: String,
 }
