@@ -271,7 +271,7 @@ impl Field {
             };
             if let Some(unnest) = unnest {
                 match unnest_from_one_attribute(attr) {
-                    Ok(n) => unnest.extend(n),
+                    Ok(n) => unnest.push(n),
                     Err(e) => errors.push(e),
                 }
             } else {
@@ -288,7 +288,7 @@ impl Field {
     }
 }
 
-fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attribute>> {
+fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute> {
     match &attr.style {
         syn::AttrStyle::Outer => (),
         syn::AttrStyle::Inner(bang) => {
@@ -300,8 +300,8 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attrib
     };
 
     #[derive(Debug)]
-    struct ContainedAttributes(Vec<syn::Attribute>);
-    impl syn::parse::Parse for ContainedAttributes {
+    struct ContainedAttribute(syn::Attribute);
+    impl syn::parse::Parse for ContainedAttribute {
         fn parse(input: ParseStream) -> syn::Result<Self> {
             // Strip parentheses, and save the span of the parenthesis token
             let content;
@@ -314,13 +314,19 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attrib
             let content = quote_spanned!(wrap_span=> #pound [ #content ]);
 
             let parser = syn::Attribute::parse_outer;
-            let attrs = parser.parse2(content)?;
-            Ok(Self(attrs))
+            let mut attrs = parser.parse2(content)?.into_iter();
+            // TryFrom for Array not available in Rust 1.40
+            // We think this error can never actually happen, since `#[...]` ought to make just one Attribute
+            let attr = match (attrs.next(), attrs.next()) {
+                (Some(attr), None) => attr,
+                _ => return Err(input.error("expected exactly one attribute"))
+            };
+            Ok(Self(attr))
         }
     }
 
-    let ContainedAttributes(attrs) = syn::parse2(attr.tokens)?;
-    Ok(attrs)
+    let ContainedAttribute(attr) = syn::parse2(attr.tokens)?;
+    Ok(attr)
 }
 
 impl FlagVisibility for Field {
