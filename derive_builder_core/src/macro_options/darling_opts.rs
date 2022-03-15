@@ -211,7 +211,7 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 #[derive(Debug, Clone, FromField)]
 #[darling(
     attributes(builder),
-    forward_attrs(doc, cfg, allow, builder_field_attrs, builder_setter_attrs),
+    forward_attrs(doc, cfg, allow, builder_field_attr, builder_setter_attr),
     and_then = "Self::unnest_attrs"
 )]
 pub struct Field {
@@ -254,16 +254,16 @@ pub struct Field {
 }
 
 impl Field {
-    /// Remove the `builder_field_attrs(...)` packaging around attributes meant for fields
+    /// Remove the `builder_field_attr(...)` packaging around attributes meant for fields
     /// in the builder.
     fn unnest_attrs(mut self) -> darling::Result<Self> {
         let mut errors = vec![];
 
         for attr in self.attrs.drain(..) {
             let unnest = {
-                if attr.path.is_ident("builder_field_attrs") {
+                if attr.path.is_ident("builder_field_attr") {
                     Some(&mut self.field_attrs)
-                } else if attr.path.is_ident("builder_setter_attrs") {
+                } else if attr.path.is_ident("builder_setter_attr") {
                     Some(&mut self.setter_attrs)
                 } else {
                     None
@@ -293,7 +293,7 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Vec<Attrib
         syn::AttrStyle::Outer => (),
         syn::AttrStyle::Inner(bang) => {
             return Err(darling::Error::unsupported_format(
-                "builder_field_attrs must be an outer attributes",
+                "builder_field_attr must be an outer attributes",
             )
             .with_span(bang))
         }

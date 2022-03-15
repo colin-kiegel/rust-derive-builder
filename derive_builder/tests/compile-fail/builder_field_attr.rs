@@ -5,7 +5,7 @@ extern crate derive_builder;
 pub struct Lorem {
     ok: String,
 
-    #[builder_field_attrs(no_such_attribute)]
+    #[builder_field_attr(no_such_attribute)]
     broken: String,
 }
 

@@ -7,7 +7,7 @@ extern crate derive_builder;
 pub struct Lorem {
     ok: String,
 
-    #[builder_setter_attrs(must_use)]
+    #[builder_setter_attr(must_use)]
     broken: usize,
 }
 

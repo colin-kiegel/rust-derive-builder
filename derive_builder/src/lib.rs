@@ -565,7 +565,7 @@
 //! #[derive(Builder)]
 //! #[builder(derive(serde::Serialize))]
 //! struct Lorem {
-//!     #[builder_field_attrs(serde(rename="dolor"))]
+//!     #[builder_field_attr(serde(rename="dolor"))]
 //!     ipsum: String,
 //! }
 //!
@@ -629,7 +629,7 @@
 //! # }
 //! ```
 //!
-//! `builder_setter_attrs` works the same way,
+//! `builder_setter_attr` works the same way,
 //! but the contained attribute(s) are applied to the generated setter function.
 //!
 //! # **`#![no_std]`** Support (on Nightly)
