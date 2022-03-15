@@ -635,6 +635,32 @@
 //! # }
 //! ```
 //!
+//! # Completely custom fields in the builder
+//!
+//! Instead of having an `Option`, you can have whatever type you like:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #[derive(Debug, PartialEq, Default, Builder, Clone)]
+//! #[builder(derive(Debug, PartialEq))]
+//! struct Lorem {
+//!     #[builder(custom(type = "u32", build = "self.ipsum"), setter(into))]
+//!     ipsum: u32,
+//!
+//!     #[builder(custom(type = "String", build = "()"))]
+//!     dolor: (),
+//! }
+//!
+//! # fn main() {
+//! let mut builder = LoremBuilder::default();
+//! builder.ipsum(42u16).dolor("sit".into());
+//! assert_eq!(builder, LoremBuilder { ipsum: 42, dolor: "sit".into() });
+//! let lorem = builder.build().unwrap();
+//! assert_eq!(lorem, Lorem { ipsum: 42, dolor: () });
+//! # }
+//! ```
+//!
 //! # **`#![no_std]`** Support (on Nightly)
 //!
 //! You can activate support for `#![no_std]` by adding `#[builder(no_std)]` to your struct
