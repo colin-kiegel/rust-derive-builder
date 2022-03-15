@@ -4,7 +4,8 @@ use crate::BuildMethod;
 
 use darling::util::{Flag, PathList};
 use darling::{self, FromMeta};
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
+use syn::parse::{ParseStream, Parser};
 use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
 
@@ -208,10 +209,15 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 
 /// Data extracted from the fields of the input struct.
 #[derive(Debug, Clone, FromField)]
-#[darling(attributes(builder), forward_attrs(doc, cfg, allow))]
+#[darling(
+    attributes(builder),
+    forward_attrs(doc, cfg, allow, builder_field_attr, builder_setter_attr),
+    and_then = "Self::unnest_attrs"
+)]
 pub struct Field {
     ident: Option<Ident>,
-    attrs: Vec<Attribute>,
+    /// Raw input attributes, for consumption by Field::unnest_attrs.  Do not use elsewhere.
+    attrs: Vec<syn::Attribute>,
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
@@ -241,6 +247,87 @@ pub struct Field {
     try_setter: Flag,
     #[darling(default)]
     field: FieldMeta,
+    #[darling(skip)]
+    field_attrs: Vec<Attribute>,
+    #[darling(skip)]
+    setter_attrs: Vec<Attribute>,
+}
+
+impl Field {
+    /// Remove the `builder_field_attr(...)` packaging around an attribute
+    fn unnest_attrs(mut self) -> darling::Result<Self> {
+        let mut errors = vec![];
+
+        for attr in self.attrs.drain(..) {
+            let unnest = {
+                if attr.path.is_ident("builder_field_attr") {
+                    Some(&mut self.field_attrs)
+                } else if attr.path.is_ident("builder_setter_attr") {
+                    Some(&mut self.setter_attrs)
+                } else {
+                    None
+                }
+            };
+            if let Some(unnest) = unnest {
+                match unnest_from_one_attribute(attr) {
+                    Ok(n) => unnest.push(n),
+                    Err(e) => errors.push(e),
+                }
+            } else {
+                self.field_attrs.push(attr.clone());
+                self.setter_attrs.push(attr);
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(darling::Error::multiple(errors));
+        }
+
+        Ok(self)
+    }
+}
+
+fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute> {
+    match &attr.style {
+        syn::AttrStyle::Outer => (),
+        syn::AttrStyle::Inner(bang) => {
+            // We think this error can never actually happen,
+            // since struct fields don't allow inner attributes.
+            return Err(darling::Error::unsupported_format(
+                "builder_field_attr/builder_setter_attr must be an outer attribute",
+            )
+            .with_span(bang));
+        }
+    };
+
+    #[derive(Debug)]
+    struct ContainedAttribute(syn::Attribute);
+    impl syn::parse::Parse for ContainedAttribute {
+        fn parse(input: ParseStream) -> syn::Result<Self> {
+            // Strip parentheses, and save the span of the parenthesis token
+            let content;
+            let paren_token = parenthesized!(content in input);
+            let wrap_span = paren_token.span;
+
+            // Wrap up in #[ ] instead.
+            let pound = Token![#](wrap_span); // We can't write a literal # inside quote
+            let content: TokenStream = content.parse()?;
+            let content = quote_spanned!(wrap_span=> #pound [ #content ]);
+
+            let parser = syn::Attribute::parse_outer;
+            let mut attrs = parser.parse2(content)?.into_iter();
+            // TryFrom for Array not available in Rust 1.40
+            // We think this error can never actually happen, since `#[...]` ought to make just one Attribute
+            let attr = match (attrs.next(), attrs.next()) {
+                (Some(attr), None) => attr,
+                _ => return Err(input.error("expected exactly one attribute")),
+            };
+            Ok(Self(attr))
+        }
+    }
+
+    let ContainedAttribute(attr) = syn::parse2(attr.tokens)?;
+    Ok(attr)
 }
 
 impl FlagVisibility for Field {
@@ -570,7 +657,7 @@ impl<'a> FieldWithDefaults<'a> {
             try_setter: self.try_setter(),
             visibility: self.setter_vis(),
             pattern: self.pattern(),
-            attrs: &self.field.attrs,
+            attrs: &self.field.setter_attrs,
             ident: self.setter_ident(),
             field_ident: self.field_ident(),
             field_type: &self.field.ty,
@@ -608,7 +695,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_type: &self.field.ty,
             field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
-            attrs: &self.field.attrs,
+            attrs: &self.field.field_attrs,
         }
     }
 }
