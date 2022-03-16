@@ -302,7 +302,8 @@ pub struct Field {
 pub struct CustomField {
     #[darling(rename = "type")]
     ty: ParsedLiteral<syn::Type>,
-    build: BlockContents,
+    #[darling(default)]
+    build: Option<BlockContents>,
 }
 
 impl Field {
@@ -778,7 +779,10 @@ impl<'a> FieldWithDefaults<'a> {
 
     pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
         if let Some(custom) = &self.field.custom {
-            Some(CustomConversion::Block(&custom.build))
+            Some(match &custom.build {
+                Some(block) => CustomConversion::Block(block),
+                None => CustomConversion::Move,
+            })
         } else {
             None
         }

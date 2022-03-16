@@ -69,6 +69,8 @@ pub struct Initializer<'a> {
 pub enum CustomConversion<'a> {
     /// Custom conversion is a block contents expression
     Block(&'a BlockContents),
+    /// Custom conversion is just to move the field from the builder
+    Move,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -89,6 +91,9 @@ impl<'a> ToTokens for Initializer<'a> {
             match conv {
                 CustomConversion::Block(conv) => {
                     conv.to_tokens(tokens);
+                },
+                CustomConversion::Move => {
+                    tokens.append_all(quote!( self.#builder_field ))
                 },
             }
         } else {

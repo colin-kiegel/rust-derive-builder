@@ -645,7 +645,7 @@
 //! #[derive(Debug, PartialEq, Default, Builder, Clone)]
 //! #[builder(derive(Debug, PartialEq))]
 //! struct Lorem {
-//!     #[builder(custom(type = "u32", build = "self.ipsum"), setter(into))]
+//!     #[builder(custom(type = "u32"), setter(into))]
 //!     ipsum: u32,
 //!
 //!     #[builder(custom(type = "String", build = "()"))]
