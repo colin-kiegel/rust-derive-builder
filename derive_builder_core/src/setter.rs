@@ -128,9 +128,10 @@ impl<'a> ToTokens for Setter<'a> {
                 into_value = quote!(value);
             }
             if stripped_option {
-                into_value =
-                    quote!(::derive_builder::export::core::option::Option::Some(#into_value));
+                into_value = wrap_expression_in_some(into_value);
             }
+            into_value = self.field_type.wrap_some(into_value);
+
             tokens.append_all(quote!(
                 #(#attrs)*
                 #[allow(unused_mut)]
@@ -139,7 +140,7 @@ impl<'a> ToTokens for Setter<'a> {
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = ::derive_builder::export::core::option::Option::Some(#into_value);
+                    new.#field_ident = #into_value;
                     new
                 }
             ));
@@ -148,6 +149,7 @@ impl<'a> ToTokens for Setter<'a> {
                 let try_ty_params =
                     quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
+                let converted = self.field_type.wrap_some(quote!{converted});
 
                 tokens.append_all(quote!(
                     #(#attrs)*
@@ -156,7 +158,7 @@ impl<'a> ToTokens for Setter<'a> {
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
-                        new.#field_ident = ::derive_builder::export::core::option::Option::Some(converted);
+                        new.#field_ident = #converted;
                         Ok(new)
                     }
                 ));
@@ -211,6 +213,11 @@ impl<'a> ToTokens for Setter<'a> {
             }
         }
     }
+}
+
+/// Returns expression wrapping `bare_value` in `Some`
+pub fn wrap_expression_in_some(bare_value: TokenStream) -> TokenStream {
+    quote!( ::derive_builder::export::core::option::Option::Some(#bare_value) )
 }
 
 // adapted from https://stackoverflow.com/a/55277337/469066

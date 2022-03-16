@@ -54,7 +54,7 @@ pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
 pub(crate) use initializer::Initializer;
 pub(crate) use options::{BuilderPattern, Each};
-pub(crate) use setter::Setter;
+pub(crate) use setter::{wrap_expression_in_some, Setter};
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
 

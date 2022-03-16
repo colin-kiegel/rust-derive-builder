@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn;
+use crate::wrap_expression_in_some;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///
@@ -59,6 +60,13 @@ impl<'a> BuilderFieldType<'a> {
     pub fn target_type(&'a self) -> &'a syn::Type {
         match self {
             BuilderFieldType::Optional(ty) => ty,
+        }
+    }
+
+    /// Returns expression wrapping `bare_value` in Some, if appropriate
+    pub fn wrap_some(&'a self, bare_value: TokenStream) -> TokenStream {
+        match self {
+            BuilderFieldType::Optional(_) => wrap_expression_in_some(bare_value),
         }
     }
 }
