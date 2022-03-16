@@ -92,6 +92,8 @@ pub struct Builder<'a> {
     pub pattern: BuilderPattern,
     /// Traits to automatically derive on the builder type.
     pub derives: &'a [Path],
+    /// Attributes to include on the builder `struct` declaration and its inherent `impl`.
+    pub attrs: &'a [syn::Attribute],
     /// When true, generate `impl Default for #ident` which calls the `create_empty` inherent method.
     ///
     /// Note that the name of `create_empty` can be overridden; see the `create_empty` field for more.
@@ -168,6 +170,8 @@ impl<'a> ToTokens for Builder<'a> {
                 }
             };
 
+            let attrs = self.attrs;
+
             let builder_doc_comment = &self.doc_comment;
             let deprecation_notes = &self.deprecation_notes.as_item();
 
@@ -175,6 +179,7 @@ impl<'a> ToTokens for Builder<'a> {
             tokens.append_all(quote!(#[allow(clippy::all)]));
 
             tokens.append_all(quote!(
+                #(#attrs)*
                 #derive_attr
                 #builder_doc_comment
                 #builder_vis struct #builder_ident #struct_generics #where_clause {
@@ -186,6 +191,7 @@ impl<'a> ToTokens for Builder<'a> {
             tokens.append_all(quote!(#[allow(clippy::all)]));
 
             tokens.append_all(quote!(
+                #(#attrs)*
                 #[allow(dead_code)]
                 impl #impl_generics #builder_ident #ty_generics #where_clause {
                     #(#functions)*
@@ -324,6 +330,7 @@ macro_rules! default_builder {
             ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),
             derives: &vec![],
+            attrs: &vec![],
             impl_default: true,
             create_empty: syn::Ident::new("create_empty", ::proc_macro2::Span::call_site()),
             generics: None,
