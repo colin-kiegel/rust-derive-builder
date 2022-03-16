@@ -65,7 +65,12 @@ impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
 
-        if self.field_enabled {
+        if ! self.field_enabled {
+            let default = self.default();
+            tokens.append_all(quote!(
+                #struct_field: #default,
+            ));
+        } else {
             let match_some = self.match_some();
             let match_none = self.match_none();
             let builder_field = &*struct_field;
@@ -74,11 +79,6 @@ impl<'a> ToTokens for Initializer<'a> {
                     #match_some,
                     #match_none,
                 },
-            ));
-        } else {
-            let default = self.default();
-            tokens.append_all(quote!(
-                #struct_field: #default,
             ));
         }
     }
