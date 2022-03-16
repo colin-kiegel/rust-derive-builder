@@ -650,16 +650,30 @@
 //!
 //!     #[builder(custom(type = "String", build = "()"))]
 //!     dolor: (),
+//!
+//!     #[builder(custom(type = "&'static str", build = "self.amet.parse()?"))]
+//!     amet: u32,
 //! }
+//!
+//! impl From<std::num::ParseIntError> for LoremBuilderError { // ...
+//! #     fn from(e: std::num::ParseIntError) -> LoremBuilderError {
+//! #         e.to_string().into()
+//! #     }
+//! # }
 //!
 //! # fn main() {
 //! let mut builder = LoremBuilder::default();
-//! builder.ipsum(42u16).dolor("sit".into());
-//! assert_eq!(builder, LoremBuilder { ipsum: 42, dolor: "sit".into() });
+//! builder.ipsum(42u16).dolor("sit".into()).amet("12");
+//! assert_eq!(builder, LoremBuilder { ipsum: 42, dolor: "sit".into(), amet: "12" });
 //! let lorem = builder.build().unwrap();
-//! assert_eq!(lorem, Lorem { ipsum: 42, dolor: () });
+//! assert_eq!(lorem, Lorem { ipsum: 42, dolor: (), amet: 12 });
 //! # }
 //! ```
+//!
+//! The builder field type (`type =`) must implement `Default`.
+//!
+//! The argument to `build` must be a literal string containing Rust code for the contents of a block.
+//! It may refer to the builder struct as `self`, use `?`, etc.
 //!
 //! # **`#![no_std]`** Support (on Nightly)
 //!
