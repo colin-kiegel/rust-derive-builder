@@ -68,6 +68,8 @@ pub struct Setter<'a> {
     pub deprecation_notes: &'a DeprecationNotes,
     /// Emit extend method.
     pub each: Option<&'a Each>,
+    /// Instead of providing a setter, provide an accessor
+    pub sub_accessor: bool,
 }
 
 impl<'a> ToTokens for Setter<'a> {
@@ -138,18 +140,31 @@ impl<'a> ToTokens for Setter<'a> {
                 into_value = wrap_expression_in_some(into_value);
             }
 
-            tokens.append_all(quote!(
-                #(#attrs)*
-                #[allow(unused_mut)]
-                #vis fn #ident #ty_params (#self_param, value: #param_ty)
-                    -> #return_ty
-                {
-                    #deprecation_notes
-                    let mut new = #self_into_return_ty;
-                    new.#field_ident = #into_value;
-                    new
-                }
-            ));
+            if self.sub_accessor {
+                // The accessor must take &mut self regardless of the pattern
+                // (although the option resolution code won't set sub_accessor other than with Mutable).
+                tokens.append_all(quote!(
+                    #(#attrs)*
+                    #vis fn #ident #ty_params (&mut self)
+                        -> &mut #param_ty
+                    {
+                        &mut self.#field_ident
+                    }
+                ));
+            } else {
+                tokens.append_all(quote!(
+                    #(#attrs)*
+                    #[allow(unused_mut)]
+                    #vis fn #ident #ty_params (#self_param, value: #param_ty)
+                        -> #return_ty
+                    {
+                        #deprecation_notes
+                        let mut new = #self_into_return_ty;
+                        new.#field_ident = #into_value;
+                        new
+                    }
+                ));
+            }
 
             if self.try_setter {
                 let try_ty_params =
@@ -296,6 +311,7 @@ macro_rules! default_setter {
             strip_option: false,
             deprecation_notes: &Default::default(),
             each: None,
+            sub_accessor: false,
         }
     };
 }

@@ -876,6 +876,7 @@ impl<'a> FieldWithDefaults<'a> {
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
             each: self.field.setter.each.as_ref(),
+            sub_accessor: false,
         }
     }
 
