@@ -291,11 +291,13 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
     match &attr.style {
         syn::AttrStyle::Outer => (),
         syn::AttrStyle::Inner(bang) => {
-            // We think this error can never actually happen,
-            // since struct fields don't allow inner attributes.
-            return Err(darling::Error::unsupported_format(
-                "builder_field_attr/builder_setter_attr must be an outer attribute",
-            )
+            return Err(darling::Error::unsupported_format(&format!(
+                "{} must be an outer attribute",
+                attr.path
+                    .get_ident()
+                    .map(Ident::to_string)
+                    .unwrap_or_else(|| "Attribute".to_string())
+            ))
             .with_span(bang));
         }
     };
@@ -345,11 +347,27 @@ fn default_create_empty() -> Ident {
 }
 
 #[derive(Debug, Clone, FromDeriveInput)]
-#[darling(attributes(builder), forward_attrs(cfg, allow), supports(struct_named))]
+#[darling(
+    attributes(builder),
+    forward_attrs(cfg, allow, builder_struct_attr, builder_impl_attr),
+    supports(struct_named),
+    and_then = "Self::unnest_attrs"
+)]
 pub struct Options {
     ident: Ident,
 
+    /// DO NOT USE.
+    ///
+    /// Initial receiver for forwarded attributes from the struct; these are split
+    /// into `Options::struct_attrs` and `Options::impl_attrs` before `FromDeriveInput`
+    /// returns.
     attrs: Vec<Attribute>,
+
+    #[darling(skip)]
+    struct_attrs: Vec<Attribute>,
+
+    #[darling(skip)]
+    impl_attrs: Vec<Attribute>,
 
     vis: Visibility,
 
@@ -416,6 +434,40 @@ impl FlagVisibility for Options {
 
     fn private(&self) -> &Flag {
         &self.private
+    }
+}
+
+impl Options {
+    /// Remove the `builder_struct_attr(...)` packaging around an attribute
+    fn unnest_attrs(mut self) -> darling::Result<Self> {
+        let mut errors = vec![];
+
+        for attr in self.attrs.drain(..) {
+            let unnest = {
+                if attr.path.is_ident("builder_struct_attr") {
+                    Some(&mut self.struct_attrs)
+                } else if attr.path.is_ident("builder_impl_attr") {
+                    Some(&mut self.impl_attrs)
+                } else {
+                    None
+                }
+            };
+            if let Some(unnest) = unnest {
+                match unnest_from_one_attribute(attr) {
+                    Ok(n) => unnest.push(n),
+                    Err(e) => errors.push(e),
+                }
+            } else {
+                self.struct_attrs.push(attr.clone());
+                self.impl_attrs.push(attr);
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(darling::Error::multiple(errors));
+        }
+
+        Ok(self)
     }
 }
 
@@ -487,7 +539,8 @@ impl Options {
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
-            attrs: &self.attrs,
+            struct_attrs: &self.struct_attrs,
+            impl_attrs: &self.impl_attrs,
             impl_default: {
                 let custom_constructor: bool = self.custom_constructor.into();
                 !custom_constructor
