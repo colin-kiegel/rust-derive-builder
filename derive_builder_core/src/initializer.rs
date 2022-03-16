@@ -82,6 +82,11 @@ impl<'a> ToTokens for Initializer<'a> {
                     FieldConversion::Block(conv) => {
                         conv.to_tokens(tokens);
                     }
+                    FieldConversion::Method(meth) => {
+                        tokens.append_all(quote!(
+                            self.#builder_field.#meth()?
+                        ));
+                    }
                     FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),
                     FieldConversion::OptionOrDefault => {
                         let match_some = self.match_some();
@@ -148,6 +153,9 @@ pub enum FieldConversion<'a> {
     OptionOrDefault,
     /// Custom conversion is a block contents expression
     Block(&'a BlockContents),
+    /// Custom conversion is a method to be called on the corresponding builder field
+    #[allow(dead_code)]
+    Method(&'a syn::Ident),
     /// Custom conversion is just to move the field from the builder
     Move,
 }
