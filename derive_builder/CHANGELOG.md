@@ -4,6 +4,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 - Forward `allow` and `cfg` attributes from the deriving struct to the builder and its impl block #222
+- Support passing attributes to the builder struct using `#[builder_struct_attr(...)]`
+- Support passing attributes to the builder struct's inherent `impl` block using `#[builder_impl_attr(...)]`
 
 ## [0.11.0] - 2022-03-15
 - Support shorthand and long-form collection setters; `#[builder(setter(each = "..."))]` and `#[builder(setter(each(name = "...")))]` #234

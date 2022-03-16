@@ -128,6 +128,7 @@ It's as simple as three steps:
 - **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
 - **Custom build method error types**: You can use `#[builder(build_fn(error = "path::to::Error"))]` to have your builder return an error type of your choosing. By default, the macro will emit an error type alongside the builder.
 - **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
+- **Pass-through attributes**: Use `#[builder_struct_attr(...)]`, `#[builder_impl_attr(...)]`, `#[builder_field_attr(...)]`, and `#[builder_setter_attr(...)]` to declare attributes that will be added to the relevant part of the generated builder.
 - **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate alloc` to your crate.
 
 For more information and examples please take a look at our [documentation][doc].
