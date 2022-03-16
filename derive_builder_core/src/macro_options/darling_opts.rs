@@ -345,18 +345,12 @@ fn default_create_empty() -> Ident {
 }
 
 #[derive(Debug, Clone, FromDeriveInput)]
-#[darling(
-    attributes(builder),
-    forward_attrs(doc, cfg, allow),
-    supports(struct_named)
-)]
+#[darling(attributes(builder), forward_attrs(cfg, allow), supports(struct_named))]
 pub struct Options {
     ident: Ident,
 
-    // These are currently unused, but that means the generated builder cannot have
-    // inherited the cfg or allow attributes from the base struct.
-    // see https://github.com/colin-kiegel/rust-derive-builder/issues/222
-    // attrs: Vec<Attribute>,
+    attrs: Vec<Attribute>,
+
     vis: Visibility,
 
     generics: Generics,
@@ -493,6 +487,7 @@ impl Options {
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
+            attrs: &self.attrs,
             impl_default: {
                 let custom_constructor: bool = self.custom_constructor.into();
                 !custom_constructor
