@@ -64,23 +64,31 @@ pub struct Initializer<'a> {
 impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
+        let builder_field = &*struct_field;
+
+        tokens.append_all(quote!(
+            #struct_field:
+        ));
 
         if ! self.field_enabled {
             let default = self.default();
             tokens.append_all(quote!(
-                #struct_field: #default,
+                #default
             ));
         } else {
             let match_some = self.match_some();
             let match_none = self.match_none();
-            let builder_field = &*struct_field;
             tokens.append_all(quote!(
-                #struct_field: match self.#builder_field {
+                match self.#builder_field {
                     #match_some,
                     #match_none,
-                },
+                }
             ));
         }
+
+        tokens.append_all(quote!(
+            ,
+        ));
     }
 }
 
