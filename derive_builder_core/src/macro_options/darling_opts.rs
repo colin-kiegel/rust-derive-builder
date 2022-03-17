@@ -254,37 +254,52 @@ pub struct Field {
 }
 
 impl Field {
-    /// Remove the `builder_field_attr(...)` packaging around an attribute
+    /// Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        let mut errors = vec![];
-
-        for attr in self.attrs.drain(..) {
-            let unnest = {
-                if attr.path.is_ident("builder_field_attr") {
-                    Some(&mut self.field_attrs)
-                } else if attr.path.is_ident("builder_setter_attr") {
-                    Some(&mut self.setter_attrs)
-                } else {
-                    None
-                }
-            };
-            if let Some(unnest) = unnest {
-                match unnest_from_one_attribute(attr) {
-                    Ok(n) => unnest.push(n),
-                    Err(e) => errors.push(e),
-                }
-            } else {
-                self.field_attrs.push(attr.clone());
-                self.setter_attrs.push(attr);
-            }
-        }
-
-        if !errors.is_empty() {
-            return Err(darling::Error::multiple(errors));
-        }
-
+        distribute_and_unnest_attrs(
+            &mut self.attrs,
+            &mut [
+                ("builder_field_attr", &mut self.field_attrs),
+                ("builder_setter_attr", &mut self.setter_attrs),
+            ],
+        )?;
         Ok(self)
     }
+}
+
+/// Handles incoming attributes from darling and assigns them to decoratee attribute lists
+///
+/// `outputs` lists each pass-through attribute name, and the corresponding decoratee attribute list.
+/// Matching atttributes are unnested and applied to the specific decoratee;
+/// Other attributes are not unnested, and simply copied for each decoratee.
+fn distribute_and_unnest_attrs(
+    input: &mut Vec<Attribute>,
+    outputs: &mut [(&'static str, &mut Vec<Attribute>)],
+) -> darling::Result<()> {
+    let mut errors = vec![];
+
+    for attr in input.drain(..) {
+        let unnest = outputs
+            .iter_mut()
+            .find(|(ptattr, _)| attr.path.is_ident(ptattr));
+
+        if let Some((_, unnest)) = unnest {
+            match unnest_from_one_attribute(attr) {
+                Ok(n) => unnest.push(n),
+                Err(e) => errors.push(e),
+            }
+        } else {
+            for (_, output) in outputs.iter_mut() {
+                output.push(attr.clone());
+            }
+        }
+    }
+
+    if !errors.is_empty() {
+        return Err(darling::Error::multiple(errors));
+    }
+
+    Ok(())
 }
 
 fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute> {
@@ -438,34 +453,15 @@ impl FlagVisibility for Options {
 }
 
 impl Options {
-    /// Remove the `builder_struct_attr(...)` packaging around an attribute
+    /// Populate `self.struct_attrs` and `self.impl_attrs` by draining `self.attrs`
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        let mut errors = vec![];
-
-        for attr in self.attrs.drain(..) {
-            let unnest = {
-                if attr.path.is_ident("builder_struct_attr") {
-                    Some(&mut self.struct_attrs)
-                } else if attr.path.is_ident("builder_impl_attr") {
-                    Some(&mut self.impl_attrs)
-                } else {
-                    None
-                }
-            };
-            if let Some(unnest) = unnest {
-                match unnest_from_one_attribute(attr) {
-                    Ok(n) => unnest.push(n),
-                    Err(e) => errors.push(e),
-                }
-            } else {
-                self.struct_attrs.push(attr.clone());
-                self.impl_attrs.push(attr);
-            }
-        }
-
-        if !errors.is_empty() {
-            return Err(darling::Error::multiple(errors));
-        }
+        distribute_and_unnest_attrs(
+            &mut self.attrs,
+            &mut [
+                ("builder_struct_attr", &mut self.struct_attrs),
+                ("builder_impl_attr", &mut self.impl_attrs),
+            ],
+        )?;
 
         Ok(self)
     }
