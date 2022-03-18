@@ -293,13 +293,13 @@ fn distribute_and_unnest_attrs(
     }
 
     for attr in input.drain(..) {
-        let unnest = outputs
+        let destination = outputs
             .iter_mut()
             .find(|(ptattr, _)| attr.path.is_ident(ptattr));
 
-        if let Some((_, unnest)) = unnest {
+        if let Some((_, destination)) = destination {
             match unnest_from_one_attribute(attr) {
-                Ok(n) => unnest.push(n),
+                Ok(n) => destination.push(n),
                 Err(e) => errors.push(e),
             }
         } else {
