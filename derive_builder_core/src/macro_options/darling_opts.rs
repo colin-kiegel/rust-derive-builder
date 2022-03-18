@@ -288,6 +288,10 @@ fn distribute_and_unnest_attrs(
 ) -> darling::Result<()> {
     let mut errors = vec![];
 
+    for (name, list) in &*outputs {
+        assert!(list.is_empty(), "Output Vec for '{}' was not empty", name);
+    }
+
     for attr in input.drain(..) {
         let unnest = outputs
             .iter_mut()
