@@ -267,10 +267,20 @@ impl Field {
     }
 }
 
-/// Handles incoming attributes from darling and assigns them to decoratee attribute lists
+/// Divide a list of attributes into multiple partially-overlapping output lists.
 ///
-/// `outputs` lists each pass-through attribute name, and the corresponding decoratee attribute list.
-/// Matching atttributes are unnested and applied to the specific decoratee;
+/// Some attributes from the macro input will be added to the output in multiple places;
+/// for example, a `cfg` attribute must be replicated to both the struct and its impl block or
+/// the resulting code will not compile.
+///
+/// Other attributes are scoped to a specific output by their path, e.g. `builder_field_attr`.
+/// These attributes will only appear in one output list, but need that outer path removed.
+///
+/// For performance reasons, we want to do this in one pass through the list instead of
+/// first distributing and then iterating through each of the output lists.
+///
+/// Each item in `outputs` contains the attribute name unique to that output, and the `Vec` where all attributes for that output should be inserted.
+/// Attributes whose path matches any value in `outputs` will be added only to the first matching one, and will be "unnested".
 /// Other attributes are not unnested, and simply copied for each decoratee.
 fn distribute_and_unnest_attrs(
     input: &mut Vec<Attribute>,
