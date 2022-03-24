@@ -252,7 +252,7 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 #[darling(
     attributes(builder),
     forward_attrs(doc, cfg, allow, builder_field_attr, builder_setter_attr),
-    and_then = "Self::unnest_attrs"
+    and_then = "Self::resolve"
 )]
 pub struct Field {
     ident: Option<Ident>,
@@ -314,8 +314,28 @@ impl Field {
         errors.finish()
     }
 
-    /// Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
-    fn unnest_attrs(mut self) -> darling::Result<Self> {
+    /// Resolve and check (post-parsing) options which come from multiple darling options
+    ///
+    ///  * Check that we don't have a custom field builder *and* a default value
+    ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
+    fn resolve(mut self) -> darling::Result<Self> {
+        // Perhaps at some future point there would be a way to specify the default value of the field in the builder.
+        // That ought possibly to be distinct from the default value of the field in the target.
+        // For now, reject this situation.
+        if let Field {
+            default: Some(default_spec),
+            custom: Some(CustomField { build: Some(build_spec), .. }),
+            ..
+        } = &self {
+            let m = || darling::Error::unsupported_format(
+                "Specified both #[builder(default=)] and #[builder(custom(build=))] on same field, but this is not meaningful",
+            );
+            return Err(darling::Error::multiple(vec![
+                m().with_span(default_spec),
+                m().with_span(build_spec),
+            ]));
+        };
+
         distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [

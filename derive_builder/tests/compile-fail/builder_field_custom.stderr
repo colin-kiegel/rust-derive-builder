@@ -1,0 +1,11 @@
+error: Unexpected meta-item format `Specified both #[builder(default=)] and #[builder(custom(build=))] on same field, but this is not meaningful`
+ --> tests/compile-fail/builder_field_custom.rs:6:25
+  |
+6 |     #[builder(default = "88", custom(type = "usize", build = "self.ipsum.unwrap_or_else(42) + 1"))]
+  |                         ^^^^
+
+error: Unexpected meta-item format `Specified both #[builder(default=)] and #[builder(custom(build=))] on same field, but this is not meaningful`
+ --> tests/compile-fail/builder_field_custom.rs:6:62
+  |
+6 |     #[builder(default = "88", custom(type = "usize", build = "self.ipsum.unwrap_or_else(42) + 1"))]
+  |                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
