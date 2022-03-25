@@ -149,7 +149,7 @@ impl<'a> ToTokens for Setter<'a> {
                 let try_ty_params =
                     quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
-                let converted = self.field_type.wrap_some(quote!{converted});
+                let converted = self.field_type.wrap_some(quote! {converted});
 
                 tokens.append_all(quote!(
                     #(#attrs)*

@@ -22,10 +22,7 @@ impl From<ParseIntError> for LoremBuilderError {
 
 #[test]
 fn custom_fields() {
-    let x = LoremBuilder::default()
-        .dolor("7".into())
-        .build()
-        .unwrap();
+    let x = LoremBuilder::default().dolor("7".into()).build().unwrap();
 
     assert_eq!(
         x,
@@ -49,9 +46,6 @@ fn custom_fields() {
         }
     );
 
-    let x = LoremBuilder::default()
-        .build()
-        .unwrap_err()
-        .to_string();
+    let x = LoremBuilder::default().build().unwrap_err().to_string();
     assert_eq!(x, "cannot parse integer from empty string");
 }

@@ -10,8 +10,8 @@ use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
-    Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
-    BlockContents, ParsedLiteral, Setter, CustomConversion,
+    BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, CustomConversion,
+    DefaultExpression, DeprecationNotes, Each, Initializer, ParsedLiteral, Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -324,12 +324,19 @@ impl Field {
         // For now, reject this situation.
         if let Field {
             default: Some(default_spec),
-            custom: Some(CustomField { build: Some(build_spec), .. }),
+            custom:
+                Some(CustomField {
+                    build: Some(build_spec),
+                    ..
+                }),
             ..
-        } = &self {
-            let m = || darling::Error::unsupported_format(
+        } = &self
+        {
+            let m = || {
+                darling::Error::unsupported_format(
                 "Specified both #[builder(default=)] and #[builder(custom(build=))] on same field, but this is not meaningful",
-            );
+            )
+            };
             return Err(darling::Error::multiple(vec![
                 m().with_span(default_spec),
                 m().with_span(build_spec),

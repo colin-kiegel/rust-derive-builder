@@ -4,7 +4,7 @@ use syn;
 use BuilderPattern;
 use DEFAULT_STRUCT_NAME;
 
-use crate::{DefaultExpression, BlockContents};
+use crate::{BlockContents, DefaultExpression};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -82,7 +82,7 @@ impl<'a> ToTokens for Initializer<'a> {
             #struct_field:
         ));
 
-        if ! self.field_enabled {
+        if !self.field_enabled {
             let default = self.default();
             tokens.append_all(quote!(
                 #default
@@ -91,10 +91,8 @@ impl<'a> ToTokens for Initializer<'a> {
             match conv {
                 CustomConversion::Block(conv) => {
                     conv.to_tokens(tokens);
-                },
-                CustomConversion::Move => {
-                    tokens.append_all(quote!( self.#builder_field ))
-                },
+                }
+                CustomConversion::Move => tokens.append_all(quote!( self.#builder_field )),
             }
         } else {
             let match_some = self.match_some();

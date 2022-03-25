@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
+use crate::wrap_expression_in_some;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn;
-use crate::wrap_expression_in_some;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///
@@ -57,7 +57,7 @@ pub enum BuilderFieldType<'a> {
     Precisely(&'a syn::Type),
 }
 
-impl<'a> BuilderFieldType<'a> { 
+impl<'a> BuilderFieldType<'a> {
     /// Some call sites want the target field type
     pub fn target_type(&'a self) -> &'a syn::Type {
         match self {
@@ -101,11 +101,9 @@ impl<'a> ToTokens for BuilderField<'a> {
 impl<'a> ToTokens for BuilderFieldType<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            BuilderFieldType::Optional(ty) => {
-                tokens.append_all(quote!(
-                    ::derive_builder::export::core::option::Option<#ty>
-                ))
-            },
+            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::option::Option<#ty>
+            )),
             BuilderFieldType::Precisely(ty) => ty.to_tokens(tokens),
         }
     }
