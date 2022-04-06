@@ -12,7 +12,8 @@ jobs:
           - nightly
           - beta
           - stable
-          - 1.40.0
+          - 1.40.0 # MSRV
+          - 1.59.0 # Used for trybuild; supports aarch64
         features:
           - ""
           - --no-default-features
