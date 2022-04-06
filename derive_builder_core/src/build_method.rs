@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
@@ -43,7 +45,7 @@ pub struct BuildMethod<'a> {
     /// Name of this build fn.
     pub ident: &'a syn::Ident,
     /// Visibility of the build method, e.g. `syn::Visibility::Public`.
-    pub visibility: syn::Visibility,
+    pub visibility: Cow<'a, syn::Visibility>,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub pattern: BuilderPattern,
     /// Type of the target field.
@@ -138,7 +140,7 @@ macro_rules! default_build_method {
         BuildMethod {
             enabled: true,
             ident: &syn::Ident::new("build", ::proc_macro2::Span::call_site()),
-            visibility: syn::parse_quote!(pub),
+            visibility: ::std::borrow::Cow::Owned(syn::parse_quote!(pub)),
             pattern: BuilderPattern::Mutable,
             target_ty: &syn::Ident::new("Foo", ::proc_macro2::Span::call_site()),
             target_ty_generics: None,

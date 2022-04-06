@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use proc_macro2::TokenStream;
 use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
@@ -110,7 +112,7 @@ pub struct Builder<'a> {
     /// definition.
     pub generics: Option<&'a syn::Generics>,
     /// Visibility of the builder struct, e.g. `syn::Visibility::Public`.
-    pub visibility: syn::Visibility,
+    pub visibility: Cow<'a, syn::Visibility>,
     /// Fields of the builder struct, e.g. `foo: u32,`
     ///
     /// Expects each entry to be terminated by a comma.
@@ -341,7 +343,7 @@ macro_rules! default_builder {
             impl_default: true,
             create_empty: syn::Ident::new("create_empty", ::proc_macro2::Span::call_site()),
             generics: None,
-            visibility: parse_quote!(pub),
+            visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             fields: vec![quote!(foo: u32,)],
             field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn;
@@ -42,7 +44,7 @@ pub struct BuilderField<'a> {
     ///       least for now.
     pub field_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
-    pub field_visibility: syn::Visibility,
+    pub field_visibility: Cow<'a, syn::Visibility>,
     /// Attributes which will be attached to this builder field.
     pub attrs: &'a [syn::Attribute],
 }
@@ -88,7 +90,7 @@ macro_rules! default_builder_field {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &parse_quote!(String),
             field_enabled: true,
-            field_visibility: parse_quote!(pub),
+            field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             attrs: &[parse_quote!(#[some_attr])],
         }
     }};
@@ -129,7 +131,7 @@ mod tests {
 
     #[test]
     fn private_field() {
-        let private = syn::Visibility::Inherited;
+        let private = Cow::Owned(syn::Visibility::Inherited);
         let mut field = default_builder_field!();
         field.field_visibility = private;
 

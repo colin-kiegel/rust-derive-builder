@@ -1,13 +1,13 @@
-use std::vec::IntoIter;
+use std::{borrow::Cow, vec::IntoIter};
 
 use crate::BuildMethod;
 
 use darling::util::{Flag, PathList};
-use darling::{self, FromMeta};
+use darling::{self, Error, FromMeta};
 use proc_macro2::{Span, TokenStream};
 use syn::parse::{ParseStream, Parser};
 use syn::Meta;
-use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path, Visibility};
+use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
     Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
@@ -16,23 +16,41 @@ use crate::{
 
 /// `derive_builder` uses separate sibling keywords to represent
 /// mutually-exclusive visibility states. This trait requires implementers to
-/// expose those flags and provides a method to compute any explicit visibility
+/// expose those property values and provides a method to compute any explicit visibility
 /// bounds.
-trait FlagVisibility {
+trait Visibility {
     fn public(&self) -> &Flag;
     fn private(&self) -> &Flag;
+    fn explicit(&self) -> Option<&syn::Visibility>;
 
     /// Get the explicitly-expressed visibility preference from the attribute.
     /// This returns `None` if the input didn't include either keyword.
-    ///
-    /// # Panics
-    /// This method panics if the input specifies both `public` and `private`.
-    fn as_expressed_vis(&self) -> Option<Visibility> {
-        match (self.public().is_present(), self.private().is_present()) {
-            (true, true) => panic!("A field cannot be both public and private"),
-            (true, false) => Some(syn::parse_quote!(pub)),
-            (false, true) => Some(Visibility::Inherited),
-            (false, false) => None,
+    fn as_expressed_vis(&self) -> darling::Result<Option<Cow<syn::Visibility>>> {
+        let declares_public = self.public().is_present();
+        let declares_private = self.private().is_present();
+
+        // Start with `vis = "..."` because it will have a span for the error message.
+        if let Some(vis) = self.explicit() {
+            if declares_public || declares_private {
+                Err(
+                    Error::custom(r#"`vis="..."` cannot be used with `public` or `private`"#)
+                        .with_span(vis),
+                )
+            } else {
+                Ok(Some(Cow::Borrowed(vis)))
+            }
+        } else if declares_public {
+            if declares_private {
+                Err(Error::custom(
+                    r#"`public` and `private` cannot be used together"#,
+                ))
+            } else {
+                Ok(Some(Cow::Owned(syn::parse_quote!(pub))))
+            }
+        } else if declares_private {
+            Ok(Some(Cow::Owned(syn::Visibility::Inherited)))
+        } else {
+            Ok(None)
         }
     }
 }
@@ -77,13 +95,17 @@ impl Default for BuildFn {
     }
 }
 
-impl FlagVisibility for BuildFn {
+impl Visibility for BuildFn {
     fn public(&self) -> &Flag {
         &self.public
     }
 
     fn private(&self) -> &Flag {
         &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        None // TODO
     }
 }
 
@@ -94,13 +116,17 @@ pub struct FieldMeta {
     private: Flag,
 }
 
-impl FlagVisibility for FieldMeta {
+impl Visibility for FieldMeta {
     fn public(&self) -> &Flag {
         &self.public
     }
 
     fn private(&self) -> &Flag {
         &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        None // TODO
     }
 }
 
@@ -353,13 +379,17 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
     Ok(attr)
 }
 
-impl FlagVisibility for Field {
+impl Visibility for Field {
     fn public(&self) -> &Flag {
         &self.public
     }
 
     fn private(&self) -> &Flag {
         &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        None // TODO
     }
 }
 
@@ -390,7 +420,7 @@ pub struct Options {
     #[darling(skip)]
     impl_attrs: Vec<Attribute>,
 
-    vis: Visibility,
+    vis: syn::Visibility,
 
     generics: Generics,
 
@@ -441,13 +471,17 @@ pub struct Options {
     deprecation_notes: DeprecationNotes,
 }
 
-impl FlagVisibility for Options {
+impl Visibility for Options {
     fn public(&self) -> &Flag {
         &self.public
     }
 
     fn private(&self) -> &Flag {
         &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        None // TODO
     }
 }
 
@@ -489,15 +523,18 @@ impl Options {
     /// The visibility of the builder struct.
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
-    pub fn builder_vis(&self) -> Visibility {
-        self.as_expressed_vis().unwrap_or_else(|| self.vis.clone())
+    pub fn builder_vis(&self) -> Cow<syn::Visibility> {
+        self.as_expressed_vis()
+            .unwrap()
+            .unwrap_or(Cow::Borrowed(&self.vis))
     }
 
     /// Get the visibility of the emitted `build` method.
     /// This defaults to the visibility of the parent builder, but can be overridden.
-    pub fn build_method_vis(&self) -> Visibility {
+    pub fn build_method_vis(&self) -> Cow<syn::Visibility> {
         self.build_fn
             .as_expressed_vis()
+            .unwrap()
             .unwrap_or_else(|| self.builder_vis())
     }
 
@@ -648,11 +685,12 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Get the visibility of the emitted setter, if there will be one.
-    pub fn setter_vis(&self) -> Visibility {
+    pub fn setter_vis(&self) -> Cow<syn::Visibility> {
         self.field
             .as_expressed_vis()
-            .or_else(|| self.parent.as_expressed_vis())
-            .unwrap_or_else(|| syn::parse_quote!(pub))
+            .unwrap()
+            .or_else(|| self.parent.as_expressed_vis().unwrap())
+            .unwrap_or_else(|| Cow::Owned(syn::parse_quote!(pub)))
     }
 
     /// Get the ident of the input field. This is also used as the ident of the
@@ -664,12 +702,13 @@ impl<'a> FieldWithDefaults<'a> {
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Visibility {
+    pub fn field_vis(&self) -> Cow<syn::Visibility> {
         self.field
             .field
             .as_expressed_vis()
-            .or_else(|| self.parent.field.as_expressed_vis())
-            .unwrap_or(Visibility::Inherited)
+            .unwrap()
+            .or_else(|| self.parent.field.as_expressed_vis().unwrap())
+            .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
     }
 
     pub fn pattern(&self) -> BuilderPattern {
