@@ -66,6 +66,7 @@ pub struct BuildFn {
     validate: Option<Path>,
     public: Flag,
     private: Flag,
+    vis: Option<syn::Visibility>,
     /// The path to an existing error type that the build method should return.
     ///
     /// Setting this will prevent `derive_builder` from generating an error type for the build
@@ -90,6 +91,7 @@ impl Default for BuildFn {
             validate: None,
             public: Default::default(),
             private: Default::default(),
+            vis: None,
             error: None,
         }
     }
@@ -105,7 +107,7 @@ impl Visibility for BuildFn {
     }
 
     fn explicit(&self) -> Option<&syn::Visibility> {
-        None // TODO
+        self.vis.as_ref()
     }
 }
 
@@ -114,6 +116,7 @@ impl Visibility for BuildFn {
 pub struct FieldMeta {
     public: Flag,
     private: Flag,
+    vis: Option<syn::Visibility>,
 }
 
 impl Visibility for FieldMeta {
@@ -126,7 +129,7 @@ impl Visibility for FieldMeta {
     }
 
     fn explicit(&self) -> Option<&syn::Visibility> {
-        None // TODO
+        self.vis.as_ref()
     }
 }
 
@@ -247,6 +250,12 @@ pub struct Field {
     pattern: Option<BuilderPattern>,
     public: Flag,
     private: Flag,
+    /// Declared visibility for the field in the builder, e.g. `#[builder(vis = "...")]`.
+    ///
+    /// This cannot be named `vis` or `darling` would put the deriving field's visibility into the
+    /// field instead.
+    #[darling(rename = "vis")]
+    visibility: Option<syn::Visibility>,
     // See the documentation for `FieldSetterMeta` to understand how `darling`
     // is interpreting this field.
     #[darling(default, with = "field_setter")]
@@ -274,14 +283,20 @@ pub struct Field {
 impl Field {
     /// Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        distribute_and_unnest_attrs(
+        let mut errors = Error::accumulator();
+
+        errors.handle(distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
                 ("builder_field_attr", &mut self.field_attrs),
                 ("builder_setter_attr", &mut self.setter_attrs),
             ],
-        )?;
-        Ok(self)
+        ));
+
+        // Check for conflicting visibility declarations
+        errors.handle(self.as_expressed_vis());
+
+        errors.finish_with(self)
     }
 }
 
@@ -389,7 +404,7 @@ impl Visibility for Field {
     }
 
     fn explicit(&self) -> Option<&syn::Visibility> {
-        None // TODO
+        self.visibility.as_ref()
     }
 }
 
@@ -420,6 +435,8 @@ pub struct Options {
     #[darling(skip)]
     impl_attrs: Vec<Attribute>,
 
+    /// The visibility of the deriving struct. Do not confuse this with `#[builder(vis = "...")]`,
+    /// which is received by `Options::visibility`.
     vis: syn::Visibility,
 
     generics: Generics,
@@ -455,6 +472,12 @@ pub struct Options {
 
     private: Flag,
 
+    /// Desired visibility of the builder struct.
+    ///
+    /// Do not confuse this with `Options::vis`, which is the visibility of the deriving struct.
+    #[darling(rename = "vis")]
+    visibility: Option<syn::Visibility>,
+
     /// The parsed body of the derived struct.
     data: darling::ast::Data<darling::util::Ignored, Field>,
 
@@ -481,22 +504,27 @@ impl Visibility for Options {
     }
 
     fn explicit(&self) -> Option<&syn::Visibility> {
-        None // TODO
+        self.visibility.as_ref()
     }
 }
 
 impl Options {
     /// Populate `self.struct_attrs` and `self.impl_attrs` by draining `self.attrs`
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        distribute_and_unnest_attrs(
+        let mut errors = Error::accumulator();
+
+        errors.handle(distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
                 ("builder_struct_attr", &mut self.struct_attrs),
                 ("builder_impl_attr", &mut self.impl_attrs),
             ],
-        )?;
+        ));
 
-        Ok(self)
+        // Check for conflicting visibility declarations
+        errors.handle(self.as_expressed_vis());
+
+        errors.finish_with(self)
     }
 }
 
