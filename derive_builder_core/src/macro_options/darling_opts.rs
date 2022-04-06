@@ -25,33 +25,47 @@ trait Visibility {
 
     /// Get the explicitly-expressed visibility preference from the attribute.
     /// This returns `None` if the input didn't include either keyword.
-    fn as_expressed_vis(&self) -> darling::Result<Option<Cow<syn::Visibility>>> {
+    ///
+    /// # Panics
+    /// This method panics if the input specifies both `public` and `private`.
+    fn as_expressed_vis(&self) -> Option<Cow<syn::Visibility>> {
         let declares_public = self.public().is_present();
         let declares_private = self.private().is_present();
+        let declares_explicit = self.explicit().is_some();
 
-        // Start with `vis = "..."` because it will have a span for the error message.
-        if let Some(vis) = self.explicit() {
-            if declares_public || declares_private {
-                Err(
-                    Error::custom(r#"`vis="..."` cannot be used with `public` or `private`"#)
-                        .with_span(vis),
-                )
-            } else {
-                Ok(Some(Cow::Borrowed(vis)))
-            }
+        if declares_private {
+            assert!(!declares_public && !declares_explicit);
+            Some(Cow::Owned(syn::Visibility::Inherited))
+        } else if let Some(vis) = self.explicit() {
+            assert!(!declares_public);
+            Some(Cow::Borrowed(vis))
         } else if declares_public {
-            if declares_private {
-                Err(Error::custom(
-                    r#"`public` and `private` cannot be used together"#,
-                ))
-            } else {
-                Ok(Some(Cow::Owned(syn::parse_quote!(pub))))
-            }
-        } else if declares_private {
-            Ok(Some(Cow::Owned(syn::Visibility::Inherited)))
+            Some(Cow::Owned(syn::parse_quote!(pub)))
         } else {
-            Ok(None)
+            None
         }
+    }
+}
+
+fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
+    let declares_public = v.public().is_present();
+    let declares_private = v.private().is_present();
+    if let Some(vis) = v.explicit() {
+        if declares_public || declares_private {
+            Err(
+                Error::custom(r#"`vis="..."` cannot be used with `public` or `private`"#)
+                    .with_span(vis),
+            )
+        } else {
+            Ok(())
+        }
+    } else if declares_public && declares_private {
+        Err(
+            Error::custom(r#"`public` and `private` cannot be used together"#)
+                .with_span(v.public()),
+        )
+    } else {
+        Ok(())
     }
 }
 
@@ -281,22 +295,24 @@ pub struct Field {
 }
 
 impl Field {
+    fn no_visibility_conflicts(&self) -> darling::Result<()> {
+        let mut errors = Error::accumulator();
+        errors.handle(no_visibility_conflict(&self.field));
+        errors.handle(no_visibility_conflict(self));
+        errors.finish()
+    }
+
     /// Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn unnest_attrs(mut self) -> darling::Result<Self> {
-        let mut errors = Error::accumulator();
-
-        errors.handle(distribute_and_unnest_attrs(
+        distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
                 ("builder_field_attr", &mut self.field_attrs),
                 ("builder_setter_attr", &mut self.setter_attrs),
             ],
-        ));
+        )?;
 
-        // Check for conflicting visibility declarations
-        errors.handle(self.as_expressed_vis());
-
-        errors.finish_with(self)
+        Ok(self)
     }
 }
 
@@ -521,8 +537,15 @@ impl Options {
             ],
         ));
 
-        // Check for conflicting visibility declarations
-        errors.handle(self.as_expressed_vis());
+        // Check for conflicting visibility declarations. These cannot be pushed
+        // down into `FieldMeta` et al because of the call to `no_visibility_conflict(&self)`,
+        // as all sub-fields must be valid for this `Options` function to run.
+        errors.handle(no_visibility_conflict(&self.field));
+        errors.handle(no_visibility_conflict(&self.build_fn));
+        self.data
+            .as_ref()
+            .map_struct_fields(|f| errors.handle(f.no_visibility_conflicts()));
+        errors.handle(no_visibility_conflict(&self));
 
         errors.finish_with(self)
     }
@@ -552,9 +575,7 @@ impl Options {
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
     pub fn builder_vis(&self) -> Cow<syn::Visibility> {
-        self.as_expressed_vis()
-            .unwrap()
-            .unwrap_or(Cow::Borrowed(&self.vis))
+        self.as_expressed_vis().unwrap_or(Cow::Borrowed(&self.vis))
     }
 
     /// Get the visibility of the emitted `build` method.
@@ -562,7 +583,6 @@ impl Options {
     pub fn build_method_vis(&self) -> Cow<syn::Visibility> {
         self.build_fn
             .as_expressed_vis()
-            .unwrap()
             .unwrap_or_else(|| self.builder_vis())
     }
 
@@ -716,8 +736,7 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn setter_vis(&self) -> Cow<syn::Visibility> {
         self.field
             .as_expressed_vis()
-            .unwrap()
-            .or_else(|| self.parent.as_expressed_vis().unwrap())
+            .or_else(|| self.parent.as_expressed_vis())
             .unwrap_or_else(|| Cow::Owned(syn::parse_quote!(pub)))
     }
 
@@ -734,8 +753,7 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .field
             .as_expressed_vis()
-            .unwrap()
-            .or_else(|| self.parent.field.as_expressed_vis().unwrap())
+            .or_else(|| self.parent.field.as_expressed_vis())
             .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
     }
 
