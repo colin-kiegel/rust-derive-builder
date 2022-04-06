@@ -1,4 +1,6 @@
 #![allow(clippy::useless_let_if_seq)]
+use std::borrow::Cow;
+
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
@@ -43,7 +45,7 @@ pub struct Setter<'a> {
     /// Enables code generation for the `try_` variant of this setter fn.
     pub try_setter: bool,
     /// Visibility of the setter, e.g. `syn::Visibility::Public`.
-    pub visibility: syn::Visibility,
+    pub visibility: Cow<'a, syn::Visibility>,
     /// How the setter method takes and returns `self` (e.g. mutably).
     pub pattern: BuilderPattern,
     /// Attributes which will be attached to this setter fn.
@@ -266,7 +268,7 @@ macro_rules! default_setter {
         Setter {
             setter_enabled: true,
             try_setter: false,
-            visibility: parse_quote!(pub),
+            visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             pattern: BuilderPattern::Mutable,
             attrs: &vec![],
             ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
@@ -344,7 +346,7 @@ mod tests {
 
     #[test]
     fn private() {
-        let vis = syn::Visibility::Inherited;
+        let vis = Cow::Owned(syn::Visibility::Inherited);
 
         let mut setter = default_setter!();
         setter.visibility = vis;
