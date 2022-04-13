@@ -334,7 +334,7 @@ impl Field {
         {
             let m = || {
                 darling::Error::unsupported_format(
-                "Specified both #[builder(default=)] and #[builder(custom(build=))] on same field, but this is not meaningful",
+                "#[builder(default)] and #[builder(custom(build="..."))] cannot be used together",
             )
             };
             return Err(darling::Error::multiple(vec![
