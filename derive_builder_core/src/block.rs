@@ -9,7 +9,6 @@ use syn::{self, spanned::Spanned, Block, LitStr};
 ///
 /// - **full access** to variables environment.
 /// - **full access** to control-flow of the environment via `return`, `?` etc.
-/// ```
 #[derive(Debug, Clone)]
 pub struct BlockContents(Block);
 
