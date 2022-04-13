@@ -89,7 +89,6 @@ impl FlagVisibility for BuildFn {
 
 /// Contents of the `field` meta in `builder` attributes.
 #[derive(Debug, Clone, Default, FromMeta)]
-#[darling(default)]
 pub struct FieldMeta {
     public: Flag,
     private: Flag,
@@ -106,7 +105,6 @@ impl FlagVisibility for FieldMeta {
 }
 
 #[derive(Debug, Clone, Default, FromMeta)]
-#[darling(default)]
 pub struct StructLevelSetter {
     prefix: Option<Ident>,
     into: Option<bool>,
@@ -147,7 +145,6 @@ fn parse_each(meta: &Meta) -> darling::Result<Option<Each>> {
 /// Unlike the `setter` meta item at the struct level, this allows specific
 /// name overrides.
 #[derive(Debug, Clone, Default, FromMeta)]
-#[darling(default)]
 pub struct FieldLevelSetter {
     prefix: Option<Ident>,
     name: Option<Ident>,
@@ -221,11 +218,8 @@ pub struct Field {
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
-    #[darling(default)]
     pattern: Option<BuilderPattern>,
-    #[darling(default)]
     public: Flag,
-    #[darling(default)]
     private: Flag,
     // See the documentation for `FieldSetterMeta` to understand how `darling`
     // is interpreting this field.
@@ -241,9 +235,7 @@ pub struct Field {
     /// 3. Inherited from the field's value in the struct's `default` value.
     ///
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
-    #[darling(default)]
     default: Option<DefaultExpression>,
-    #[darling(default)]
     try_setter: Flag,
     #[darling(default)]
     field: FieldMeta,
@@ -403,7 +395,6 @@ pub struct Options {
     generics: Generics,
 
     /// The name of the generated builder. Defaults to `#{ident}Builder`.
-    #[darling(default)]
     name: Option<Ident>,
 
     #[darling(default)]
@@ -416,7 +407,6 @@ pub struct Options {
     #[darling(default)]
     derive: PathList,
 
-    #[darling(default)]
     custom_constructor: Flag,
 
     /// The ident of the inherent method which takes no arguments and returns
@@ -429,24 +419,19 @@ pub struct Options {
     setter: StructLevelSetter,
 
     /// Struct-level value to use in place of any unfilled fields
-    #[darling(default)]
     default: Option<DefaultExpression>,
 
-    #[darling(default)]
     public: Flag,
 
-    #[darling(default)]
     private: Flag,
 
     /// The parsed body of the derived struct.
     data: darling::ast::Data<darling::util::Ignored, Field>,
 
-    #[darling(default)]
     no_std: Flag,
 
     /// When present, emit additional fallible setters alongside each regular
     /// setter.
-    #[darling(default)]
     try_setter: Flag,
 
     #[darling(default)]
