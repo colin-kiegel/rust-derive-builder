@@ -805,7 +805,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
-        Some(match &self.field.custom?.build {
+        Some(match &self.field.custom.as_ref()?.build {
             Some(block) => CustomConversion::Block(block),
             None => CustomConversion::Move,
         })
