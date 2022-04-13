@@ -107,7 +107,7 @@ impl<'a> ToTokens for Setter<'a> {
             let param_ty: TokenStream;
             let mut into_value: TokenStream;
 
-            let field_type = self.field_type.target_type();
+            let (field_type, builder_field_is_option) = self.field_type.setter_type_info();
 
             let (ty, stripped_option) = {
                 if self.strip_option {
@@ -129,10 +129,14 @@ impl<'a> ToTokens for Setter<'a> {
                 param_ty = quote!(#ty);
                 into_value = quote!(value);
             }
+            // If both `stripped_option` and `builder_field_is_option`, the target field is `Option<field_type>`,
+            // the builder field is `Option<Option<field_type>>`, and the setter takes `file_type`, so we must wrap it twice.
             if stripped_option {
                 into_value = wrap_expression_in_some(into_value);
             }
-            into_value = self.field_type.wrap_some(into_value);
+            if builder_field_is_option {
+                into_value = wrap_expression_in_some(into_value);
+            }
 
             tokens.append_all(quote!(
                 #(#attrs)*
@@ -151,7 +155,11 @@ impl<'a> ToTokens for Setter<'a> {
                 let try_ty_params =
                     quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
-                let converted = self.field_type.wrap_some(quote! {converted});
+
+                let mut converted = quote! {converted};
+                if builder_field_is_option {
+                    converted = wrap_expression_in_some(converted);
+                }
 
                 tokens.append_all(quote!(
                     #(#attrs)*

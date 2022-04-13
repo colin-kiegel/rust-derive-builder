@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use crate::wrap_expression_in_some;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn;
@@ -58,21 +57,17 @@ pub enum BuilderFieldType<'a> {
 }
 
 impl<'a> BuilderFieldType<'a> {
-    /// Some call sites want the target field type
-    pub fn target_type(&'a self) -> &'a syn::Type {
+    /// Onbtain type information for the builder field setter
+    ///
+    /// Return value:
+    ///  * `.0`: type of the argument to the setter function
+    ///          (before application of `strip_option`, `generic_into`)
+    ///  * `.1`: whether the builder field is `Option<type>` rather than just `type`
+    pub fn setter_type_info(&'a self) -> (&'a syn::Type, bool) {
         match self {
-            BuilderFieldType::Optional(ty) => ty,
-            BuilderFieldType::Precise(ty) => ty,
-            BuilderFieldType::Phantom(ty) => ty,
-        }
-    }
-
-    /// Returns expression wrapping `bare_value` in Some, if appropriate
-    pub fn wrap_some(&'a self, bare_value: TokenStream) -> TokenStream {
-        match self {
-            BuilderFieldType::Optional(_) => wrap_expression_in_some(bare_value),
-            BuilderFieldType::Precise(_) => bare_value,
-            BuilderFieldType::Phantom(_) => panic!("setter_enabled but BFT::PHantom"),
+            BuilderFieldType::Optional(ty) => (ty, true),
+            BuilderFieldType::Precise(ty) => (ty, false),
+            BuilderFieldType::Phantom(_ty) => panic!("setter_enabled but BFT::PHantom"),
         }
     }
 }
