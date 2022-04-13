@@ -54,7 +54,7 @@ pub enum BuilderFieldType<'a> {
     /// The corresonding builder field will be `Option<field_type>`.
     Optional(&'a syn::Type),
     /// The corresponding builder field will be just this type
-    Precisely(&'a syn::Type),
+    Precise(&'a syn::Type),
 }
 
 impl<'a> BuilderFieldType<'a> {
@@ -62,7 +62,7 @@ impl<'a> BuilderFieldType<'a> {
     pub fn target_type(&'a self) -> &'a syn::Type {
         match self {
             BuilderFieldType::Optional(ty) => ty,
-            BuilderFieldType::Precisely(ty) => ty,
+            BuilderFieldType::Precise(ty) => ty,
         }
     }
 
@@ -70,7 +70,7 @@ impl<'a> BuilderFieldType<'a> {
     pub fn wrap_some(&'a self, bare_value: TokenStream) -> TokenStream {
         match self {
             BuilderFieldType::Optional(_) => wrap_expression_in_some(bare_value),
-            BuilderFieldType::Precisely(_) => bare_value,
+            BuilderFieldType::Precise(_) => bare_value,
         }
     }
 }
@@ -81,7 +81,7 @@ impl<'a> ToTokens for BuilderFieldType<'a> {
             BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
                 ::derive_builder::export::core::option::Option<#ty>
             )),
-            BuilderFieldType::Precisely(ty) => ty.to_tokens(tokens),
+            BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
         }
     }
 }

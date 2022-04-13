@@ -792,7 +792,7 @@ impl<'a> FieldWithDefaults<'a> {
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
         if let Some(custom) = self.field.custom.as_ref() {
-            BuilderFieldType::Precisely(&custom.ty)
+            BuilderFieldType::Precise(&custom.ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
         }
