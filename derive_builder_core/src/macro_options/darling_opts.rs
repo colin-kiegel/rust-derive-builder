@@ -11,7 +11,7 @@ use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
     BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, CustomConversion,
-    DefaultExpression, DeprecationNotes, Each, Initializer, ParsedLiteral, Setter,
+    DefaultExpression, DeprecationNotes, Each, Initializer, Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -301,7 +301,7 @@ pub struct Field {
 #[derive(Debug, Clone, FromMeta)]
 pub struct CustomField {
     #[darling(rename = "type")]
-    ty: ParsedLiteral<syn::Type>,
+    ty: syn::Type,
     #[darling(default)]
     build: Option<BlockContents>,
 }
@@ -792,7 +792,7 @@ impl<'a> FieldWithDefaults<'a> {
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
         if let Some(custom) = self.field.custom.as_ref() {
-            BuilderFieldType::Precisely(&custom.ty.0)
+            BuilderFieldType::Precisely(&custom.ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
         }
