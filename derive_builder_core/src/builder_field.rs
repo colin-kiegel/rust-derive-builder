@@ -48,7 +48,7 @@ pub struct BuilderField<'a> {
     pub attrs: &'a [syn::Attribute],
 }
 
-/// The type of a field in the builder struct, implementing `quote::ToTokens`
+/// The type of a field in the builder struct
 #[derive(Debug, Clone)]
 pub enum BuilderFieldType<'a> {
     /// The corresonding builder field will be `Option<field_type>`.
