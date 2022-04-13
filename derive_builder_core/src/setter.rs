@@ -73,23 +73,12 @@ pub struct Setter<'a> {
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
-            let field_type = self.field_type.target_type();
             let pattern = self.pattern;
             let vis = &self.visibility;
             let field_ident = self.field_ident;
             let ident = &self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
-            let (ty, stripped_option) = {
-                if self.strip_option {
-                    match extract_type_from_option(field_type) {
-                        Some(ty) => (ty, true),
-                        None => (field_type, false),
-                    }
-                } else {
-                    (field_type, false)
-                }
-            };
 
             let self_param: TokenStream;
             let return_ty: TokenStream;
@@ -117,6 +106,19 @@ impl<'a> ToTokens for Setter<'a> {
             let ty_params: TokenStream;
             let param_ty: TokenStream;
             let mut into_value: TokenStream;
+
+            let field_type = self.field_type.target_type();
+
+            let (ty, stripped_option) = {
+                if self.strip_option {
+                    match extract_type_from_option(field_type) {
+                        Some(ty) => (ty, true),
+                        None => (field_type, false),
+                    }
+                } else {
+                    (field_type, false)
+                }
+            };
 
             if self.generic_into {
                 ty_params = quote!(<VALUE: ::derive_builder::export::core::convert::Into<#ty>>);
