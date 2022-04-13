@@ -323,7 +323,7 @@ impl Field {
         // That ought possibly to be distinct from the default value of the field in the target.
         // For now, reject this situation.
         if let Field {
-            default: Some(default_spec),
+            default: Some(_),
             custom:
                 Some(CustomField {
                     build: Some(build_spec),
@@ -332,15 +332,9 @@ impl Field {
             ..
         } = &self
         {
-            let m = || {
-                darling::Error::unsupported_format(
-                    r#"#[builder(default)] and #[builder(custom(build="..."))] cannot be used together"#,
-            )
-            };
-            return Err(darling::Error::multiple(vec![
-                m().with_span(default_spec),
-                m().with_span(build_spec),
-            ]));
+            return Err(darling::Error::unsupported_format(
+                r#"#[builder(default)] and #[builder(custom(build="..."))] cannot be used together"#
+            ).with_span(build_spec))
         };
 
         distribute_and_unnest_attrs(
