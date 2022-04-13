@@ -75,6 +75,17 @@ impl<'a> BuilderFieldType<'a> {
     }
 }
 
+impl<'a> ToTokens for BuilderFieldType<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::option::Option<#ty>
+            )),
+            BuilderFieldType::Precisely(ty) => ty.to_tokens(tokens),
+        }
+    }
+}
+
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.field_enabled {
@@ -94,17 +105,6 @@ impl<'a> ToTokens for BuilderField<'a> {
             tokens.append_all(quote!(
                 #(#attrs)* #ident: ::derive_builder::export::core::marker::PhantomData<#ty>,
             ));
-        }
-    }
-}
-
-impl<'a> ToTokens for BuilderFieldType<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
-            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
-                ::derive_builder::export::core::option::Option<#ty>
-            )),
-            BuilderFieldType::Precisely(ty) => ty.to_tokens(tokens),
         }
     }
 }
