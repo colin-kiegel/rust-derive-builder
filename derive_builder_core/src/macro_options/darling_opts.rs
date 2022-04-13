@@ -334,7 +334,7 @@ impl Field {
         {
             return Err(darling::Error::unsupported_format(
                 r#"#[builder(default)] and #[builder(custom(build="..."))] cannot be used together"#
-            ).with_span(build_spec))
+            ).with_span(build_spec));
         };
 
         distribute_and_unnest_attrs(
@@ -783,7 +783,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn field_vis(&self) -> Visibility {
-        if ! self.field_enabled() {
+        if !self.field_enabled() {
             Cow::Owned(syn::Visibility::Inherited)
         } else {
             self.field
@@ -795,7 +795,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
-        if ! self.field_enabled() {
+        if !self.field_enabled() {
             BuilderFieldType::Phantom(&self.field.ty)
         } else if let Some(custom) = self.field.custom.as_ref() {
             BuilderFieldType::Precise(&custom.ty)
