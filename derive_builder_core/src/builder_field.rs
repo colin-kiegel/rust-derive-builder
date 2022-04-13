@@ -33,7 +33,7 @@ use syn;
 pub struct BuilderField<'a> {
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
-    /// Type of the target field.
+    /// Type of the builder field.
     pub field_type: BuilderFieldType<'a>,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: Cow<'a, syn::Visibility>,

@@ -55,7 +55,7 @@ pub struct Setter<'a> {
     pub ident: syn::Ident,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
-    /// Type of the target field.
+    /// Type of the builder field.
     ///
     /// The corresonding builder field will be `Option<field_type>`.
     pub field_type: BuilderFieldType<'a>,
