@@ -805,14 +805,10 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
-        if let Some(custom) = &self.field.custom {
-            Some(match &custom.build {
-                Some(block) => CustomConversion::Block(block),
-                None => CustomConversion::Move,
-            })
-        } else {
-            None
-        }
+        Some(match &self.field.custom?.build {
+            Some(block) => CustomConversion::Block(block),
+            None => CustomConversion::Move,
+        })
     }
 
     pub fn pattern(&self) -> BuilderPattern {
