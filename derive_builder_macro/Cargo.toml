@@ -22,5 +22,5 @@ proc-macro = true
 clippy = ["derive_builder_core/clippy"]
 
 [dependencies]
-syn = { version = "1.0.58", features = ["full", "extra-traits"] }
+syn = { version = "1.0.91", features = ["full", "extra-traits"] }
 derive_builder_core = { version = "=0.11.1", path = "../derive_builder_core" }

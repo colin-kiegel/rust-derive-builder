@@ -17,10 +17,10 @@ readme = "README.md"
 clippy = []
 
 [dependencies]
-darling = "0.12.4"
-proc-macro2 = "1.0.24"
-quote = "1.0.8"
-syn = { version = "1.0.69", features = ["full", "extra-traits"] }
+darling = "0.14.0"
+proc-macro2 = "1.0.37"
+quote = "1.0.18"
+syn = { version = "1.0.91", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

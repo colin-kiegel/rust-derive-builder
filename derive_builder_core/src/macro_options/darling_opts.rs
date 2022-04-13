@@ -28,7 +28,7 @@ trait FlagVisibility {
     /// # Panics
     /// This method panics if the input specifies both `public` and `private`.
     fn as_expressed_vis(&self) -> Option<Visibility> {
-        match (self.public().is_some(), self.private().is_some()) {
+        match (self.public().is_present(), self.private().is_present()) {
             (true, true) => panic!("A field cannot be both public and private"),
             (true, false) => Some(syn::parse_quote!(pub)),
             (false, true) => Some(Visibility::Inherited),
@@ -551,10 +551,7 @@ impl Options {
             derives: &self.derive,
             struct_attrs: &self.struct_attrs,
             impl_attrs: &self.impl_attrs,
-            impl_default: {
-                let custom_constructor: bool = self.custom_constructor.into();
-                !custom_constructor
-            },
+            impl_default: !self.custom_constructor.is_present(),
             create_empty: self.create_empty.clone(),
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
@@ -565,10 +562,7 @@ impl Options {
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
-            std: {
-                let no_std: bool = self.no_std.into();
-                !no_std
-            },
+            std: !self.no_std.is_present(),
         }
     }
 
@@ -620,7 +614,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// Check if this field should emit a fallible setter.
     /// This depends on the `TryFrom` trait, which hasn't yet stabilized.
     pub fn try_setter(&self) -> bool {
-        self.field.try_setter.is_some() || self.parent.try_setter.is_some()
+        self.field.try_setter.is_present() || self.parent.try_setter.is_present()
     }
 
     /// Get the prefix that should be applied to the field name to produce
