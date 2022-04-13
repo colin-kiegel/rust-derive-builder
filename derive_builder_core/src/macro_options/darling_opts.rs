@@ -782,16 +782,22 @@ impl<'a> FieldWithDefaults<'a> {
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Cow<syn::Visibility> {
-        self.field
-            .field
-            .as_expressed_vis()
-            .or_else(|| self.parent.field.as_expressed_vis())
-            .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
+    pub fn field_vis(&self) -> Visibility {
+        if ! self.field_enabled() {
+            Cow::Owned(syn::Visibility::Inherited)
+        } else {
+            self.field
+                .field
+                .as_expressed_vis()
+                .or_else(|| self.parent.field.as_expressed_vis())
+                .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
+        }
     }
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
-        if let Some(custom) = self.field.custom.as_ref() {
+        if ! self.field_enabled() {
+            BuilderFieldType::Phantom(&self.field.ty)
+        } else if let Some(custom) = self.field.custom.as_ref() {
             BuilderFieldType::Precise(&custom.ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
@@ -864,7 +870,6 @@ impl<'a> FieldWithDefaults<'a> {
         BuilderField {
             field_ident: self.field_ident(),
             field_type: self.field_type(),
-            field_enabled: self.field_enabled(),
             field_visibility: self.field_vis(),
             attrs: &self.field.field_attrs,
         }

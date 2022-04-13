@@ -36,12 +36,6 @@ pub struct BuilderField<'a> {
     pub field_ident: &'a syn::Ident,
     /// Type of the target field.
     pub field_type: BuilderFieldType<'a>,
-    /// Whether the builder implements a setter for this field.
-    ///
-    /// Note: We will fallback to `PhantomData` if the setter is disabled
-    ///       to hack around issues with unused generic type parameters - at
-    ///       least for now.
-    pub field_enabled: bool,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: Cow<'a, syn::Visibility>,
     /// Attributes which will be attached to this builder field.
@@ -55,6 +49,12 @@ pub enum BuilderFieldType<'a> {
     Optional(&'a syn::Type),
     /// The corresponding builder field will be just this type
     Precise(&'a syn::Type),
+    /// The corresponding builder field will be a PhantomData
+    ///
+    /// We do this if if the field is disabled
+    /// to hack around issues with unused generic type parameters - at
+    /// least for now.
+    Phantom(&'a syn::Type),
 }
 
 impl<'a> BuilderFieldType<'a> {
@@ -63,6 +63,7 @@ impl<'a> BuilderFieldType<'a> {
         match self {
             BuilderFieldType::Optional(ty) => ty,
             BuilderFieldType::Precise(ty) => ty,
+            BuilderFieldType::Phantom(ty) => ty,
         }
     }
 
@@ -71,6 +72,7 @@ impl<'a> BuilderFieldType<'a> {
         match self {
             BuilderFieldType::Optional(_) => wrap_expression_in_some(bare_value),
             BuilderFieldType::Precise(_) => bare_value,
+            BuilderFieldType::Phantom(_) => panic!("setter_enabled but BFT::PHantom"),
         }
     }
 }
@@ -82,30 +84,23 @@ impl<'a> ToTokens for BuilderFieldType<'a> {
                 ::derive_builder::export::core::option::Option<#ty>
             )),
             BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
+            BuilderFieldType::Phantom(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::marker::PhantomData<#ty>
+            )),
         }
     }
 }
 
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.field_enabled {
-            let vis = &self.field_visibility;
-            let ident = self.field_ident;
-            let ty = &self.field_type;
-            let attrs = self.attrs;
-
-            tokens.append_all(quote!(
-                #(#attrs)* #vis #ident: #ty,
-            ));
-        } else {
-            let ident = self.field_ident;
-            let ty = self.field_type.target_type();
-            let attrs = self.attrs;
-
-            tokens.append_all(quote!(
-                #(#attrs)* #ident: ::derive_builder::export::core::marker::PhantomData<#ty>,
-            ));
-        }
+        let ident = self.field_ident;
+        let vis = &self.field_visibility;
+        let ty = &self.field_type;
+        let attrs = self.attrs;
+        tokens.append_all(quote!(
+            #(#attrs)* #vis #ident: #ty,
+        ));
+        // K let ty = self.field_type.target_type();
     }
 }
 
@@ -127,7 +122,6 @@ macro_rules! default_builder_field {
         BuilderField {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
-            field_enabled: true,
             field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             attrs: &[parse_quote!(#[some_attr])],
         }
@@ -155,7 +149,11 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut field = default_builder_field!();
-        field.field_enabled = false;
+        field.field_visibility = syn::Visibility::Inherited;
+        field.field_type = match field.field_type {
+            BuilderFieldType::Optional(ty) => BuilderFieldType::Phantom(ty),
+            _ => panic!(),
+        };
 
         assert_eq!(
             quote!(#field).to_string(),
