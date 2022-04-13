@@ -119,6 +119,7 @@ impl<'a> BuilderField<'a> {
 
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
+#[cfg(test)] // This contains a Box::leak, so is suitable only for tests
 #[doc(hidden)]
 #[macro_export]
 macro_rules! default_builder_field {
