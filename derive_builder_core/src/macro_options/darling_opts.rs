@@ -334,7 +334,7 @@ impl Field {
         {
             let m = || {
                 darling::Error::unsupported_format(
-                "#[builder(default)] and #[builder(custom(build="..."))] cannot be used together",
+                    r#"#[builder(default)] and #[builder(custom(build="..."))] cannot be used together"#,
             )
             };
             return Err(darling::Error::multiple(vec![
