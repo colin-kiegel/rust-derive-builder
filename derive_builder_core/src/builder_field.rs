@@ -41,37 +41,6 @@ pub struct BuilderField<'a> {
     pub attrs: &'a [syn::Attribute],
 }
 
-/// The type of a field in the builder struct
-#[derive(Debug, Clone)]
-pub enum BuilderFieldType<'a> {
-    /// The corresonding builder field will be `Option<field_type>`.
-    Optional(&'a syn::Type),
-    /// The corresponding builder field will be just this type
-    Precise(&'a syn::Type),
-    /// The corresponding builder field will be a PhantomData
-    ///
-    /// We do this if if the field is disabled
-    /// to hack around issues with unused generic type parameters - at
-    /// least for now.
-    Phantom(&'a syn::Type),
-}
-
-impl<'a> BuilderFieldType<'a> {
-    /// Obtain type information for the builder field setter
-    ///
-    /// Return value:
-    ///  * `.0`: type of the argument to the setter function
-    ///          (before application of `strip_option`, `generic_into`)
-    ///  * `.1`: whether the builder field is `Option<type>` rather than just `type`
-    pub fn setter_type_info(&'a self) -> (&'a syn::Type, bool) {
-        match self {
-            BuilderFieldType::Optional(ty) => (ty, true),
-            BuilderFieldType::Precise(ty) => (ty, false),
-            BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
-        }
-    }
-}
-
 impl<'a> ToTokens for BuilderFieldType<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
@@ -121,6 +90,37 @@ macro_rules! default_builder_field {
             attrs: &[parse_quote!(#[some_attr])],
         }
     }};
+}
+
+/// The type of a field in the builder struct
+#[derive(Debug, Clone)]
+pub enum BuilderFieldType<'a> {
+    /// The corresonding builder field will be `Option<field_type>`.
+    Optional(&'a syn::Type),
+    /// The corresponding builder field will be just this type
+    Precise(&'a syn::Type),
+    /// The corresponding builder field will be a PhantomData
+    ///
+    /// We do this if if the field is disabled
+    /// to hack around issues with unused generic type parameters - at
+    /// least for now.
+    Phantom(&'a syn::Type),
+}
+
+impl<'a> BuilderFieldType<'a> {
+    /// Obtain type information for the builder field setter
+    ///
+    /// Return value:
+    ///  * `.0`: type of the argument to the setter function
+    ///          (before application of `strip_option`, `generic_into`)
+    ///  * `.1`: whether the builder field is `Option<type>` rather than just `type`
+    pub fn setter_type_info(&'a self) -> (&'a syn::Type, bool) {
+        match self {
+            BuilderFieldType::Optional(ty) => (ty, true),
+            BuilderFieldType::Precise(ty) => (ty, false),
+            BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
+        }
+    }
 }
 
 #[cfg(test)]
