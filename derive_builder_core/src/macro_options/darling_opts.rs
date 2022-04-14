@@ -791,7 +791,7 @@ impl<'a> FieldWithDefaults<'a> {
         if !self.field_enabled() {
             BuilderFieldType::Phantom(&self.field.ty)
         } else if let Some(custom_ty) = self.field.builder_type.as_ref() {
-            BuilderFieldType::Precise(&custom_ty)
+            BuilderFieldType::Precise(custom_ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
         }
