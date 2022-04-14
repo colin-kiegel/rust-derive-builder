@@ -57,7 +57,7 @@ pub enum BuilderFieldType<'a> {
 }
 
 impl<'a> BuilderFieldType<'a> {
-    /// Onbtain type information for the builder field setter
+    /// Obtain type information for the builder field setter
     ///
     /// Return value:
     ///  * `.0`: type of the argument to the setter function
