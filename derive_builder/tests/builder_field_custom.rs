@@ -7,10 +7,10 @@ use std::num::ParseIntError;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 pub struct Lorem {
-    #[builder(custom(type = "Option<usize>", build = "self.ipsum.unwrap_or(42) + 1"))]
+    #[builder(type = "Option<usize>", build = "self.ipsum.unwrap_or(42) + 1")]
     ipsum: usize,
 
-    #[builder(custom(type = "String", build = "self.dolor.parse()?"))]
+    #[builder(type = "String", build = "self.dolor.parse()?")]
     dolor: u32,
 }
 

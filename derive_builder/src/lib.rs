@@ -645,13 +645,13 @@
 //! #[derive(Debug, PartialEq, Default, Builder, Clone)]
 //! #[builder(derive(Debug, PartialEq))]
 //! struct Lorem {
-//!     #[builder(custom(type = "u32"), setter(into))]
+//!     #[builder(type = "u32", setter(into))]
 //!     ipsum: u32,
 //!
-//!     #[builder(custom(type = "String", build = "()"))]
+//!     #[builder(type = "String", build = "()")]
 //!     dolor: (),
 //!
-//!     #[builder(custom(type = "&'static str", build = "self.amet.parse()?"))]
+//!     #[builder(type = "&'static str", build = "self.amet.parse()?")]
 //!     amet: u32,
 //! }
 //!
@@ -672,7 +672,7 @@
 //!
 //! The builder field type (`type =`) must implement `Default`.
 //!
-//! The argument to `build` must be a literal string containing Rust code for the contents of a block.
+//! The argument to `build` must be a literal string containing Rust code for the contents of a block, which must evaluate to the type of the target field.
 //! It may refer to the builder struct as `self`, use `?`, etc.
 //!
 //! # **`#![no_std]`** Support (on Nightly)

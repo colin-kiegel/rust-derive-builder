@@ -286,22 +286,17 @@ pub struct Field {
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     default: Option<DefaultExpression>,
     try_setter: Flag,
-    /// Custom builder field type and build method
-    custom: Option<CustomField>,
+    /// Custom builder field type
+    #[darling(rename = "type")]
+    builder_type: Option<syn::Type>,
+    /// Custom builder field method, for making target struct field value
+    build: Option<BlockContents>,
     #[darling(default)]
     field: FieldMeta,
     #[darling(skip)]
     field_attrs: Vec<Attribute>,
     #[darling(skip)]
     setter_attrs: Vec<Attribute>,
-}
-
-/// Options for the field-level `custom` property
-#[derive(Debug, Clone, FromMeta)]
-pub struct CustomField {
-    #[darling(rename = "type")]
-    ty: syn::Type,
-    build: Option<BlockContents>,
 }
 
 impl Field {
@@ -322,17 +317,14 @@ impl Field {
         // For now, reject this situation.
         if let Field {
             default: Some(_),
-            custom:
-                Some(CustomField {
-                    build: Some(build_spec),
-                    ..
-                }),
+            build: Some(custom_build),
             ..
         } = &self
         {
             return Err(darling::Error::unsupported_format(
-                r#"#[builder(default)] and #[builder(custom(build="..."))] cannot be used together"#
-            ).with_span(build_spec));
+                r#"#[builder(default)] and #[builder(build="...")] cannot be used together"#,
+            )
+            .with_span(custom_build));
         };
 
         distribute_and_unnest_attrs(
@@ -795,18 +787,19 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
         if !self.field_enabled() {
             BuilderFieldType::Phantom(&self.field.ty)
-        } else if let Some(custom) = self.field.custom.as_ref() {
-            BuilderFieldType::Precise(&custom.ty)
+        } else if let Some(custom_ty) = self.field.builder_type.as_ref() {
+            BuilderFieldType::Precise(&custom_ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
         }
     }
 
     pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
-        Some(match &self.field.custom.as_ref()?.build {
-            Some(block) => CustomConversion::Block(block),
-            None => CustomConversion::Move,
-        })
+        match (&self.field.builder_type, &self.field.build) {
+            (_, Some(block)) => Some(CustomConversion::Block(block)),
+            (Some(_), None) => Some(CustomConversion::Move),
+            (None, None) => None,
+        }
     }
 
     pub fn pattern(&self) -> BuilderPattern {
