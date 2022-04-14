@@ -287,7 +287,6 @@ pub struct Field {
     default: Option<DefaultExpression>,
     try_setter: Flag,
     /// Custom builder field type and build method
-    #[darling(default)]
     custom: Option<CustomField>,
     #[darling(default)]
     field: FieldMeta,
@@ -302,7 +301,6 @@ pub struct Field {
 pub struct CustomField {
     #[darling(rename = "type")]
     ty: syn::Type,
-    #[darling(default)]
     build: Option<BlockContents>,
 }
 
