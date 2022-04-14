@@ -101,9 +101,13 @@ pub enum BuilderFieldType<'a> {
     Precise(&'a syn::Type),
     /// The corresponding builder field will be a PhantomData
     ///
-    /// We do this if if the field is disabled
-    /// to hack around issues with unused generic type parameters - at
-    /// least for now.
+    /// We do this if if the field is disabled.  We mustn't just completely omit the field from the builder:
+    /// if we did that, the builder might have unused generic parameters (since we copy the generics from
+    /// the target struct).   Using a PhantomData of the original field type provides the right generic usage
+    /// (and the right variance).  The alternative would be to give the user a way to separately control
+    /// the generics of the builder struct, which would be very awkward to use and complex to document.
+    /// We could just include the field anyway, as `Option<T>`, but this is wasteful of space, and it
+    /// seems good to explicitly suppress the existence of a variable that won't be set or read.
     Phantom(&'a syn::Type),
 }
 
