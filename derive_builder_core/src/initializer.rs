@@ -62,11 +62,13 @@ pub struct Initializer<'a> {
     /// Method to use to to convert the builder's field to the target field
     ///
     /// For sub-builder fields, this will be `build` (or similar)
-    pub custom_conversion: Option<CustomConversion<'a>>,
+    pub conversion: FieldConversion<'a>,
 }
 
 #[derive(Debug, Clone)]
-pub enum CustomConversion<'a> {
+pub enum FieldConversion<'a> {
+    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
+    OptionOrDefault,
     /// Custom conversion is a block contents expression
     Block(&'a BlockContents),
     /// Custom conversion is just to move the field from the builder
@@ -85,22 +87,23 @@ impl<'a> ToTokens for Initializer<'a> {
                 tokens.append_all(quote!(
                     #default
                 ));
-            } else if let Some(conv) = &self.custom_conversion {
-                match conv {
-                    CustomConversion::Block(conv) => {
+            } else {
+                match &self.conversion {
+                    FieldConversion::Block(conv) => {
                         conv.to_tokens(tokens);
                     }
-                    CustomConversion::Move => tokens.append_all(quote!( self.#builder_field )),
-                }
-            } else {
-                let match_some = self.match_some();
-                let match_none = self.match_none();
-                tokens.append_all(quote!(
-                    match self.#builder_field {
-                        #match_some,
-                        #match_none,
+                    FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),
+                    FieldConversion::OptionOrDefault => {
+                        let match_some = self.match_some();
+                        let match_none = self.match_none();
+                        tokens.append_all(quote!(
+                            match self.#builder_field {
+                                #match_some,
+                                #match_none,
+                            }
+                        ));
                     }
-                ));
+                }
             }
         };
 
@@ -217,7 +220,7 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
-            custom_conversion: None,
+            conversion: FieldConversion::OptionOrDefault,
             custom_error_type_span: None,
         }
     };

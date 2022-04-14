@@ -10,8 +10,8 @@ use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
-    BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, CustomConversion,
-    DefaultExpression, DeprecationNotes, Each, Initializer, Setter,
+    BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,
+    DeprecationNotes, Each, FieldConversion, Initializer, Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -794,11 +794,11 @@ impl<'a> FieldWithDefaults<'a> {
         }
     }
 
-    pub fn custom_conversion(&'a self) -> Option<CustomConversion<'a>> {
+    pub fn conversion(&'a self) -> FieldConversion<'a> {
         match (&self.field.builder_type, &self.field.build) {
-            (_, Some(block)) => Some(CustomConversion::Block(block)),
-            (Some(_), None) => Some(CustomConversion::Move),
-            (None, None) => None,
+            (_, Some(block)) => FieldConversion::Block(block),
+            (Some(_), None) => FieldConversion::Move,
+            (None, None) => FieldConversion::OptionOrDefault,
         }
     }
 
@@ -847,7 +847,7 @@ impl<'a> FieldWithDefaults<'a> {
             builder_pattern: self.pattern(),
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
-            custom_conversion: self.custom_conversion(),
+            conversion: self.conversion(),
             custom_error_type_span: self
                 .parent
                 .build_fn
