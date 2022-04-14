@@ -65,16 +65,6 @@ pub struct Initializer<'a> {
     pub conversion: FieldConversion<'a>,
 }
 
-#[derive(Debug, Clone)]
-pub enum FieldConversion<'a> {
-    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
-    OptionOrDefault,
-    /// Custom conversion is a block contents expression
-    Block(&'a BlockContents),
-    /// Custom conversion is just to move the field from the builder
-    Move,
-}
-
 impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
@@ -150,6 +140,16 @@ impl<'a> Initializer<'a> {
             None => quote!(::derive_builder::export::core::default::Default::default()),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum FieldConversion<'a> {
+    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
+    OptionOrDefault,
+    /// Custom conversion is a block contents expression
+    Block(&'a BlockContents),
+    /// Custom conversion is just to move the field from the builder
+    Move,
 }
 
 /// To be used inside of `#struct_field: match self.#builder_field { ... }`
