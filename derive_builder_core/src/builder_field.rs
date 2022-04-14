@@ -67,7 +67,7 @@ impl<'a> BuilderFieldType<'a> {
         match self {
             BuilderFieldType::Optional(ty) => (ty, true),
             BuilderFieldType::Precise(ty) => (ty, false),
-            BuilderFieldType::Phantom(_ty) => panic!("setter_enabled but BFT::PHantom"),
+            BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
         }
     }
 }
