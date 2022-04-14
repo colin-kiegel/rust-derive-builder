@@ -226,7 +226,7 @@ impl<'a> ToTokens for Setter<'a> {
 }
 
 /// Returns expression wrapping `bare_value` in `Some`
-pub fn wrap_expression_in_some(bare_value: TokenStream) -> TokenStream {
+fn wrap_expression_in_some(bare_value: TokenStream) -> TokenStream {
     quote!( ::derive_builder::export::core::option::Option::Some(#bare_value) )
 }
 
