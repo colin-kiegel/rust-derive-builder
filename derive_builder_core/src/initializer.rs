@@ -68,7 +68,7 @@ pub struct Initializer<'a> {
 impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
-        let builder_field = &*struct_field;
+        let builder_field = struct_field;
 
         // This structure prevents accidental failure to add the trailing `,` due to incautious `return`
         let append_rhs = |tokens: &mut TokenStream| {
