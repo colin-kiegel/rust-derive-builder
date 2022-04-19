@@ -125,7 +125,7 @@ impl Visibility for BuildFn {
     }
 }
 
-/// Contents of the `field` meta in `builder` attributes.
+/// Contents of the `field` meta in `builder` attributes at the struct level.
 #[derive(Debug, Clone, Default, FromMeta)]
 pub struct StructLevelFieldMeta {
     public: Flag,
