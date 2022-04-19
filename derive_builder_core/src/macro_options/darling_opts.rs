@@ -354,7 +354,7 @@ impl Field {
         } = &self
         {
             errors.push(
-                darling::Error::unsupported_format(
+                darling::Error::custom(
                     r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
                 )
                 .with_span(field_default),
