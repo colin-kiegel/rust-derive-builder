@@ -127,7 +127,33 @@ impl Visibility for BuildFn {
 
 /// Contents of the `field` meta in `builder` attributes.
 #[derive(Debug, Clone, Default, FromMeta)]
-pub struct FieldMeta {
+pub struct StructLevelFieldMeta {
+    public: Flag,
+    private: Flag,
+    vis: Option<syn::Visibility>,
+}
+
+impl Visibility for StructLevelFieldMeta {
+    fn public(&self) -> &Flag {
+        &self.public
+    }
+
+    fn private(&self) -> &Flag {
+        &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        self.vis.as_ref()
+    }
+}
+
+/// Contents of the `field` meta in `builder` attributes.
+//
+// TODO this struct and its Visibility impl duplicate code from StructLevelFieldMeta
+// Ideally they would be combined somehow, but without adversely affecting diagnostics
+// from darling, etc.
+#[derive(Debug, Clone, Default, FromMeta)]
+pub struct FieldLevelFieldMeta {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
@@ -138,7 +164,7 @@ pub struct FieldMeta {
     build: Option<BlockContents>,
 }
 
-impl Visibility for FieldMeta {
+impl Visibility for FieldLevelFieldMeta {
     fn public(&self) -> &Flag {
         &self.public
     }
@@ -292,7 +318,7 @@ pub struct Field {
     default: Option<DefaultExpression>,
     try_setter: Flag,
     #[darling(default)]
-    field: FieldMeta,
+    field: FieldLevelFieldMeta,
     #[darling(skip)]
     field_attrs: Vec<Attribute>,
     #[darling(skip)]
@@ -317,7 +343,7 @@ impl Field {
         // construction. Because default will not be used, we disallow it.
         if let Field {
             default: Some(field_default),
-            field: FieldMeta { build: Some(_custom_build), .. },
+            field: FieldLevelFieldMeta { build: Some(_custom_build), .. },
             ..
         } = &self
         {
@@ -527,7 +553,7 @@ pub struct Options {
     try_setter: Flag,
 
     #[darling(default)]
-    field: FieldMeta,
+    field: StructLevelFieldMeta,
 
     #[darling(skip, default)]
     deprecation_notes: DeprecationNotes,
