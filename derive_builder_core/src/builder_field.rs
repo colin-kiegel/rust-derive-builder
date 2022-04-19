@@ -50,7 +50,6 @@ impl<'a> ToTokens for BuilderField<'a> {
         tokens.append_all(quote!(
             #(#attrs)* #vis #ident: #ty,
         ));
-        // K let ty = self.field_type.target_type();
     }
 }
 
