@@ -62,22 +62,6 @@ impl<'a> BuilderField<'a> {
     }
 }
 
-/// Helper macro for unit tests. This is _only_ public in order to be accessible
-/// from doc-tests too.
-#[cfg(test)] // This contains a Box::leak, so is suitable only for tests
-#[doc(hidden)]
-#[macro_export]
-macro_rules! default_builder_field {
-    () => {{
-        BuilderField {
-            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
-            field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
-            attrs: &[parse_quote!(#[some_attr])],
-        }
-    }};
-}
-
 /// The type of a field in the builder struct
 #[derive(Debug, Clone)]
 pub enum BuilderFieldType<'a> {
@@ -125,6 +109,23 @@ impl<'a> ToTokens for BuilderFieldType<'a> {
             )),
         }
     }
+}
+
+
+/// Helper macro for unit tests. This is _only_ public in order to be accessible
+/// from doc-tests too.
+#[cfg(test)] // This contains a Box::leak, so is suitable only for tests
+#[doc(hidden)]
+#[macro_export]
+macro_rules! default_builder_field {
+    () => {{
+        BuilderField {
+            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
+            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
+            field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
+            attrs: &[parse_quote!(#[some_attr])],
+        }
+    }};
 }
 
 #[cfg(test)]
