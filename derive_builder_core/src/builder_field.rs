@@ -116,7 +116,7 @@ impl<'a> BuilderFieldType<'a> {
     ///
     /// Return value:
     ///  * `.0`: type of the argument to the setter function
-    ///          (before application of `strip_option`, `generic_into`)
+    ///          (before application of `strip_option`, `into`)
     ///  * `.1`: whether the builder field is `Option<type>` rather than just `type`
     pub fn setter_type_info(&'a self) -> (&'a syn::Type, bool) {
         match self {
