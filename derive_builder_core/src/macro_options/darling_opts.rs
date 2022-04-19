@@ -338,6 +338,8 @@ impl Field {
     ///  * Check that we don't have a custom field builder *and* a default value
     ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn resolve(mut self) -> darling::Result<Self> {
+        let mut errors = darling::Error::accumulator();
+
         // `field.build` is stronger than `default`, as it contains both instructions on how to
         // deal with a missing value and conversions to do on the value during target type
         // construction. Because default will not be used, we disallow it.
@@ -351,21 +353,23 @@ impl Field {
             ..
         } = &self
         {
-            return Err(darling::Error::unsupported_format(
-                r#"#[builder(default)] and #[builder(build="...")] cannot be used together"#,
-            )
-            .with_span(field_default));
+            errors.push(
+                darling::Error::unsupported_format(
+                    r#"#[builder(default)] and #[builder(build="...")] cannot be used together"#,
+                )
+                .with_span(field_default),
+            );
         };
 
-        distribute_and_unnest_attrs(
+        errors.handle(distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
                 ("builder_field_attr", &mut self.field_attrs),
                 ("builder_setter_attr", &mut self.setter_attrs),
             ],
-        )?;
+        ));
 
-        Ok(self)
+        errors.finish_with(self)
     }
 }
 
