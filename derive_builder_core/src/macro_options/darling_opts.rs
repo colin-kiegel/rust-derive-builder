@@ -803,18 +803,17 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn field_vis(&self) -> Cow<syn::Visibility> {
-        if !self.field_enabled() {
-            // Disabled fields become a PhantomData in the builder.  We make that field non-public,
-            // even if the rest of the builder is public, since this field is just there to make
-            // sure the struct's generics are properly handled.
-            Cow::Owned(syn::Visibility::Inherited)
-        } else {
-            self.field
-                .field
-                .as_expressed_vis()
-                .or_else(|| self.parent.field.as_expressed_vis())
-                .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
-        }
+        self.field
+            .field
+            .as_expressed_vis()
+            .or_else(
+                // Disabled fields become a PhantomData in the builder.  We make that field
+                // non-public, even if the rest of the builder is public, since this field is just
+                // there to make sure the struct's generics are properly handled.
+                || (!self.field_enabled()).then(|| Cow::Owned(syn::Visibility::Inherited)),
+            )
+            .or_else(|| self.parent.field.as_expressed_vis())
+            .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
     }
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
