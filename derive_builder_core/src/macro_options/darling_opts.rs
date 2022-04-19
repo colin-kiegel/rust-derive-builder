@@ -355,7 +355,7 @@ impl Field {
         {
             errors.push(
                 darling::Error::unsupported_format(
-                    r#"#[builder(default)] and #[builder(build="...")] cannot be used together"#,
+                    r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
                 )
                 .with_span(field_default),
             );
