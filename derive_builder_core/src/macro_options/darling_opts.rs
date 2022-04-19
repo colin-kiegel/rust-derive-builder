@@ -837,10 +837,12 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn conversion(&'a self) -> FieldConversion<'a> {
-        match (&self.field.field.builder_type, &self.field.field.build) {
-            (_, Some(block)) => FieldConversion::Block(block),
-            (Some(_), None) => FieldConversion::Move,
-            (None, None) => FieldConversion::OptionOrDefault,
+        if let Some(block) = &self.field.field.build {
+            FieldConversion::Block(block)
+        } else if self.field.field.builder_type.is_some() {
+            FieldConversion::Move
+        } else {
+            FieldConversion::OptionOrDefault
         }
     }
 
