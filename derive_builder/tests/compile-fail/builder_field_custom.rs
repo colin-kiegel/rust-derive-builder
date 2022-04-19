@@ -3,7 +3,7 @@ extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
 pub struct Lorem {
-    #[builder(default = "88", type = "usize", build = "self.ipsum.unwrap_or_else(42) + 1")]
+    #[builder(default = "88", field(type = "usize", build = "self.ipsum.unwrap_or_else(42) + 1"))]
     ipsum: usize,
 }
 

@@ -645,13 +645,13 @@
 //! #[derive(Debug, PartialEq, Default, Builder, Clone)]
 //! #[builder(derive(Debug, PartialEq))]
 //! struct Lorem {
-//!     #[builder(type = "u32", setter(into))]
+//!     #[builder(setter(into), field(type = "u32"))]
 //!     ipsum: u32,
 //!
-//!     #[builder(type = "String", build = "()")]
+//!     #[builder(field(type = "String", build = "()"))]
 //!     dolor: (),
 //!
-//!     #[builder(type = "&'static str", build = "self.amet.parse()?")]
+//!     #[builder(field(type = "&'static str", build = "self.amet.parse()?"))]
 //!     amet: u32,
 //! }
 //!

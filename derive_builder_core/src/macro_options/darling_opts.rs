@@ -131,6 +131,11 @@ pub struct FieldMeta {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
+    /// Custom builder field type
+    #[darling(rename = "type")]
+    builder_type: Option<syn::Type>,
+    /// Custom builder field method, for making target struct field value
+    build: Option<BlockContents>,
 }
 
 impl Visibility for FieldMeta {
@@ -286,11 +291,6 @@ pub struct Field {
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     default: Option<DefaultExpression>,
     try_setter: Flag,
-    /// Custom builder field type
-    #[darling(rename = "type")]
-    builder_type: Option<syn::Type>,
-    /// Custom builder field method, for making target struct field value
-    build: Option<BlockContents>,
     #[darling(default)]
     field: FieldMeta,
     #[darling(skip)]
@@ -317,7 +317,7 @@ impl Field {
         // construction. Because default will not be used, we disallow it.
         if let Field {
             default: Some(_),
-            build: Some(custom_build),
+            field: FieldMeta { build: Some(custom_build), .. },
             ..
         } = &self
         {
@@ -790,7 +790,7 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
         if !self.field_enabled() {
             BuilderFieldType::Phantom(&self.field.ty)
-        } else if let Some(custom_ty) = self.field.builder_type.as_ref() {
+        } else if let Some(custom_ty) = self.field.field.builder_type.as_ref() {
             BuilderFieldType::Precise(custom_ty)
         } else {
             BuilderFieldType::Optional(&self.field.ty)
@@ -798,7 +798,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn conversion(&'a self) -> FieldConversion<'a> {
-        match (&self.field.builder_type, &self.field.build) {
+        match (&self.field.field.builder_type, &self.field.field.build) {
             (_, Some(block)) => FieldConversion::Block(block),
             (Some(_), None) => FieldConversion::Move,
             (None, None) => FieldConversion::OptionOrDefault,
