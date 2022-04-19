@@ -31,7 +31,9 @@ trait Visibility {
     fn as_expressed_vis<'s>(&'s self) -> Option<Cow<'s, syn::Visibility>> {
         let mut to_return = None;
         let mut intend_return_some = |v: Cow<'s, syn::Visibility>| {
-            if let Some(already) = &to_return { panic!("visibility specified both of {:?} {:?}", already, &v); }
+            if let Some(already) = &to_return {
+                panic!("visibility specified both of {:?} {:?}", already, &v);
+            }
             to_return = Some(v);
         };
 
