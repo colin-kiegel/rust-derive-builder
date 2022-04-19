@@ -28,22 +28,23 @@ trait Visibility {
     ///
     /// # Panics
     /// This method panics if the input specifies both `public` and `private`.
-    fn as_expressed_vis(&self) -> Option<Cow<syn::Visibility>> {
-        let declares_public = self.public().is_present();
-        let declares_private = self.private().is_present();
-        let declares_explicit = self.explicit().is_some();
+    fn as_expressed_vis<'s>(&'s self) -> Option<Cow<'s, syn::Visibility>> {
+        let mut to_return = None;
+        let mut intend_return_some = |v: Cow<'s, syn::Visibility>| {
+            if let Some(already) = &to_return { panic!("visibility specified both of {:?} {:?}", already, &v); }
+            to_return = Some(v);
+        };
 
-        if declares_private {
-            assert!(!declares_public && !declares_explicit);
-            Some(Cow::Owned(syn::Visibility::Inherited))
-        } else if let Some(vis) = self.explicit() {
-            assert!(!declares_public);
-            Some(Cow::Borrowed(vis))
-        } else if declares_public {
-            Some(Cow::Owned(syn::parse_quote!(pub)))
-        } else {
-            None
+        if self.private().is_present() {
+            intend_return_some(Cow::Owned(syn::Visibility::Inherited));
         }
+        if let Some(vis) = self.explicit() {
+            intend_return_some(Cow::Borrowed(vis));
+        }
+        if self.public().is_present() {
+            intend_return_some(Cow::Owned(syn::parse_quote!(pub)));
+        }
+        to_return
     }
 }
 
