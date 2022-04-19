@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut field = default_builder_field!();
-        field.field_visibility = syn::Visibility::Inherited;
+        field.field_visibility = Cow::Owned(syn::Visibility::Inherited);
         field.field_type = match field.field_type {
             BuilderFieldType::Optional(ty) => BuilderFieldType::Phantom(ty),
             _ => panic!(),

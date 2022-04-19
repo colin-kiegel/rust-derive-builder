@@ -772,7 +772,7 @@ impl<'a> FieldWithDefaults<'a> {
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Visibility {
+    pub fn field_vis(&self) -> Cow<syn::Visibility> {
         if !self.field_enabled() {
             // Disabled fields become a PhantomData in the builder.  We make that field non-public,
             // even if the rest of the builder is public, since this field is just there to make
