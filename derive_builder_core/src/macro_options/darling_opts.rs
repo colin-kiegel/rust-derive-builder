@@ -815,7 +815,6 @@ impl<'a> FieldWithDefaults<'a> {
                 // non-public, even if the rest of the builder is public, since this field is just
                 // there to make sure the struct's generics are properly handled.
                 || {
-                    // We would prefer to use bool::then but that's only available in Rust 1.50, not in our MSRV
                     if self.field_enabled() {
                         None
                     } else {
