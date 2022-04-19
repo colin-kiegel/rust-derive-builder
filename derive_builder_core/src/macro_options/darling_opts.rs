@@ -316,15 +316,15 @@ impl Field {
         // deal with a missing value and conversions to do on the value during target type
         // construction. Because default will not be used, we disallow it.
         if let Field {
-            default: Some(_),
-            field: FieldMeta { build: Some(custom_build), .. },
+            default: Some(field_default),
+            field: FieldMeta { build: Some(_custom_build), .. },
             ..
         } = &self
         {
             return Err(darling::Error::unsupported_format(
                 r#"#[builder(default)] and #[builder(build="...")] cannot be used together"#,
             )
-            .with_span(custom_build));
+            .with_span(field_default));
         };
 
         distribute_and_unnest_attrs(
