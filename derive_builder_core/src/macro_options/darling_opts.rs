@@ -814,8 +814,14 @@ impl<'a> FieldWithDefaults<'a> {
                 // Disabled fields become a PhantomData in the builder.  We make that field
                 // non-public, even if the rest of the builder is public, since this field is just
                 // there to make sure the struct's generics are properly handled.
-                || if self.field_enabled() { None } else { Some(Cow::Owned(syn::Visibility::Inherited)) },
-                // ^ would prefer to use bool::then but that's only available in Rust 1.50, not in our MSRV
+                || {
+                    // We would prefer to use bool::then but that's only available in Rust 1.50, not in our MSRV
+                    if self.field_enabled() {
+                        None
+                    } else {
+                        Some(Cow::Owned(syn::Visibility::Inherited))
+                    }
+                },
             )
             .or_else(|| self.parent.field.as_expressed_vis())
             .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
