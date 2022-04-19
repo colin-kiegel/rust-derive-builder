@@ -343,7 +343,11 @@ impl Field {
         // construction. Because default will not be used, we disallow it.
         if let Field {
             default: Some(field_default),
-            field: FieldLevelFieldMeta { build: Some(_custom_build), .. },
+            field:
+                FieldLevelFieldMeta {
+                    build: Some(_custom_build),
+                    ..
+                },
             ..
         } = &self
         {
