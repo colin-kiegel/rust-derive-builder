@@ -312,9 +312,9 @@ impl Field {
     ///  * Check that we don't have a custom field builder *and* a default value
     ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn resolve(mut self) -> darling::Result<Self> {
-        /// `field.build` is stronger than `default`, as it contains both instructions on how to
-        /// deal with a missing value and conversions to do on the value during target type
-        /// construction. Because default will not be used, we disallow it.
+        // `field.build` is stronger than `default`, as it contains both instructions on how to
+        // deal with a missing value and conversions to do on the value during target type
+        // construction. Because default will not be used, we disallow it.
         if let Field {
             default: Some(_),
             build: Some(custom_build),
