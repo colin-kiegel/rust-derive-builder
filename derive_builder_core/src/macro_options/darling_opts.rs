@@ -150,6 +150,8 @@ impl Visibility for StructLevelFieldMeta {
 /// Contents of the `field` meta in `builder` attributes at the field level.
 //
 // This is a superset of the attributes permitted in `field` at the struct level.
+// Perhaps in the future we will be able to use `#[darling(flatten0]`, but
+// that does not exist right now: https://github.com/TedDriggs/darling/issues/146
 #[derive(Debug, Clone, Default, FromMeta)]
 pub struct FieldLevelFieldMeta {
     public: Flag,
