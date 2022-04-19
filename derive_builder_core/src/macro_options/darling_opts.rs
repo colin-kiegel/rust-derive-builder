@@ -147,11 +147,9 @@ impl Visibility for StructLevelFieldMeta {
     }
 }
 
-/// Contents of the `field` meta in `builder` attributes.
+/// Contents of the `field` meta in `builder` attributes at the field level.
 //
-// TODO this struct and its Visibility impl duplicate code from StructLevelFieldMeta
-// Ideally they would be combined somehow, but without adversely affecting diagnostics
-// from darling, etc.
+// This is a superset of the attributes permitted in `field` at the struct level.
 #[derive(Debug, Clone, Default, FromMeta)]
 pub struct FieldLevelFieldMeta {
     public: Flag,
