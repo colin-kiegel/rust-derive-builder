@@ -41,20 +41,6 @@ pub struct BuilderField<'a> {
     pub attrs: &'a [syn::Attribute],
 }
 
-impl<'a> ToTokens for BuilderFieldType<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
-            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
-                ::derive_builder::export::core::option::Option<#ty>
-            )),
-            BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
-            BuilderFieldType::Phantom(ty) => tokens.append_all(quote!(
-                ::derive_builder::export::core::marker::PhantomData<#ty>
-            )),
-        }
-    }
-}
-
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = self.field_ident;
@@ -123,6 +109,20 @@ impl<'a> BuilderFieldType<'a> {
             BuilderFieldType::Optional(ty) => (ty, true),
             BuilderFieldType::Precise(ty) => (ty, false),
             BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
+        }
+    }
+}
+
+impl<'a> ToTokens for BuilderFieldType<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::option::Option<#ty>
+            )),
+            BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
+            BuilderFieldType::Phantom(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::marker::PhantomData<#ty>
+            )),
         }
     }
 }
