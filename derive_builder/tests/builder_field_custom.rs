@@ -10,7 +10,7 @@ pub struct Lorem {
     #[builder(field(type = "Option<usize>", build = "self.ipsum.unwrap_or(42) + 1"))]
     ipsum: usize,
 
-    #[builder(field(type = "String", build = "self.dolor.parse()?"))]
+    #[builder(setter(into), field(type = "String", build = "self.dolor.parse()?"))]
     dolor: u32,
 }
 
@@ -22,7 +22,7 @@ impl From<ParseIntError> for LoremBuilderError {
 
 #[test]
 fn custom_fields() {
-    let x = LoremBuilder::default().dolor("7".into()).build().unwrap();
+    let x = LoremBuilder::default().dolor("7").build().unwrap();
 
     assert_eq!(
         x,
@@ -34,7 +34,7 @@ fn custom_fields() {
 
     let x = LoremBuilder::default()
         .ipsum(Some(12))
-        .dolor("66".into())
+        .dolor("66")
         .build()
         .unwrap();
 
