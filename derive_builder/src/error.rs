@@ -37,6 +37,13 @@ impl From<&'static str> for UninitializedFieldError {
 }
 
 /// Runtime error used when a sub-field's `build` method failed.
+///
+/// Represents an error from a sub-structure's builder, when
+/// [`#[builder(sub_builder)]`](../index.html#sub-fields-with-builders-nested-builders)
+/// is used.
+/// Contains an `E`, the error type returned by the sub-structure's builder.
+/// See
+/// [Errors from the sub-structure builder](../index.html#errors-from-the-sub-structure-builder).
 #[derive(Debug, Clone)]
 pub struct SubfieldBuildError<E>(&'static str, E);
 
