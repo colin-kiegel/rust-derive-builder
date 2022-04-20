@@ -83,8 +83,15 @@ impl<'a> ToTokens for Initializer<'a> {
                         conv.to_tokens(tokens);
                     }
                     FieldConversion::Method(meth) => {
-                        tokens.append_all(quote!(
-                            self.#builder_field.#meth()?
+                        let span = self
+                            .custom_error_type_span
+                            .unwrap_or_else(|| self.field_ident.span());
+                        let field_name = self.field_ident.to_string();
+                        tokens.append_all(quote_spanned!(span=>
+                            ::derive_builder::export::core::result::Result::map_err(
+                                self.#builder_field.#meth(),
+                                |e| ::derive_builder::SubfieldBuildError::new(#field_name, e),
+                            )?
                         ));
                     }
                     FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),

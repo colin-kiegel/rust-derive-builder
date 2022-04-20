@@ -588,7 +588,7 @@
 //!
 //! ```rust
 //! # extern crate derive_builder;
-//! # use derive_builder::UninitializedFieldError;
+//! # use derive_builder::{SubfieldBuildError, UninitializedFieldError};
 //! # use std::fmt::{self, Display};
 //! #
 //! #[doc="Error type for LoremBuilder"]
@@ -606,6 +606,8 @@
 //! }
 //! impl From<UninitializedFieldError> for LoremBuilderError { // ...
 //! # fn from(s: UninitializedFieldError) -> Self { todo!() } }
+//! impl<E: std::error::Error> From<SubfieldBuildError<E>> for LoremBuilderError { // ...
+//! # fn from(s: SubfieldBuildError<E>) -> Self { todo!() } }
 //! impl Display for LoremBuilderError { // ...
 //! # fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result { todo!() } }
 //! impl std::error::Error for LoremBuilderError {}
@@ -722,7 +724,7 @@ mod error;
 pub use derive_builder_macro::Builder;
 
 #[doc(inline)]
-pub use error::UninitializedFieldError;
+pub use error::{SubfieldBuildError, UninitializedFieldError};
 
 #[doc(hidden)]
 pub mod export {

@@ -264,6 +264,12 @@ impl<'a> ToTokens for Builder<'a> {
                 if self.std {
                     tokens.append_all(quote!(
                         impl std::error::Error for #builder_error_ident {}
+
+                        impl<E: std::error::Error> ::derive_builder::export::core::convert::From<::derive_builder::SubfieldBuildError<E>> for #builder_error_ident {
+                            fn from(e: ::derive_builder::SubfieldBuildError<E>) -> Self {
+                                Self::ValidationError(::derive_builder::export::core::string::ToString::to_string(&e))
+                            }
+                        }
                     ));
                 }
             }
@@ -397,6 +403,12 @@ mod tests {
             }
 
             impl std::error::Error for FooBuilderError {}
+
+            impl<E: std::error::Error> ::derive_builder::export::core::convert::From<::derive_builder::SubfieldBuildError<E>> for FooBuilderError {
+                fn from(e: ::derive_builder::SubfieldBuildError<E>) -> Self {
+                    Self::ValidationError(::derive_builder::export::core::string::ToString::to_string(&e))
+                }
+            }
         ));
     }
 
