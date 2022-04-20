@@ -2,8 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.11.2] - 2022-04-20
 - Allow restricted visibility using `vis = "..."` for builders, build methods, setters, and fields #247
+- Allow specifying the type of a builder field using `#[builder(field(type = "..."))]` #246
+- Allow specifying how a builder field is built using `#[builder(field(build = "..."))]` #246
+- Update `darling`, `proc-macro2`, `syn`, and `quote` dependencies #250
 
 ## [0.11.1] - 2022-03-16
 - Forward `allow` and `cfg` attributes from the deriving struct to the builder and its impl block #222
