@@ -5,6 +5,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn;
 
+use BuilderFieldType;
 use BuilderPattern;
 use DeprecationNotes;
 use Each;
@@ -54,10 +55,10 @@ pub struct Setter<'a> {
     pub ident: syn::Ident,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
-    /// Type of the target field.
+    /// Type of the builder field.
     ///
     /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Type,
+    pub field_type: BuilderFieldType<'a>,
     /// Make the setter generic over `Into<T>`, where `T` is the field type.
     pub generic_into: bool,
     /// Make the setter remove the Option wrapper from the setter, remove the need to call Some(...).
@@ -72,23 +73,12 @@ pub struct Setter<'a> {
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
-            let field_type = self.field_type;
             let pattern = self.pattern;
             let vis = &self.visibility;
             let field_ident = self.field_ident;
             let ident = &self.ident;
             let attrs = self.attrs;
             let deprecation_notes = self.deprecation_notes;
-            let (ty, stripped_option) = {
-                if self.strip_option {
-                    match extract_type_from_option(field_type) {
-                        Some(ty) => (ty, true),
-                        None => (field_type, false),
-                    }
-                } else {
-                    (field_type, false)
-                }
-            };
 
             let self_param: TokenStream;
             let return_ty: TokenStream;
@@ -117,6 +107,19 @@ impl<'a> ToTokens for Setter<'a> {
             let param_ty: TokenStream;
             let mut into_value: TokenStream;
 
+            let (field_type, builder_field_is_option) = self.field_type.setter_type_info();
+
+            let (ty, stripped_option) = {
+                if self.strip_option {
+                    match extract_type_from_option(field_type) {
+                        Some(ty) => (ty, true),
+                        None => (field_type, false),
+                    }
+                } else {
+                    (field_type, false)
+                }
+            };
+
             if self.generic_into {
                 ty_params = quote!(<VALUE: ::derive_builder::export::core::convert::Into<#ty>>);
                 param_ty = quote!(VALUE);
@@ -126,10 +129,15 @@ impl<'a> ToTokens for Setter<'a> {
                 param_ty = quote!(#ty);
                 into_value = quote!(value);
             }
+            // If both `stripped_option` and `builder_field_is_option`, the target field is `Option<field_type>`,
+            // the builder field is `Option<Option<field_type>>`, and the setter takes `file_type`, so we must wrap it twice.
             if stripped_option {
-                into_value =
-                    quote!(::derive_builder::export::core::option::Option::Some(#into_value));
+                into_value = wrap_expression_in_some(into_value);
             }
+            if builder_field_is_option {
+                into_value = wrap_expression_in_some(into_value);
+            }
+
             tokens.append_all(quote!(
                 #(#attrs)*
                 #[allow(unused_mut)]
@@ -138,7 +146,7 @@ impl<'a> ToTokens for Setter<'a> {
                 {
                     #deprecation_notes
                     let mut new = #self_into_return_ty;
-                    new.#field_ident = ::derive_builder::export::core::option::Option::Some(#into_value);
+                    new.#field_ident = #into_value;
                     new
                 }
             ));
@@ -148,6 +156,11 @@ impl<'a> ToTokens for Setter<'a> {
                     quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
 
+                let mut converted = quote! {converted};
+                if builder_field_is_option {
+                    converted = wrap_expression_in_some(converted);
+                }
+
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
@@ -155,7 +168,7 @@ impl<'a> ToTokens for Setter<'a> {
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
-                        new.#field_ident = ::derive_builder::export::core::option::Option::Some(converted);
+                        new.#field_ident = #converted;
                         Ok(new)
                     }
                 ));
@@ -210,6 +223,11 @@ impl<'a> ToTokens for Setter<'a> {
             }
         }
     }
+}
+
+/// Returns expression wrapping `bare_value` in `Some`
+fn wrap_expression_in_some(bare_value: impl ToTokens) -> TokenStream {
+    quote!( ::derive_builder::export::core::option::Option::Some(#bare_value) )
 }
 
 // adapted from https://stackoverflow.com/a/55277337/469066
@@ -273,7 +291,7 @@ macro_rules! default_setter {
             attrs: &vec![],
             ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &parse_quote!(Foo),
+            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(Foo)))),
             generic_into: false,
             strip_option: false,
             deprecation_notes: &Default::default(),
@@ -393,7 +411,7 @@ mod tests {
         let ty = parse_quote!(Option<Foo>);
         let mut setter = default_setter!();
         setter.strip_option = true;
-        setter.field_type = &ty;
+        setter.field_type = BuilderFieldType::Optional(&ty);
 
         #[rustfmt::skip]
         assert_eq!(
@@ -418,7 +436,7 @@ mod tests {
         let mut setter = default_setter!();
         setter.strip_option = true;
         setter.generic_into = true;
-        setter.field_type = &ty;
+        setter.field_type = BuilderFieldType::Optional(&ty);
 
         #[rustfmt::skip]
         assert_eq!(

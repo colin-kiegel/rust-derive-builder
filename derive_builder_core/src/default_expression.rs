@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::BlockContents;
 use quote::{ToTokens, TokenStreamExt};
 
@@ -23,16 +21,7 @@ impl darling::FromMeta for DefaultExpression {
     }
 
     fn from_value(value: &syn::Lit) -> darling::Result<Self> {
-        if let syn::Lit::Str(s) = value {
-            let contents = BlockContents::try_from(s)?;
-            if contents.is_empty() {
-                Err(darling::Error::unknown_value("").with_span(s))
-            } else {
-                Ok(Self::Explicit(contents))
-            }
-        } else {
-            Err(darling::Error::unexpected_lit_type(value))
-        }
+        Ok(Self::Explicit(BlockContents::from_value(value)?))
     }
 }
 

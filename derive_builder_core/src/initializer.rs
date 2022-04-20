@@ -4,7 +4,7 @@ use syn;
 use BuilderPattern;
 use DEFAULT_STRUCT_NAME;
 
-use crate::DefaultExpression;
+use crate::{BlockContents, DefaultExpression};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -59,28 +59,47 @@ pub struct Initializer<'a> {
     /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
     /// error type.
     pub custom_error_type_span: Option<Span>,
+    /// Method to use to to convert the builder's field to the target field
+    ///
+    /// For sub-builder fields, this will be `build` (or similar)
+    pub conversion: FieldConversion<'a>,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
+        let builder_field = struct_field;
 
-        if self.field_enabled {
-            let match_some = self.match_some();
-            let match_none = self.match_none();
-            let builder_field = &*struct_field;
-            tokens.append_all(quote!(
-                #struct_field: match self.#builder_field {
-                    #match_some,
-                    #match_none,
-                },
-            ));
-        } else {
-            let default = self.default();
-            tokens.append_all(quote!(
-                #struct_field: #default,
-            ));
-        }
+        // This structure prevents accidental failure to add the trailing `,` due to incautious `return`
+        let append_rhs = |tokens: &mut TokenStream| {
+            if !self.field_enabled {
+                let default = self.default();
+                tokens.append_all(quote!(
+                    #default
+                ));
+            } else {
+                match &self.conversion {
+                    FieldConversion::Block(conv) => {
+                        conv.to_tokens(tokens);
+                    }
+                    FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),
+                    FieldConversion::OptionOrDefault => {
+                        let match_some = self.match_some();
+                        let match_none = self.match_none();
+                        tokens.append_all(quote!(
+                            match self.#builder_field {
+                                #match_some,
+                                #match_none,
+                            }
+                        ));
+                    }
+                }
+            }
+        };
+
+        tokens.append_all(quote!(#struct_field:));
+        append_rhs(tokens);
+        tokens.append_all(quote!(,));
     }
 }
 
@@ -121,6 +140,16 @@ impl<'a> Initializer<'a> {
             None => quote!(::derive_builder::export::core::default::Default::default()),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum FieldConversion<'a> {
+    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
+    OptionOrDefault,
+    /// Custom conversion is a block contents expression
+    Block(&'a BlockContents),
+    /// Custom conversion is just to move the field from the builder
+    Move,
 }
 
 /// To be used inside of `#struct_field: match self.#builder_field { ... }`
@@ -191,6 +220,7 @@ macro_rules! default_initializer {
             builder_pattern: BuilderPattern::Mutable,
             default_value: None,
             use_default_struct: false,
+            conversion: FieldConversion::OptionOrDefault,
             custom_error_type_span: None,
         }
     };

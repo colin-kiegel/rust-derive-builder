@@ -46,12 +46,12 @@ mod setter;
 pub(crate) use block::BlockContents;
 pub(crate) use build_method::BuildMethod;
 pub(crate) use builder::Builder;
-pub(crate) use builder_field::BuilderField;
+pub(crate) use builder_field::{BuilderField, BuilderFieldType};
 use darling::FromDeriveInput;
 pub(crate) use default_expression::DefaultExpression;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
-pub(crate) use initializer::Initializer;
+pub(crate) use initializer::{FieldConversion, Initializer};
 pub(crate) use options::{BuilderPattern, Each};
 pub(crate) use setter::Setter;
 

@@ -33,16 +33,8 @@ use syn;
 pub struct BuilderField<'a> {
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
-    /// Type of the target field.
-    ///
-    /// The corresonding builder field will be `Option<field_type>`.
-    pub field_type: &'a syn::Type,
-    /// Whether the builder implements a setter for this field.
-    ///
-    /// Note: We will fallback to `PhantomData` if the setter is disabled
-    ///       to hack around issues with unused generic type parameters - at
-    ///       least for now.
-    pub field_enabled: bool,
+    /// Type of the builder field.
+    pub field_type: BuilderFieldType<'a>,
     /// Visibility of this builder field, e.g. `syn::Visibility::Public`.
     pub field_visibility: Cow<'a, syn::Visibility>,
     /// Attributes which will be attached to this builder field.
@@ -51,24 +43,13 @@ pub struct BuilderField<'a> {
 
 impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        if self.field_enabled {
-            let vis = &self.field_visibility;
-            let ident = self.field_ident;
-            let ty = self.field_type;
-            let attrs = self.attrs;
-
-            tokens.append_all(quote!(
-                #(#attrs)* #vis #ident: ::derive_builder::export::core::option::Option<#ty>,
-            ));
-        } else {
-            let ident = self.field_ident;
-            let ty = self.field_type;
-            let attrs = self.attrs;
-
-            tokens.append_all(quote!(
-                #(#attrs)* #ident: ::derive_builder::export::core::marker::PhantomData<#ty>,
-            ));
-        }
+        let ident = self.field_ident;
+        let vis = &self.field_visibility;
+        let ty = &self.field_type;
+        let attrs = self.attrs;
+        tokens.append_all(quote!(
+            #(#attrs)* #vis #ident: #ty,
+        ));
     }
 }
 
@@ -80,16 +61,65 @@ impl<'a> BuilderField<'a> {
     }
 }
 
+/// The type of a field in the builder struct
+#[derive(Debug, Clone)]
+pub enum BuilderFieldType<'a> {
+    /// The corresonding builder field will be `Option<field_type>`.
+    Optional(&'a syn::Type),
+    /// The corresponding builder field will be just this type
+    Precise(&'a syn::Type),
+    /// The corresponding builder field will be a PhantomData
+    ///
+    /// We do this if if the field is disabled.  We mustn't just completely omit the field from the builder:
+    /// if we did that, the builder might have unused generic parameters (since we copy the generics from
+    /// the target struct).   Using a PhantomData of the original field type provides the right generic usage
+    /// (and the right variance).  The alternative would be to give the user a way to separately control
+    /// the generics of the builder struct, which would be very awkward to use and complex to document.
+    /// We could just include the field anyway, as `Option<T>`, but this is wasteful of space, and it
+    /// seems good to explicitly suppress the existence of a variable that won't be set or read.
+    Phantom(&'a syn::Type),
+}
+
+impl<'a> BuilderFieldType<'a> {
+    /// Obtain type information for the builder field setter
+    ///
+    /// Return value:
+    ///  * `.0`: type of the argument to the setter function
+    ///          (before application of `strip_option`, `into`)
+    ///  * `.1`: whether the builder field is `Option<type>` rather than just `type`
+    pub fn setter_type_info(&'a self) -> (&'a syn::Type, bool) {
+        match self {
+            BuilderFieldType::Optional(ty) => (ty, true),
+            BuilderFieldType::Precise(ty) => (ty, false),
+            BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
+        }
+    }
+}
+
+impl<'a> ToTokens for BuilderFieldType<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::option::Option<#ty>
+            )),
+            BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
+            BuilderFieldType::Phantom(ty) => tokens.append_all(quote!(
+                ::derive_builder::export::core::marker::PhantomData<#ty>
+            )),
+        }
+    }
+}
+
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
+#[cfg(test)] // This contains a Box::leak, so is suitable only for tests
 #[doc(hidden)]
 #[macro_export]
 macro_rules! default_builder_field {
     () => {{
         BuilderField {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
-            field_type: &parse_quote!(String),
-            field_enabled: true,
+            field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
             field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             attrs: &[parse_quote!(#[some_attr])],
         }
@@ -117,7 +147,11 @@ mod tests {
     #[test]
     fn setter_disabled() {
         let mut field = default_builder_field!();
-        field.field_enabled = false;
+        field.field_visibility = Cow::Owned(syn::Visibility::Inherited);
+        field.field_type = match field.field_type {
+            BuilderFieldType::Optional(ty) => BuilderFieldType::Phantom(ty),
+            _ => panic!(),
+        };
 
         assert_eq!(
             quote!(#field).to_string(),

@@ -10,8 +10,8 @@ use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
 use crate::{
-    Builder, BuilderField, BuilderPattern, DefaultExpression, DeprecationNotes, Each, Initializer,
-    Setter,
+    BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,
+    DeprecationNotes, Each, FieldConversion, Initializer, Setter,
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
@@ -125,15 +125,46 @@ impl Visibility for BuildFn {
     }
 }
 
-/// Contents of the `field` meta in `builder` attributes.
+/// Contents of the `field` meta in `builder` attributes at the struct level.
 #[derive(Debug, Clone, Default, FromMeta)]
-pub struct FieldMeta {
+pub struct StructLevelFieldMeta {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
 }
 
-impl Visibility for FieldMeta {
+impl Visibility for StructLevelFieldMeta {
+    fn public(&self) -> &Flag {
+        &self.public
+    }
+
+    fn private(&self) -> &Flag {
+        &self.private
+    }
+
+    fn explicit(&self) -> Option<&syn::Visibility> {
+        self.vis.as_ref()
+    }
+}
+
+/// Contents of the `field` meta in `builder` attributes at the field level.
+//
+// This is a superset of the attributes permitted in `field` at the struct level.
+// Perhaps in the future we will be able to use `#[darling(flatten)]`, but
+// that does not exist right now: https://github.com/TedDriggs/darling/issues/146
+#[derive(Debug, Clone, Default, FromMeta)]
+pub struct FieldLevelFieldMeta {
+    public: Flag,
+    private: Flag,
+    vis: Option<syn::Visibility>,
+    /// Custom builder field type
+    #[darling(rename = "type")]
+    builder_type: Option<syn::Type>,
+    /// Custom builder field method, for making target struct field value
+    build: Option<BlockContents>,
+}
+
+impl Visibility for FieldLevelFieldMeta {
     fn public(&self) -> &Flag {
         &self.public
     }
@@ -252,7 +283,7 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 #[darling(
     attributes(builder),
     forward_attrs(doc, cfg, allow, builder_field_attr, builder_setter_attr),
-    and_then = "Self::unnest_attrs"
+    and_then = "Self::resolve"
 )]
 pub struct Field {
     ident: Option<Ident>,
@@ -287,7 +318,7 @@ pub struct Field {
     default: Option<DefaultExpression>,
     try_setter: Flag,
     #[darling(default)]
-    field: FieldMeta,
+    field: FieldLevelFieldMeta,
     #[darling(skip)]
     field_attrs: Vec<Attribute>,
     #[darling(skip)]
@@ -302,17 +333,43 @@ impl Field {
         errors.finish()
     }
 
-    /// Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
-    fn unnest_attrs(mut self) -> darling::Result<Self> {
-        distribute_and_unnest_attrs(
+    /// Resolve and check (post-parsing) options which come from multiple darling options
+    ///
+    ///  * Check that we don't have a custom field builder *and* a default value
+    ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
+    fn resolve(mut self) -> darling::Result<Self> {
+        let mut errors = darling::Error::accumulator();
+
+        // `field.build` is stronger than `default`, as it contains both instructions on how to
+        // deal with a missing value and conversions to do on the value during target type
+        // construction. Because default will not be used, we disallow it.
+        if let Field {
+            default: Some(field_default),
+            field:
+                FieldLevelFieldMeta {
+                    build: Some(_custom_build),
+                    ..
+                },
+            ..
+        } = &self
+        {
+            errors.push(
+                darling::Error::custom(
+                    r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
+                )
+                .with_span(field_default),
+            );
+        };
+
+        errors.handle(distribute_and_unnest_attrs(
             &mut self.attrs,
             &mut [
                 ("builder_field_attr", &mut self.field_attrs),
                 ("builder_setter_attr", &mut self.setter_attrs),
             ],
-        )?;
+        ));
 
-        Ok(self)
+        errors.finish_with(self)
     }
 }
 
@@ -504,7 +561,7 @@ pub struct Options {
     try_setter: Flag,
 
     #[darling(default)]
-    field: FieldMeta,
+    field: StructLevelFieldMeta,
 
     #[darling(skip, default)]
     deprecation_notes: DeprecationNotes,
@@ -753,8 +810,38 @@ impl<'a> FieldWithDefaults<'a> {
         self.field
             .field
             .as_expressed_vis()
+            .or_else(
+                // Disabled fields become a PhantomData in the builder.  We make that field
+                // non-public, even if the rest of the builder is public, since this field is just
+                // there to make sure the struct's generics are properly handled.
+                || {
+                    if self.field_enabled() {
+                        None
+                    } else {
+                        Some(Cow::Owned(syn::Visibility::Inherited))
+                    }
+                },
+            )
             .or_else(|| self.parent.field.as_expressed_vis())
             .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
+    }
+
+    pub fn field_type(&'a self) -> BuilderFieldType<'a> {
+        if !self.field_enabled() {
+            BuilderFieldType::Phantom(&self.field.ty)
+        } else if let Some(custom_ty) = self.field.field.builder_type.as_ref() {
+            BuilderFieldType::Precise(custom_ty)
+        } else {
+            BuilderFieldType::Optional(&self.field.ty)
+        }
+    }
+
+    pub fn conversion(&'a self) -> FieldConversion<'a> {
+        match (&self.field.field.builder_type, &self.field.field.build) {
+            (_, Some(block)) => FieldConversion::Block(block),
+            (Some(_), None) => FieldConversion::Move,
+            (None, None) => FieldConversion::OptionOrDefault,
+        }
     }
 
     pub fn pattern(&self) -> BuilderPattern {
@@ -782,7 +869,7 @@ impl<'a> FieldWithDefaults<'a> {
             attrs: &self.field.setter_attrs,
             ident: self.setter_ident(),
             field_ident: self.field_ident(),
-            field_type: &self.field.ty,
+            field_type: self.field_type(),
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
             deprecation_notes: self.deprecation_notes(),
@@ -802,6 +889,7 @@ impl<'a> FieldWithDefaults<'a> {
             builder_pattern: self.pattern(),
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
+            conversion: self.conversion(),
             custom_error_type_span: self
                 .parent
                 .build_fn
@@ -814,8 +902,7 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn as_builder_field(&'a self) -> BuilderField<'a> {
         BuilderField {
             field_ident: self.field_ident(),
-            field_type: &self.field.ty,
-            field_enabled: self.field_enabled(),
+            field_type: self.field_type(),
             field_visibility: self.field_vis(),
             attrs: &self.field.field_attrs,
         }

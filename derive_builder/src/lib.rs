@@ -635,6 +635,46 @@
 //! # }
 //! ```
 //!
+//! # Completely custom fields in the builder
+//!
+//! Instead of having an `Option`, you can have whatever type you like:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate derive_builder;
+//! #[derive(Debug, PartialEq, Default, Builder, Clone)]
+//! #[builder(derive(Debug, PartialEq))]
+//! struct Lorem {
+//!     #[builder(setter(into), field(type = "u32"))]
+//!     ipsum: u32,
+//!
+//!     #[builder(field(type = "String", build = "()"))]
+//!     dolor: (),
+//!
+//!     #[builder(field(type = "&'static str", build = "self.amet.parse()?"))]
+//!     amet: u32,
+//! }
+//!
+//! impl From<std::num::ParseIntError> for LoremBuilderError { // ...
+//! #     fn from(e: std::num::ParseIntError) -> LoremBuilderError {
+//! #         e.to_string().into()
+//! #     }
+//! # }
+//!
+//! # fn main() {
+//! let mut builder = LoremBuilder::default();
+//! builder.ipsum(42u16).dolor("sit".into()).amet("12");
+//! assert_eq!(builder, LoremBuilder { ipsum: 42, dolor: "sit".into(), amet: "12" });
+//! let lorem = builder.build().unwrap();
+//! assert_eq!(lorem, Lorem { ipsum: 42, dolor: (), amet: 12 });
+//! # }
+//! ```
+//!
+//! The builder field type (`type =`) must implement `Default`.
+//!
+//! The argument to `build` must be a literal string containing Rust code for the contents of a block, which must evaluate to the type of the target field.
+//! It may refer to the builder struct as `self`, use `?`, etc.
+//!
 //! # **`#![no_std]`** Support (on Nightly)
 //!
 //! You can activate support for `#![no_std]` by adding `#[builder(no_std)]` to your struct
