@@ -44,7 +44,7 @@ use Setter;
 /// }
 ///
 /// #[doc="Error type for FooBuilder"]
-/// #[derive(Debug)]
+/// #[derive(Debug, Eq, PartialEq)]
 /// #[non_exhaustive]
 /// pub enum FooBuilderError {
 ///     /// Uninitialized field
@@ -230,7 +230,7 @@ impl<'a> ToTokens for Builder<'a> {
 
                 tokens.append_all(quote!(
                     #[doc=#builder_error_doc]
-                    #[derive(Debug)]
+                    #[derive(Debug, Eq, PartialEq)]
                     #[non_exhaustive]
                     #builder_vis enum #builder_error_ident {
                         /// Uninitialized field
@@ -366,7 +366,7 @@ mod tests {
     fn add_generated_error(result: &mut TokenStream) {
         result.append_all(quote!(
             #[doc="Error type for FooBuilder"]
-            #[derive(Debug)]
+            #[derive(Debug, Eq, PartialEq)]
             #[non_exhaustive]
             pub enum FooBuilderError {
                 /// Uninitialized field
