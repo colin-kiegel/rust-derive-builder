@@ -235,6 +235,8 @@ impl<'a> ToTokens for Builder<'a> {
                     #builder_vis enum #builder_error_ident {
                         /// Uninitialized field
                         UninitializedField(&'static str),
+                        /// post build operation error
+                        PostBuildError(::derive_builder::export::core::string::String),                        
                         /// Custom validation error
                         ValidationError(::derive_builder::export::core::string::String),
                     }
@@ -242,6 +244,12 @@ impl<'a> ToTokens for Builder<'a> {
                     impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
                         fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
                             Self::UninitializedField(s.field_name())
+                        }
+                    }
+
+                    impl ::derive_builder::export::core::convert::From<::derive_builder::PostBuildError> for #builder_error_ident {
+                        fn from(s: ::derive_builder::PostBuildError) -> Self {
+                            Self::PostBuildError(s.get_msg())
                         }
                     }
 
@@ -255,6 +263,7 @@ impl<'a> ToTokens for Builder<'a> {
                         fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                                Self::PostBuildError(ref error) => write!(f, "{}", error),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
                             }
                         }
@@ -371,6 +380,8 @@ mod tests {
             pub enum FooBuilderError {
                 /// Uninitialized field
                 UninitializedField(&'static str),
+                /// post build operation error
+                PostBuildError(::derive_builder::export::core::string::String),
                 /// Custom validation error
                 ValidationError(::derive_builder::export::core::string::String),
             }
@@ -378,6 +389,12 @@ mod tests {
             impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
                 fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
                     Self::UninitializedField(s.field_name())
+                }
+            }
+
+            impl ::derive_builder::export::core::convert::From<::derive_builder::PostBuildError> for FooBuilderError {
+                fn from(s: ::derive_builder::PostBuildError) -> Self {
+                    Self::PostBuildError(s.get_msg())
                 }
             }
 
@@ -391,6 +408,7 @@ mod tests {
                 fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
                     match self {
                         Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                        Self::PostBuildError(ref error) => write!(f, "{}", error),
                         Self::ValidationError(ref error) => write!(f, "{}", error),
                     }
                 }

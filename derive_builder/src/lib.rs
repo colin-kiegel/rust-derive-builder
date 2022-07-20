@@ -722,7 +722,7 @@ mod error;
 pub use derive_builder_macro::Builder;
 
 #[doc(inline)]
-pub use error::UninitializedFieldError;
+pub use error::{PostBuildError, UninitializedFieldError};
 
 #[doc(hidden)]
 pub mod export {
