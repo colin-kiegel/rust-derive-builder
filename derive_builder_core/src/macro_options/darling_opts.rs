@@ -78,6 +78,7 @@ pub struct BuildFn {
     skip: bool,
     name: Ident,
     validate: Option<Path>,
+    post_build: Option<Path>,
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
@@ -103,6 +104,7 @@ impl Default for BuildFn {
             skip: false,
             name: Ident::new("build", Span::call_site()),
             validate: None,
+            post_build: None,
             public: Default::default(),
             private: Default::default(),
             vis: None,
@@ -707,6 +709,7 @@ impl Options {
             doc_comment: None,
             default_struct: self.default.as_ref(),
             validate_fn: self.build_fn.validate.as_ref(),
+            post_build_fn: self.build_fn.post_build.as_ref(),
         }
     }
 }

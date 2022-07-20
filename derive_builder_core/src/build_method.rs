@@ -67,6 +67,9 @@ pub struct BuildMethod<'a> {
     /// Validation function with signature `&FooBuilder -> Result<(), String>`
     /// to call before the macro-provided struct buildout.
     pub validate_fn: Option<&'a syn::Path>,
+    /// post build function with signature `&mut Foo -> Result<(), String>`
+    /// to be called by FooBuilder::build() as soon as Foo is built.
+    pub post_build_fn: Option<&'a syn::Path>,
 }
 
 impl<'a> ToTokens for BuildMethod<'a> {
@@ -85,11 +88,22 @@ impl<'a> ToTokens for BuildMethod<'a> {
             let ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
+
+        let error_ty = &self.error_ty;
+
         let validate_fn = self
             .validate_fn
             .as_ref()
             .map(|vfn| quote_spanned!(vfn.span() => #vfn(&self)?;));
-        let error_ty = &self.error_ty;
+        let post_build_fn = self
+            .post_build_fn
+            .as_ref()
+            .map(|vfn| quote_spanned!(vfn.span() => #vfn(&mut res).map_err( | e | ::derive_builder::PostBuildError::new(e))?;));
+        let built_struct_mutability = if self.post_build_fn.is_some() {
+            Some(quote!(mut))
+        } else {
+            None
+        };
 
         if self.enabled {
             tokens.append_all(quote!(
@@ -99,9 +113,11 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 {
                     #validate_fn
                     #default_struct
-                    Ok(#target_ty {
+                    let #built_struct_mutability res = #target_ty {
                         #(#initializers)*
-                    })
+                    };
+                    #post_build_fn
+                    Ok(res)
                 }
             ))
         }
@@ -149,6 +165,7 @@ macro_rules! default_build_method {
             doc_comment: None,
             default_struct: None,
             validate_fn: None,
+            post_build_fn: None,
         }
     };
 }
@@ -167,9 +184,10 @@ mod tests {
             quote!(#build_method).to_string(),
             quote!(
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
-                    Ok(Foo {
+                    let res = Foo {
                         foo: self.foo,
-                    })
+                    };
+                    Ok(res)
                 }
             )
             .to_string()
@@ -189,9 +207,10 @@ mod tests {
             quote!(
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     let __default: Foo = { Default::default() };
-                    Ok(Foo {
+                 let res = Foo {
                         foo: self.foo,
-                    })
+                    };
+                    Ok(res)
                 }
             )
             .to_string()
@@ -218,9 +237,10 @@ mod tests {
             quote!(#build_method).to_string(),
             quote!(
                 pub fn finish(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
-                    Ok(Foo {
+                    let res = Foo {
                         foo: self.foo,
-                    })
+                    };
+                    Ok(res)
                 }
             )
             .to_string()
@@ -241,9 +261,34 @@ mod tests {
                 pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
                     IpsumBuilder::validate(&self)?;
 
-                    Ok(Foo {
+                    let res = Foo {
                         foo: self.foo,
-                    })
+                    };
+                    Ok(res)
+                }
+            )
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn post_build() {
+        let post_build_path: syn::Path = parse_quote!(IpsumBuilder::post_build);
+
+        let mut build_method: BuildMethod = default_build_method!();
+        build_method.post_build_fn = Some(&post_build_path);
+
+        #[rustfmt::skip]
+        assert_eq!(
+            quote!(#build_method).to_string(),
+            quote!(
+                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
+                    
+                    let mut res = Foo {
+                        foo: self.foo,
+                    };
+                    IpsumBuilder::post_build(&mut res).map_err( | e | ::derive_builder::PostBuildError::new(e))?;
+                    Ok(res)
                 }
             )
             .to_string()
