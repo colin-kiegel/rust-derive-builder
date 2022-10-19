@@ -140,6 +140,48 @@ pub struct Builder<'a> {
     pub std: bool,
 }
 
+impl<'a> Builder<'a> {
+    #[doc = "
+        adding builder() fn on the original struct
+        ```rust
+        impl <original_struct> {
+         pub fn builder() -> <original_struct>Builder  {
+             <original_struct>Builder::default()
+         }
+        }
+        ```
+        Why ?
+        Because sometimes @alexzanderr likes to call the builder like this:
+        ```rust
+            let ch = Channel::builder()
+            .special_info(42u8)
+            .token(19_124)
+            .build()
+            .unwrap();
+        ```
+        Note the `Channel::builder()`, it generates the builder from the original struct.
+    "]
+    pub fn add_builder_fn_to_struct(&self, ast: &syn::DeriveInput) -> TokenStream {
+        // name of the original struct
+        let struct_name_ident = &ast.ident;
+        // name of the builder for the original struct
+        let builder_name_ident = &self.ident;
+
+        // rust source code
+        let expanded = quote! {
+            /// This returns a new builder for the original struct
+            impl #struct_name_ident {
+                pub fn builder() -> #builder_name_ident {
+                    #builder_name_ident::default()
+                }
+            }
+        };
+
+        // this token stream is appended in in `builder_for_struct`
+        TokenStream::from(expanded)
+    }
+}
+
 impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {

@@ -86,5 +86,8 @@ pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
 
     builder.push_build_fn(build_fn);
 
-    quote!(#builder)
+    // adds pub fn builder() to original struct
+    let extra_builder_fn = builder.add_builder_fn_to_struct(&ast);
+
+    quote!(#builder #extra_builder_fn)
 }
