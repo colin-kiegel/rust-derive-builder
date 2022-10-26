@@ -1,3 +1,5 @@
+#![cfg(compiletests)]
+
 extern crate rustversion;
 extern crate trybuild;
 
