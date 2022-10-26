@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+- Produce error when `default` is used with `field(type = "...")` rather than silently ignoring `default` #269
+
 ## [0.11.2] - 2022-04-20
 - Allow restricted visibility using `vis = "..."` for builders, build methods, setters, and fields #247
 - Allow specifying the type of a builder field using `#[builder(field(type = "..."))]` #246

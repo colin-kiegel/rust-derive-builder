@@ -335,30 +335,43 @@ impl Field {
 
     /// Resolve and check (post-parsing) options which come from multiple darling options
     ///
-    ///  * Check that we don't have a custom field builder *and* a default value
+    ///  * Check that we don't have a custom field type or builder *and* a default value
     ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
     fn resolve(mut self) -> darling::Result<Self> {
         let mut errors = darling::Error::accumulator();
 
-        // `field.build` is stronger than `default`, as it contains both instructions on how to
-        // deal with a missing value and conversions to do on the value during target type
-        // construction. Because default will not be used, we disallow it.
+        // `default` can be preempted by properties in `field`. Silently ignoring a
+        // `default` could cause the direct user of `derive_builder` to see unexpected
+        // behavior from the builder, so instead we require that the deriving struct
+        // not pass any ignored instructions.
         if let Field {
             default: Some(field_default),
-            field:
-                FieldLevelFieldMeta {
-                    build: Some(_custom_build),
-                    ..
-                },
             ..
         } = &self
         {
-            errors.push(
-                darling::Error::custom(
-                    r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
+            // `field.build` is stronger than `default`, as it contains both instructions on how to
+            // deal with a missing value and conversions to do on the value during target type
+            // construction.
+            if self.field.build.is_some() {
+                errors.push(
+                    darling::Error::custom(
+                        r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
+                    )
+                    .with_span(field_default),
+                );
+            }
+
+            // `field.type` being set means `default` will not be used, since we don't know how
+            // to check a custom field type for the absence of a value and therefore we'll never
+            // know that we should use the `default` value.
+            if self.field.builder_type.is_some() {
+                errors.push(
+                    darling::Error::custom(
+                        r#"#[builder(default)] and #[builder(field(type="..."))] cannot be used together"#,
+                    )
+                    .with_span(field_default)
                 )
-                .with_span(field_default),
-            );
+            }
         };
 
         errors.handle(distribute_and_unnest_attrs(
