@@ -195,7 +195,7 @@ enum MatchSome {
     Clone,
 }
 
-impl<'a> ToTokens for MatchSome {
+impl ToTokens for MatchSome {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match *self {
             Self::Move => tokens.append_all(quote!(
