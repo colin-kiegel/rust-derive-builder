@@ -61,7 +61,7 @@
 //! ```
 //!
 //! By default all generated setter-methods take and return `&mut self`
-//! (aka _non-conusuming_ builder pattern). Accordingly, the build method also takes a
+//! (aka _non-consuming_ builder pattern). Accordingly, the build method also takes a
 //! reference by default.
 //!
 //! You can easily opt into different patterns and control many other aspects.
