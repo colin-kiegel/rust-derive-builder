@@ -134,7 +134,9 @@ impl<'a> ToTokens for BuilderFieldTypeWithCrateRoot<'a> {
 macro_rules! default_builder_field {
     () => {{
         BuilderField {
-            crate_root: &parse_quote!(::derive_builder),
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
             field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
@@ -155,7 +157,7 @@ mod tests {
         assert_eq!(
             quote!(#field).to_string(),
             quote!(
-                #[some_attr] pub foo: ::derive_builder::export::core::option::Option<String>,
+                #[some_attr] pub foo: ::db::export::core::option::Option<String>,
             )
             .to_string()
         );
@@ -174,7 +176,7 @@ mod tests {
             quote!(#field).to_string(),
             quote!(
                 #[some_attr]
-                foo: ::derive_builder::export::core::marker::PhantomData<String>,
+                foo: ::db::export::core::marker::PhantomData<String>,
             )
             .to_string()
         );
@@ -190,7 +192,7 @@ mod tests {
             quote!(#field).to_string(),
             quote!(
                 #[some_attr]
-                foo: ::derive_builder::export::core::option::Option<String>,
+                foo: ::db::export::core::option::Option<String>,
             )
             .to_string()
         );

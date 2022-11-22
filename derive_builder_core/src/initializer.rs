@@ -243,7 +243,9 @@ impl ToTokens for MatchSome<'_> {
 macro_rules! default_initializer {
     () => {
         Initializer {
-            crate_root: &parse_quote!(::derive_builder),
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
@@ -269,9 +271,9 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        ::derive_builder::UninitializedFieldError::from("foo")
+                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
+                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
+                        ::db::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -288,9 +290,9 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        ::derive_builder::UninitializedFieldError::from("foo")
+                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
+                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
+                        ::db::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -308,8 +310,8 @@ mod tests {
             quote!(
                 foo: match self.foo {
                     Some(value) => value,
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        ::derive_builder::UninitializedFieldError::from("foo")
+                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
+                        ::db::UninitializedFieldError::from("foo")
                     )),
                 },
             )
@@ -327,7 +329,7 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
+                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
                     None => { 42 },
                 },
             )
@@ -344,7 +346,7 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
+                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
                     None => __default.foo,
                 },
             )
@@ -359,7 +361,7 @@ mod tests {
 
         assert_eq!(
             quote!(#initializer).to_string(),
-            quote!(foo: ::derive_builder::export::core::default::Default::default(),).to_string()
+            quote!(foo: ::db::export::core::default::Default::default(),).to_string()
         );
     }
 
@@ -371,9 +373,9 @@ mod tests {
             quote!(#initializer).to_string(),
             quote!(
                 foo: match self.foo {
-                    Some(ref value) => ::derive_builder::export::core::clone::Clone::clone(value),
-                    None => return ::derive_builder::export::core::result::Result::Err(::derive_builder::export::core::convert::Into::into(
-                        ::derive_builder::UninitializedFieldError::from("foo")
+                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
+                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
+                        ::db::UninitializedFieldError::from("foo")
                     )),
                 },
             )

@@ -142,7 +142,9 @@ impl<'a> BuildMethod<'a> {
 macro_rules! default_build_method {
     () => {
         BuildMethod {
-            crate_root: &parse_quote!(::derive_builder),
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
             enabled: true,
             ident: &syn::Ident::new("build", ::proc_macro2::Span::call_site()),
             visibility: ::std::borrow::Cow::Owned(syn::parse_quote!(pub)),
@@ -171,7 +173,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::db::export::core::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -192,7 +194,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::db::export::core::result::Result<Foo, FooBuilderError> {
                     let __default: Foo = { Default::default() };
                     Ok(Foo {
                         foo: self.foo,
@@ -222,7 +224,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn finish(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
+                pub fn finish(&self) -> ::db::export::core::result::Result<Foo, FooBuilderError> {
                     Ok(Foo {
                         foo: self.foo,
                     })
@@ -243,7 +245,7 @@ mod tests {
         assert_eq!(
             quote!(#build_method).to_string(),
             quote!(
-                pub fn build(&self) -> ::derive_builder::export::core::result::Result<Foo, FooBuilderError> {
+                pub fn build(&self) -> ::db::export::core::result::Result<Foo, FooBuilderError> {
                     IpsumBuilder::validate(&self)?;
 
                     Ok(Foo {
