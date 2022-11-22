@@ -31,6 +31,8 @@ use syn;
 /// ```
 #[derive(Debug, Clone)]
 pub struct BuilderField<'a> {
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a syn::Path,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Type of the builder field.
@@ -45,7 +47,7 @@ impl<'a> ToTokens for BuilderField<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = self.field_ident;
         let vis = &self.field_visibility;
-        let ty = &self.field_type;
+        let ty = &self.field_type.with_crate_root(self.crate_root);
         let attrs = self.attrs;
         tokens.append_all(quote!(
             #(#attrs)* #vis #ident: #ty,
@@ -57,7 +59,8 @@ impl<'a> BuilderField<'a> {
     /// Emits a struct field initializer that initializes the field to `Default::default`.
     pub fn default_initializer_tokens(&self) -> TokenStream {
         let ident = self.field_ident;
-        quote! { #ident : ::derive_builder::export::core::default::Default::default(), }
+        let crate_root = self.crate_root;
+        quote! { #ident : #crate_root::export::core::default::Default::default(), }
     }
 }
 
@@ -94,17 +97,30 @@ impl<'a> BuilderFieldType<'a> {
             BuilderFieldType::Phantom(_ty) => panic!("phantom fields should never have setters"),
         }
     }
+
+    fn with_crate_root(&'a self, crate_root: &'a syn::Path) -> BuilderFieldTypeWithCrateRoot<'a> {
+        BuilderFieldTypeWithCrateRoot {
+            crate_root,
+            field_type: self,
+        }
+    }
 }
 
-impl<'a> ToTokens for BuilderFieldType<'a> {
+struct BuilderFieldTypeWithCrateRoot<'a> {
+    crate_root: &'a syn::Path,
+    field_type: &'a BuilderFieldType<'a>,
+}
+
+impl<'a> ToTokens for BuilderFieldTypeWithCrateRoot<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
+        let crate_root = self.crate_root;
+        match self.field_type {
             BuilderFieldType::Optional(ty) => tokens.append_all(quote!(
-                ::derive_builder::export::core::option::Option<#ty>
+                #crate_root::export::core::option::Option<#ty>
             )),
             BuilderFieldType::Precise(ty) => ty.to_tokens(tokens),
             BuilderFieldType::Phantom(ty) => tokens.append_all(quote!(
-                ::derive_builder::export::core::marker::PhantomData<#ty>
+                #crate_root::export::core::marker::PhantomData<#ty>
             )),
         }
     }
@@ -118,6 +134,7 @@ impl<'a> ToTokens for BuilderFieldType<'a> {
 macro_rules! default_builder_field {
     () => {{
         BuilderField {
+            crate_root: &parse_quote!(::derive_builder),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(String)))),
             field_visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),

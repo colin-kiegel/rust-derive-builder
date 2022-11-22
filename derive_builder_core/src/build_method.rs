@@ -40,6 +40,8 @@ use crate::DefaultExpression;
 /// ```
 #[derive(Debug)]
 pub struct BuildMethod<'a> {
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a syn::Path,
     /// Enables code generation for this build method.
     pub enabled: bool,
     /// Name of this build fn.
@@ -82,6 +84,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         };
         let doc_comment = &self.doc_comment;
         let default_struct = self.default_struct.as_ref().map(|default_expr| {
+            let default_expr = default_expr.with_crate_root(self.crate_root);
             let ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
             quote!(let #ident: #target_ty #target_ty_generics = #default_expr;)
         });
@@ -92,10 +95,11 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let error_ty = &self.error_ty;
 
         if self.enabled {
+            let crate_root = &self.crate_root;
             tokens.append_all(quote!(
                 #doc_comment
                 #vis fn #ident(#self_param)
-                    -> ::derive_builder::export::core::result::Result<#target_ty #target_ty_generics, #error_ty>
+                    -> #crate_root::export::core::result::Result<#target_ty #target_ty_generics, #error_ty>
                 {
                     #validate_fn
                     #default_struct
@@ -138,6 +142,7 @@ impl<'a> BuildMethod<'a> {
 macro_rules! default_build_method {
     () => {
         BuildMethod {
+            crate_root: &parse_quote!(::derive_builder),
             enabled: true,
             ident: &syn::Ident::new("build", ::proc_macro2::Span::call_site()),
             visibility: ::std::borrow::Cow::Owned(syn::parse_quote!(pub)),

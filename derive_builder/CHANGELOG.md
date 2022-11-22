@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Produce error when `default` is used with `field(type = "...")` rather than silently ignoring `default` #269
+- Add support for `crate = "..."` to support re-export scenarios #274
 
 ## [0.11.2] - 2022-04-20
 - Allow restricted visibility using `vis = "..."` for builders, build methods, setters, and fields #247

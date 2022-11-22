@@ -130,6 +130,7 @@ It's as simple as three steps:
 - **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
 - **Pass-through attributes**: Use `#[builder_struct_attr(...)]`, `#[builder_impl_attr(...)]`, `#[builder_field_attr(...)]`, and `#[builder_setter_attr(...)]` to declare attributes that will be added to the relevant part of the generated builder.
 - **no_std support**: Just add `#[builder(no_std)]` to your struct and add `extern crate alloc` to your crate.
+- **Re-export support**: Use `#[builder(crate = "...")]` to set the root for `derive_builder`. This is useful if your crate is re-exporting `derive_builder::Builder` and needs the generated code to not directly reference the `derive_builder` crate.
 
 For more information and examples please take a look at our [documentation][doc].
 

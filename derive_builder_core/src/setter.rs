@@ -41,6 +41,8 @@ use Each;
 /// ```
 #[derive(Debug, Clone)]
 pub struct Setter<'a> {
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a syn::Path,
     /// Enables code generation for this setter fn.
     pub setter_enabled: bool,
     /// Enables code generation for the `try_` variant of this setter fn.
@@ -73,6 +75,7 @@ pub struct Setter<'a> {
 impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
+            let crate_root = self.crate_root;
             let pattern = self.pattern;
             let vis = &self.visibility;
             let field_ident = self.field_ident;
@@ -99,7 +102,7 @@ impl<'a> ToTokens for Setter<'a> {
                     self_param = quote!(&self);
                     return_ty = quote!(Self);
                     self_into_return_ty =
-                        quote!(::derive_builder::export::core::clone::Clone::clone(self));
+                        quote!(#crate_root::export::core::clone::Clone::clone(self));
                 }
             };
 
@@ -121,7 +124,7 @@ impl<'a> ToTokens for Setter<'a> {
             };
 
             if self.generic_into {
-                ty_params = quote!(<VALUE: ::derive_builder::export::core::convert::Into<#ty>>);
+                ty_params = quote!(<VALUE: #crate_root::export::core::convert::Into<#ty>>);
                 param_ty = quote!(VALUE);
                 into_value = quote!(value.into());
             } else {
@@ -132,10 +135,10 @@ impl<'a> ToTokens for Setter<'a> {
             // If both `stripped_option` and `builder_field_is_option`, the target field is `Option<field_type>`,
             // the builder field is `Option<Option<field_type>>`, and the setter takes `file_type`, so we must wrap it twice.
             if stripped_option {
-                into_value = wrap_expression_in_some(into_value);
+                into_value = wrap_expression_in_some(crate_root, into_value);
             }
             if builder_field_is_option {
-                into_value = wrap_expression_in_some(into_value);
+                into_value = wrap_expression_in_some(crate_root, into_value);
             }
 
             tokens.append_all(quote!(
@@ -153,18 +156,18 @@ impl<'a> ToTokens for Setter<'a> {
 
             if self.try_setter {
                 let try_ty_params =
-                    quote!(<VALUE: ::derive_builder::export::core::convert::TryInto<#ty>>);
+                    quote!(<VALUE: #crate_root::export::core::convert::TryInto<#ty>>);
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
 
                 let mut converted = quote! {converted};
                 if builder_field_is_option {
-                    converted = wrap_expression_in_some(converted);
+                    converted = wrap_expression_in_some(crate_root, converted);
                 }
 
                 tokens.append_all(quote!(
                     #(#attrs)*
                     #vis fn #try_ident #try_ty_params (#self_param, value: VALUE)
-                        -> ::derive_builder::export::core::result::Result<#return_ty, VALUE::Error>
+                        -> #crate_root::export::core::result::Result<#return_ty, VALUE::Error>
                     {
                         let converted : #ty = value.try_into()?;
                         let mut new = #self_into_return_ty;
@@ -181,13 +184,13 @@ impl<'a> ToTokens for Setter<'a> {
                 let get_initialized_collection = if stripped_option {
                     // Outer (builder) Option -> Inner (field) Option -> collection.
                     quote!(get_or_insert_with(|| Some(
-                        ::derive_builder::export::core::default::Default::default()
+                        #crate_root::export::core::default::Default::default()
                     ))
-                    .get_or_insert_with(::derive_builder::export::core::default::Default::default))
+                    .get_or_insert_with(#crate_root::export::core::default::Default::default))
                 } else {
                     // Outer (builder) Option -> collection.
                     quote!(get_or_insert_with(
-                        ::derive_builder::export::core::default::Default::default
+                        #crate_root::export::core::default::Default::default
                     ))
                 };
 
@@ -196,9 +199,9 @@ impl<'a> ToTokens for Setter<'a> {
                 let into_item: TokenStream;
 
                 if each.into {
-                    ty_params = quote!(<VALUE, FROM_VALUE: ::derive_builder::export::core::convert::Into<VALUE>>);
+                    ty_params = quote!(<VALUE, FROM_VALUE: #crate_root::export::core::convert::Into<VALUE>>);
                     param_ty = quote!(FROM_VALUE);
-                    into_item = quote!(::derive_builder::export::core::convert::Into::into(item));
+                    into_item = quote!(#crate_root::export::core::convert::Into::into(item));
                 } else {
                     ty_params = quote!(<VALUE>);
                     param_ty = quote!(VALUE);
@@ -210,13 +213,13 @@ impl<'a> ToTokens for Setter<'a> {
                     #[allow(unused_mut)]
                     #vis fn #ident_each #ty_params(#self_param, item: #param_ty) -> #return_ty
                     where
-                        #ty: ::derive_builder::export::core::default::Default + ::derive_builder::export::core::iter::Extend<VALUE>,
+                        #ty: #crate_root::export::core::default::Default + #crate_root::export::core::iter::Extend<VALUE>,
                     {
                         #deprecation_notes
                         let mut new = #self_into_return_ty;
                         new.#field_ident
                             .#get_initialized_collection
-                            .extend(::derive_builder::export::core::option::Option::Some(#into_item));
+                            .extend(#crate_root::export::core::option::Option::Some(#into_item));
                         new
                     }
                 ));
@@ -226,8 +229,8 @@ impl<'a> ToTokens for Setter<'a> {
 }
 
 /// Returns expression wrapping `bare_value` in `Some`
-fn wrap_expression_in_some(bare_value: impl ToTokens) -> TokenStream {
-    quote!( ::derive_builder::export::core::option::Option::Some(#bare_value) )
+fn wrap_expression_in_some(crate_root: &syn::Path, bare_value: impl ToTokens) -> TokenStream {
+    quote!( #crate_root::export::core::option::Option::Some(#bare_value) )
 }
 
 // adapted from https://stackoverflow.com/a/55277337/469066
@@ -284,6 +287,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
 macro_rules! default_setter {
     () => {
         Setter {
+            crate_root: &parse_quote!(::derive_builder),
             setter_enabled: true,
             try_setter: false,
             visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
