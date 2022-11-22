@@ -86,6 +86,8 @@ use Setter;
 /// ```
 #[derive(Debug)]
 pub struct Builder<'a> {
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a Path,
     /// Enables code generation for this builder struct.
     pub enabled: bool,
     /// Name of this builder struct.
@@ -143,6 +145,7 @@ pub struct Builder<'a> {
 impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
+            let crate_root = self.crate_root;
             let builder_vis = &self.visibility;
             let builder_ident = &self.ident;
             let bounded_generics = self.compute_impl_bounds();
@@ -216,7 +219,7 @@ impl<'a> ToTokens for Builder<'a> {
 
             if self.impl_default {
                 tokens.append_all(quote!(
-                    impl #impl_generics ::derive_builder::export::core::default::Default for #builder_ident #ty_generics #where_clause {
+                    impl #impl_generics #crate_root::export::core::default::Default for #builder_ident #ty_generics #where_clause {
                         fn default() -> Self {
                             Self::#create_empty()
                         }
@@ -236,23 +239,23 @@ impl<'a> ToTokens for Builder<'a> {
                         /// Uninitialized field
                         UninitializedField(&'static str),
                         /// Custom validation error
-                        ValidationError(::derive_builder::export::core::string::String),
+                        ValidationError(#crate_root::export::core::string::String),
                     }
 
-                    impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for #builder_error_ident {
-                        fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+                    impl #crate_root::export::core::convert::From<#crate_root::UninitializedFieldError> for #builder_error_ident {
+                        fn from(s: #crate_root::UninitializedFieldError) -> Self {
                             Self::UninitializedField(s.field_name())
                         }
                     }
 
-                    impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for #builder_error_ident {
-                        fn from(s: ::derive_builder::export::core::string::String) -> Self {
+                    impl #crate_root::export::core::convert::From<#crate_root::export::core::string::String> for #builder_error_ident {
+                        fn from(s: #crate_root::export::core::string::String) -> Self {
                             Self::ValidationError(s)
                         }
                     }
 
-                    impl ::derive_builder::export::core::fmt::Display for #builder_error_ident {
-                        fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+                    impl #crate_root::export::core::fmt::Display for #builder_error_ident {
+                        fn fmt(&self, f: &mut #crate_root::export::core::fmt::Formatter) -> #crate_root::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                                 Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -309,11 +312,13 @@ impl<'a> Builder<'a> {
                 return generics;
             }
 
+            let crate_root = self.crate_root;
+
             let clone_bound = TypeParamBound::Trait(TraitBound {
                 paren_token: None,
                 modifier: TraitBoundModifier::None,
                 lifetimes: None,
-                path: syn::parse_quote!(::derive_builder::export::core::clone::Clone),
+                path: syn::parse_quote!(#crate_root::export::core::clone::Clone),
             });
 
             for typ in generics.type_params_mut() {
@@ -334,6 +339,7 @@ impl<'a> Builder<'a> {
 macro_rules! default_builder {
     () => {
         Builder {
+            crate_root: &parse_quote!(::derive_builder),
             enabled: true,
             ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),

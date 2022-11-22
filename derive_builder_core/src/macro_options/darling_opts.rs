@@ -494,6 +494,10 @@ impl Visibility for Field {
     }
 }
 
+fn default_crate_root() -> Path {
+    parse_quote!(::derive_builder)
+}
+
 fn default_create_empty() -> Ident {
     Ident::new("create_empty", Span::call_site())
 }
@@ -529,6 +533,11 @@ pub struct Options {
 
     /// The name of the generated builder. Defaults to `#{ident}Builder`.
     name: Option<Ident>,
+
+    /// The path to the root of the derive_builder crate used in generated
+    /// code.
+    #[darling(rename = "crate", default = "default_crate_root")]
+    crate_root: Path,
 
     #[darling(default)]
     pattern: BuilderPattern,
@@ -685,6 +694,7 @@ impl Options {
 impl Options {
     pub fn as_builder(&self) -> Builder {
         Builder {
+            crate_root: &self.crate_root,
             enabled: true,
             ident: self.builder_ident(),
             pattern: self.pattern,
@@ -709,6 +719,7 @@ impl Options {
     pub fn as_build_method(&self) -> BuildMethod {
         let (_, ty_generics, _) = self.generics.split_for_impl();
         BuildMethod {
+            crate_root: &self.crate_root,
             enabled: !self.build_fn.skip,
             ident: &self.build_fn.name,
             visibility: self.build_method_vis(),
@@ -875,6 +886,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// Returns a `Setter` according to the options.
     pub fn as_setter(&'a self) -> Setter<'a> {
         Setter {
+            crate_root: &self.parent.crate_root,
             setter_enabled: self.setter_enabled(),
             try_setter: self.try_setter(),
             visibility: self.setter_vis(),
@@ -897,6 +909,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// if `default_expression` can not be parsed as `Block`.
     pub fn as_initializer(&'a self) -> Initializer<'a> {
         Initializer {
+            crate_root: &self.parent.crate_root,
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
@@ -914,6 +927,7 @@ impl<'a> FieldWithDefaults<'a> {
 
     pub fn as_builder_field(&'a self) -> BuilderField<'a> {
         BuilderField {
+            crate_root: &self.parent.crate_root,
             field_ident: self.field_ident(),
             field_type: self.field_type(),
             field_visibility: self.field_vis(),
