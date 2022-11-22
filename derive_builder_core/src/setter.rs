@@ -287,7 +287,9 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
 macro_rules! default_setter {
     () => {
         Setter {
-            crate_root: &parse_quote!(::derive_builder),
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
             setter_enabled: true,
             try_setter: false,
             visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
@@ -319,8 +321,8 @@ mod tests {
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo(&self, value: Foo) -> Self {
-                    let mut new = ::derive_builder::export::core::clone::Clone::clone(self);
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    let mut new = ::db::export::core::clone::Clone::clone(self);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -339,7 +341,7 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -358,7 +360,7 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(self, value: Foo) -> Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -379,7 +381,7 @@ mod tests {
                 #[allow(unused_mut)]
                 fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -397,12 +399,12 @@ mod tests {
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
+                pub fn foo<VALUE: ::db::export::core::convert::Into<Foo>>(
                     &mut self,
                     value: VALUE
                 ) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
+                    new.foo = ::db::export::core::option::Option::Some(value.into());
                     new
                 }
             )
@@ -424,8 +426,8 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(
-                        ::derive_builder::export::core::option::Option::Some(value)
+                    new.foo = ::db::export::core::option::Option::Some(
+                        ::db::export::core::option::Option::Some(value)
                     );
                     new
                 }
@@ -447,13 +449,13 @@ mod tests {
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
+                pub fn foo<VALUE: ::db::export::core::convert::Into<Foo>>(
                     &mut self,
                     value: VALUE
                 ) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(
-                        ::derive_builder::export::core::option::Option::Some(value.into())
+                    new.foo = ::db::export::core::option::Option::Some(
+                        ::db::export::core::option::Option::Some(value.into())
                     );
                     new
                 }
@@ -483,19 +485,19 @@ mod tests {
             quote!(
             #[some_attr]
             #[allow(unused_mut)]
-            pub fn foo <VALUE: ::derive_builder::export::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
+            pub fn foo <VALUE: ::db::export::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
                 let mut new = self;
-                new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
+                new.foo = ::db::export::core::option::Option::Some(value.into());
                 new
             }
 
             #[some_attr]
-            pub fn try_foo<VALUE: ::derive_builder::export::core::convert::TryInto<Foo>>(&mut self, value: VALUE)
-                -> ::derive_builder::export::core::result::Result<&mut Self, VALUE::Error> {
+            pub fn try_foo<VALUE: ::db::export::core::convert::TryInto<Foo>>(&mut self, value: VALUE)
+                -> ::db::export::core::result::Result<&mut Self, VALUE::Error> {
                 let converted : Foo = value.try_into()?;
                 let mut new = self;
-                new.foo = ::derive_builder::export::core::option::Option::Some(converted);
+                new.foo = ::db::export::core::option::Option::Some(converted);
                 Ok(new)
             }
         ).to_string()
@@ -512,8 +514,8 @@ mod tests {
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo(&self, value: Foo) -> Self {
-                    let mut new = ::derive_builder::export::core::clone::Clone::clone(self);
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    let mut new = ::db::export::core::clone::Clone::clone(self);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
             )
@@ -531,12 +533,12 @@ mod tests {
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
-                pub fn foo<VALUE: ::derive_builder::export::core::convert::Into<Foo>>(
+                pub fn foo<VALUE: ::db::export::core::convert::Into<Foo>>(
                     &mut self,
                     value: VALUE
                 ) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value.into());
+                    new.foo = ::db::export::core::option::Option::Some(value.into());
                     new
                 }
             )
@@ -565,17 +567,17 @@ mod tests {
                 #[allow(unused_mut)]
                 pub fn foo(&mut self, value: Foo) -> &mut Self {
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(value);
+                    new.foo = ::db::export::core::option::Option::Some(value);
                     new
                 }
 
-                pub fn try_foo<VALUE: ::derive_builder::export::core::convert::TryInto<Foo>>(
+                pub fn try_foo<VALUE: ::db::export::core::convert::TryInto<Foo>>(
                     &mut self,
                     value: VALUE
-                ) -> ::derive_builder::export::core::result::Result<&mut Self, VALUE::Error> {
+                ) -> ::db::export::core::result::Result<&mut Self, VALUE::Error> {
                     let converted: Foo = value.try_into()?;
                     let mut new = self;
-                    new.foo = ::derive_builder::export::core::option::Option::Some(converted);
+                    new.foo = ::db::export::core::option::Option::Some(converted);
                     Ok(new)
                 }
             )

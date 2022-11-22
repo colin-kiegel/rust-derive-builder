@@ -339,7 +339,9 @@ impl<'a> Builder<'a> {
 macro_rules! default_builder {
     () => {
         Builder {
-            crate_root: &parse_quote!(::derive_builder),
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
             enabled: true,
             ident: syn::Ident::new("FooBuilder", ::proc_macro2::Span::call_site()),
             pattern: Default::default(),
@@ -351,7 +353,7 @@ macro_rules! default_builder {
             generics: None,
             visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             fields: vec![quote!(foo: u32,)],
-            field_initializers: vec![quote!(foo: ::derive_builder::export::core::default::Default::default(), )],
+            field_initializers: vec![quote!(foo: ::db::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             generate_error: true,
             must_derive_clone: true,
@@ -378,23 +380,23 @@ mod tests {
                 /// Uninitialized field
                 UninitializedField(&'static str),
                 /// Custom validation error
-                ValidationError(::derive_builder::export::core::string::String),
+                ValidationError(::db::export::core::string::String),
             }
 
-            impl ::derive_builder::export::core::convert::From<::derive_builder::UninitializedFieldError> for FooBuilderError {
-                fn from(s: ::derive_builder::UninitializedFieldError) -> Self {
+            impl ::db::export::core::convert::From<::db::UninitializedFieldError> for FooBuilderError {
+                fn from(s: ::db::UninitializedFieldError) -> Self {
                     Self::UninitializedField(s.field_name())
                 }
             }
 
-            impl ::derive_builder::export::core::convert::From<::derive_builder::export::core::string::String> for FooBuilderError {
-                fn from(s: ::derive_builder::export::core::string::String) -> Self {
+            impl ::db::export::core::convert::From<::db::export::core::string::String> for FooBuilderError {
+                fn from(s: ::db::export::core::string::String) -> Self {
                     Self::ValidationError(s)
                 }
             }
 
-            impl ::derive_builder::export::core::fmt::Display for FooBuilderError {
-                fn fmt(&self, f: &mut ::derive_builder::export::core::fmt::Formatter) -> ::derive_builder::export::core::fmt::Result {
+            impl ::db::export::core::fmt::Display for FooBuilderError {
+                fn fmt(&self, f: &mut ::db::export::core::fmt::Formatter) -> ::db::export::core::fmt::Result {
                     match self {
                         Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
                         Self::ValidationError(ref error) => write!(f, "{}", error),
@@ -438,12 +440,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                    impl ::db::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self::create_empty()
                         }
@@ -491,12 +493,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                    impl ::db::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self::empty()
                         }
@@ -543,7 +545,7 @@ mod tests {
 
                 result.append_all(quote!(
                     #[allow(dead_code)]
-                    impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
+                    impl<'a, T: Debug + ::db::export::core::clone::Clone> FooBuilder<'a, T> where T: PartialEq {
                         fn bar() -> {
                             unimplemented!()
                         }
@@ -551,12 +553,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl<'a, T: Debug + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
+                    impl<'a, T: Debug + ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
                             Self::create_empty()
                         }
@@ -603,7 +605,7 @@ mod tests {
 
                 result.append_all(quote!(
                     #[allow(dead_code)]
-                    impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> FooBuilder<'a, T>
+                    impl<'a, T: 'a + Default + ::db::export::core::clone::Clone> FooBuilder<'a, T>
                     where
                         T: PartialEq
                     {
@@ -614,12 +616,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl<'a, T: 'a + Default + ::derive_builder::export::core::clone::Clone> ::derive_builder::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
+                    impl<'a, T: 'a + Default + ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
                         fn default() -> Self {
                             Self::create_empty()
                         }
@@ -674,12 +676,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl<'a, T: Debug> ::derive_builder::export::core::default::Default for FooBuilder<'a, T>
+                    impl<'a, T: Debug> ::db::export::core::default::Default for FooBuilder<'a, T>
                     where T: PartialEq {
                         fn default() -> Self {
                             Self::create_empty()
@@ -736,12 +738,12 @@ mod tests {
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {
-                                foo: ::derive_builder::export::core::default::Default::default(),
+                                foo: ::db::export::core::default::Default::default(),
                             }
                         }
                     }
 
-                    impl ::derive_builder::export::core::default::Default for FooBuilder {
+                    impl ::db::export::core::default::Default for FooBuilder {
                         fn default() -> Self {
                             Self::create_empty()
                         }
