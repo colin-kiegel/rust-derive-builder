@@ -10,7 +10,9 @@ extern crate derive_builder_core;
 
 use proc_macro::TokenStream;
 
-#[doc(hidden)]
+/// Create a builder struct for the deriving struct.
+///
+/// See the `derive_builder` crate documentation for more details.
 #[proc_macro_derive(
     Builder,
     attributes(
