@@ -160,7 +160,12 @@ impl<'a> ToTokens for Setter<'a> {
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
 
                 let mut converted = quote! {converted};
+
                 if builder_field_is_option {
+                    converted = wrap_expression_in_some(crate_root, converted);
+                }
+
+                if stripped_option {
                     converted = wrap_expression_in_some(crate_root, converted);
                 }
 
@@ -458,6 +463,43 @@ mod tests {
                         ::db::export::core::option::Option::Some(value.into())
                     );
                     new
+                }
+            )
+            .to_string()
+        );
+    }
+    #[test]
+    fn strip_option_try_into() {
+        let ty = parse_quote!(Option<Foo>);
+        let mut setter = default_setter!();
+        setter.strip_option = true;
+        setter.try_setter = true;
+        setter.generic_into = true;
+        setter.field_type = BuilderFieldType::Optional(&ty);
+        assert_eq!(
+            quote!(#setter).to_string(),
+            quote!(
+                #[allow(unused_mut)]
+                pub fn foo<VALUE: ::db::export::core::convert::Into<Foo>>(
+                    &mut self,
+                    value: VALUE,
+                ) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::db::export::core::option::Option::Some(
+                        ::db::export::core::option::Option::Some(value.into()),
+                    );
+                    new
+                }
+                pub fn try_foo<VALUE: ::db::export::core::convert::TryInto<Foo>>(
+                    &mut self,
+                    value: VALUE,
+                ) -> ::db::export::core::result::Result<&mut Self, VALUE::Error> {
+                    let converted: Foo = value.try_into()?;
+                    let mut new = self;
+                    new.foo = ::db::export::core::option::Option::Some(
+                        ::db::export::core::option::Option::Some(converted),
+                    );
+                    Ok(new)
                 }
             )
             .to_string()
