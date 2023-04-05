@@ -469,7 +469,7 @@ mod tests {
         );
     }
     #[test]
-    fn strip_option_try_into() {
+    fn strip_option_try_setter() {
         let ty = parse_quote!(Option<Foo>);
         let mut setter = default_setter!();
         setter.strip_option = true;
