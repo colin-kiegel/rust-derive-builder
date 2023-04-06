@@ -160,11 +160,9 @@ impl<'a> ToTokens for Setter<'a> {
                 let try_ident = syn::Ident::new(&format!("try_{}", ident), Span::call_site());
 
                 let mut converted = quote! {converted};
-
                 if builder_field_is_option {
                     converted = wrap_expression_in_some(crate_root, converted);
                 }
-
                 if stripped_option {
                     converted = wrap_expression_in_some(crate_root, converted);
                 }
