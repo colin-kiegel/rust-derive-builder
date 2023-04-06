@@ -476,28 +476,29 @@ mod tests {
         setter.try_setter = true;
         setter.generic_into = true;
         setter.field_type = BuilderFieldType::Optional(&ty);
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
                 #[allow(unused_mut)]
                 pub fn foo<VALUE: ::db::export::core::convert::Into<Foo>>(
                     &mut self,
-                    value: VALUE,
+                    value: VALUE
                 ) -> &mut Self {
                     let mut new = self;
                     new.foo = ::db::export::core::option::Option::Some(
-                        ::db::export::core::option::Option::Some(value.into()),
+                        ::db::export::core::option::Option::Some(value.into())
                     );
                     new
                 }
                 pub fn try_foo<VALUE: ::db::export::core::convert::TryInto<Foo>>(
                     &mut self,
-                    value: VALUE,
+                    value: VALUE
                 ) -> ::db::export::core::result::Result<&mut Self, VALUE::Error> {
                     let converted: Foo = value.try_into()?;
                     let mut new = self;
                     new.foo = ::db::export::core::option::Option::Some(
-                        ::db::export::core::option::Option::Some(converted),
+                        ::db::export::core::option::Option::Some(converted)
                     );
                     Ok(new)
                 }
