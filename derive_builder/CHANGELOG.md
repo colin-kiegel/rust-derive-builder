@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased] - 2023-04-06
+- Make try-setters inherit `strip_option` from `setter` for `try_setter`. Using these settings together previously caused a compile error  #284
+
 ## [0.12.0] - 2022-11-28
 - Produce error when `default` is used with `field(type = "...")` rather than silently ignoring `default` #269
 - Add support for `crate = "..."` to support re-export scenarios #274
