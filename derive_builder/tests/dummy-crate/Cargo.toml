@@ -3,7 +3,7 @@ name = "derive_builder_dummy_crate"
 version = "0.1.0"
 authors = ["Colin Kiegel <kiegel@gmx.de>"]
 description = "This dummy crate serves as a playground to **manually** inspect things like generated documentation. It is **not** tested automatically."
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 publish = false
 
 [lib]
