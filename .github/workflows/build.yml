@@ -12,7 +12,7 @@ jobs:
           - nightly
           - beta
           - stable
-          - 1.40.0 # MSRV
+          - 1.56.0 # MSRV
         features:
           - ""
           - --no-default-features

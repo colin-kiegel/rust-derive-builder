@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.13.0] - 2023-07-24
+- Bump MSRV to 1.56.0
+
 ## [0.12.0] - 2022-11-28
 - Produce error when `default` is used with `field(type = "...")` rather than silently ignoring `default` #269
 - Add support for `crate = "..."` to support re-export scenarios #274
