@@ -1,5 +1,5 @@
 ![Build](https://github.com/colin-kiegel/rust-derive-builder/workflows/Build/badge.svg)
-[![Rust version](https://img.shields.io/badge/rust-1.40+-blue.svg)]()
+[![Rust version](https://img.shields.io/badge/rust-1.56+-blue.svg)]()
 [![Documentation](https://docs.rs/derive_builder/badge.svg)](https://docs.rs/derive_builder)
 [![Latest version](https://img.shields.io/crates/v/derive_builder.svg)](https://crates.io/crates/derive_builder)
 [![All downloads](https://img.shields.io/crates/d/derive_builder.svg)](https://crates.io/crates/derive_builder)
