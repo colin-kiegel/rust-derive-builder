@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased] - 2023-07-25
+- Make try-setters inherit `strip_option` from `setter` for `try_setter`. Using these settings together previously caused a compile error  #284
+
 ## [0.13.0] - 2023-07-24
 - Bump MSRV to 1.56.0
 

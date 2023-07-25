@@ -85,3 +85,9 @@ fn renamed() {
         .build()
         .expect("All fields were provided");
 }
+
+#[derive(Debug, PartialEq, Builder)]
+#[builder(try_setter, setter(into, strip_option))]
+struct MaybeIpsum {
+    pub source: Option<MyAddr>,
+}

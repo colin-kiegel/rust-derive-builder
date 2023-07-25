@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 #[macro_use]
 extern crate pretty_assertions;
 #[macro_use]
@@ -16,6 +18,8 @@ struct SetterCustom {
     setter_custom_with_explicit_default: u32,
     #[builder(setter(custom = "true", strip_option))]
     setter_custom_with_strip_option: Option<u32>,
+    #[builder(try_setter, setter(custom = "true", strip_option))]
+    setter_custom_with_strip_option_try_setter: Option<u32>,
 }
 
 // compile test
@@ -44,6 +48,19 @@ impl SetterCustomBuilder {
         self.setter_custom_with_strip_option = Some(Some(6));
         self
     }
+    fn setter_custom_with_strip_option_try_setter(&mut self) -> &mut Self {
+        self.setter_custom_with_strip_option_try_setter = Some(Some(32));
+        self
+    }
+}
+
+struct TryIntoU32 {}
+impl TryInto<u32> for TryIntoU32 {
+    type Error = ();
+
+    fn try_into(self) -> Result<u32, Self::Error> {
+        Ok(32)
+    }
 }
 
 #[test]
@@ -58,6 +75,7 @@ fn setter_custom_defaults() {
             setter_custom_by_explicit_opt_out: 0,
             setter_custom_with_explicit_default: 4,
             setter_custom_with_strip_option: None,
+            setter_custom_with_strip_option_try_setter: None
         }
     );
 }
@@ -70,6 +88,7 @@ fn setter_custom_setters_called() {
         .setter_custom_by_explicit_opt_out(42)
         .setter_custom_with_explicit_default() // set to 43
         .setter_custom_with_strip_option() // set to 6
+        .setter_custom_with_strip_option_try_setter() // set to 32
         .build()
         .unwrap();
 
@@ -80,7 +99,8 @@ fn setter_custom_setters_called() {
             setter_custom_shorthand: 2,
             setter_custom_by_explicit_opt_out: 42,
             setter_custom_with_explicit_default: 43,
-            setter_custom_with_strip_option: Some(6)
+            setter_custom_with_strip_option: Some(6),
+            setter_custom_with_strip_option_try_setter: Some(32)
         }
     );
 }
