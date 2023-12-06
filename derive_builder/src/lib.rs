@@ -275,8 +275,8 @@
 //!
 //! ## Setters for Option
 //!
-//! You can avoid to user to wrap value into `Some(...)` for field of type `Option<T>`. It's as simple as adding
-//! `#[builder(setter(strip_option))]` to either a field or the whole struct.
+//! You can avoid wrapping values in `Some(...)` for fields of type `Option<T>`. It's as simple as adding
+//! `#[builder(setter(strip_option))]` to either a single field or the whole struct.
 //!
 //! ```rust
 //! # #[macro_use]
