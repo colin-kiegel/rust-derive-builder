@@ -9,4 +9,4 @@ publish = false
 clippy = ["derive_builder/clippy"]
 
 [dependencies]
-derive_builder = { path = "../derive_builder", default-features = false }
+derive_builder = { path = "../derive_builder", default-features = false, features = ["alloc"] }

@@ -73,7 +73,7 @@ fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
 /// There is no inheritance for these settings from struct-level to field-level,
 /// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
-#[darling(default)]
+#[darling(default, and_then = "Self::validation_needs_error")]
 pub struct BuildFn {
     skip: bool,
     name: Ident,
@@ -95,6 +95,25 @@ pub struct BuildFn {
     /// * If `validate` is specified, then this type must provide a conversion from the specified
     ///   function's error type.
     error: Option<Path>,
+    /// Whether to generate `ValidationError(String)` as a variant of the build error type.
+    ///
+    /// Setting this to `false` will prevent `derive_builder` from using the `validate` function
+    /// but this also means it does not generate any usage of the `alloc` crate (useful when
+    /// disabling the `alloc` feature in `no_std`).
+    validation_error: bool,
+}
+
+impl BuildFn {
+    fn validation_needs_error(self) -> darling::Result<Self> {
+        if self.validate.is_some() && !self.validation_error {
+            Err(darling::Error::custom(
+                "Cannot set `validation_error = false` when using `validate`",
+            )
+            .with_span(&self.validate))
+        } else {
+            Ok(self)
+        }
+    }
 }
 
 impl Default for BuildFn {
@@ -107,6 +126,7 @@ impl Default for BuildFn {
             private: Default::default(),
             vis: None,
             error: None,
+            validation_error: true,
         }
     }
 }
@@ -709,6 +729,7 @@ impl Options {
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
             generate_error: self.build_fn.error.is_none(),
+            generate_validation_error: self.build_fn.validation_error,
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),

@@ -1,0 +1,12 @@
+[package]
+name = "derive_builder_no_alloc_tests"
+version = "0.1.0"
+authors = ["Micah Weston <micahsweston@gmail.com>"]
+edition = "2018"
+publish = false
+
+[features]
+clippy = ["derive_builder/clippy"]
+
+[dependencies]
+derive_builder = { path = "../derive_builder", default-features = false }

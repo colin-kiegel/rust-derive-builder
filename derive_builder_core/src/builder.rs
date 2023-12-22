@@ -129,6 +129,12 @@ pub struct Builder<'a> {
     ///
     /// This would be `false` in the case where an already-existing error is to be used.
     pub generate_error: bool,
+    /// Whether to include `ValidationError` in the generated enum. Necessary to avoid dependency
+    /// on `alloc::string`.
+    ///
+    /// This would be `false` when `build_fn.validation_error == false`. This is ignored when
+    /// `generate_error` is `false`.
+    pub generate_validation_error: bool,
     /// Whether this builder must derive `Clone`.
     ///
     /// This is true even for a builder using the `owned` pattern if there is a field whose setter
@@ -231,6 +237,27 @@ impl<'a> ToTokens for Builder<'a> {
                 let builder_error_ident = format_ident!("{}Error", builder_ident);
                 let builder_error_doc = format!("Error type for {}", builder_ident);
 
+                let validation_error = self
+                    .generate_validation_error
+                    .then_some(quote!(
+                        /// Custom validation error
+                        ValidationError(#crate_root::export::core::string::String),
+                    ))
+                    .unwrap_or_default();
+                let validation_from = self.generate_validation_error.then_some(quote!(
+                    impl #crate_root::export::core::convert::From<#crate_root::export::core::string::String> for #builder_error_ident {
+                        fn from(s: #crate_root::export::core::string::String) -> Self {
+                            Self::ValidationError(s)
+                        }
+                    }
+                )).unwrap_or_default();
+                let validation_display = self
+                    .generate_validation_error
+                    .then_some(quote!(
+                        Self::ValidationError(ref error) => write!(f, "{}", error),
+                    ))
+                    .unwrap_or_default();
+
                 tokens.append_all(quote!(
                     #[doc=#builder_error_doc]
                     #[derive(Debug)]
@@ -238,8 +265,7 @@ impl<'a> ToTokens for Builder<'a> {
                     #builder_vis enum #builder_error_ident {
                         /// Uninitialized field
                         UninitializedField(&'static str),
-                        /// Custom validation error
-                        ValidationError(#crate_root::export::core::string::String),
+                        #validation_error
                     }
 
                     impl #crate_root::export::core::convert::From<#crate_root::UninitializedFieldError> for #builder_error_ident {
@@ -248,17 +274,13 @@ impl<'a> ToTokens for Builder<'a> {
                         }
                     }
 
-                    impl #crate_root::export::core::convert::From<#crate_root::export::core::string::String> for #builder_error_ident {
-                        fn from(s: #crate_root::export::core::string::String) -> Self {
-                            Self::ValidationError(s)
-                        }
-                    }
+                    #validation_from
 
                     impl #crate_root::export::core::fmt::Display for #builder_error_ident {
                         fn fmt(&self, f: &mut #crate_root::export::core::fmt::Formatter) -> #crate_root::export::core::fmt::Result {
                             match self {
                                 Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
-                                Self::ValidationError(ref error) => write!(f, "{}", error),
+                                #validation_display
                             }
                         }
                     }
@@ -356,6 +378,7 @@ macro_rules! default_builder {
             field_initializers: vec![quote!(foo: ::db::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             generate_error: true,
+            generate_validation_error: true,
             must_derive_clone: true,
             doc_comment: None,
             deprecation_notes: DeprecationNotes::default(),
@@ -751,6 +774,83 @@ mod tests {
                 ));
 
                 add_generated_error(&mut result);
+
+                result
+            }
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn no_validation_error() {
+        let mut builder = default_builder!();
+        builder.generate_validation_error = false;
+
+        assert_eq!(
+            quote!(#builder).to_string(),
+            {
+                let mut result = quote!();
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Clone)]
+                    pub struct FooBuilder {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl FooBuilder {
+                        fn bar () -> {
+                            unimplemented!()
+                        }
+
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::db::export::core::default::Default::default(),
+                            }
+                        }
+                    }
+
+                    impl ::db::export::core::default::Default for FooBuilder {
+                        fn default() -> Self {
+                            Self::create_empty()
+                        }
+                    }
+                ));
+
+                result.append_all(quote!(
+                    #[doc="Error type for FooBuilder"]
+                    #[derive(Debug)]
+                    #[non_exhaustive]
+                    pub enum FooBuilderError {
+                        /// Uninitialized field
+                        UninitializedField(&'static str),
+                    }
+
+                    impl ::db::export::core::convert::From<::db::UninitializedFieldError> for FooBuilderError {
+                        fn from(s: ::db::UninitializedFieldError) -> Self {
+                            Self::UninitializedField(s.field_name())
+                        }
+                    }
+
+                    impl ::db::export::core::fmt::Display for FooBuilderError {
+                        fn fmt(&self, f: &mut ::db::export::core::fmt::Formatter) -> ::db::export::core::fmt::Result {
+                            match self {
+                                Self::UninitializedField(ref field) => write!(f, "`{}` must be initialized", field),
+                            }
+                        }
+                    }
+
+                    impl std::error::Error for FooBuilderError {}
+                ));
 
                 result
             }
