@@ -237,26 +237,32 @@ impl<'a> ToTokens for Builder<'a> {
                 let builder_error_ident = format_ident!("{}Error", builder_ident);
                 let builder_error_doc = format!("Error type for {}", builder_ident);
 
-                let validation_error = self
-                    .generate_validation_error
-                    .then_some(quote!(
+                let validation_error = if self.generate_validation_error {
+                    quote!(
                         /// Custom validation error
                         ValidationError(#crate_root::export::core::string::String),
-                    ))
-                    .unwrap_or_default();
-                let validation_from = self.generate_validation_error.then_some(quote!(
-                    impl #crate_root::export::core::convert::From<#crate_root::export::core::string::String> for #builder_error_ident {
-                        fn from(s: #crate_root::export::core::string::String) -> Self {
-                            Self::ValidationError(s)
+                    )
+                } else {
+                    TokenStream::new()
+                };
+                let validation_from = if self.generate_validation_error {
+                    quote!(
+                        impl #crate_root::export::core::convert::From<#crate_root::export::core::string::String> for #builder_error_ident {
+                            fn from(s: #crate_root::export::core::string::String) -> Self {
+                                Self::ValidationError(s)
+                            }
                         }
-                    }
-                )).unwrap_or_default();
-                let validation_display = self
-                    .generate_validation_error
-                    .then_some(quote!(
+                    )
+                } else {
+                    TokenStream::new()
+                };
+                let validation_display = if self.generate_validation_error {
+                    quote!(
                         Self::ValidationError(ref error) => write!(f, "{}", error),
-                    ))
-                    .unwrap_or_default();
+                    )
+                } else {
+                    TokenStream::new()
+                };
 
                 tokens.append_all(quote!(
                     #[doc=#builder_error_doc]
