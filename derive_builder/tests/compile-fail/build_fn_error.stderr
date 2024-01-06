@@ -1,0 +1,23 @@
+error: Too many items: Expected no more than 1
+ --> tests/compile-fail/build_fn_error.rs:4:20
+  |
+4 | #[builder(build_fn(error(validation_error = false, path = "hello")))]
+  |                    ^^^^^
+
+error: Cannot set `error(validation_error = false)` when using `validate`
+  --> tests/compile-fail/build_fn_error.rs:10:26
+   |
+10 | #[builder(build_fn(error(validation_error = false), validate = "hello"))]
+   |                          ^^^^^^^^^^^^^^^^
+
+error: Unknown field: `path`
+  --> tests/compile-fail/build_fn_error.rs:16:26
+   |
+16 | #[builder(build_fn(error(path = "hello")))]
+   |                          ^^^^
+
+error: Too few items: Expected at least 1
+  --> tests/compile-fail/build_fn_error.rs:22:20
+   |
+22 | #[builder(build_fn(error()))]
+   |                    ^^^^^

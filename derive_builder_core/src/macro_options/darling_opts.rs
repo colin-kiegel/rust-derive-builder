@@ -69,6 +69,65 @@ fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
     }
 }
 
+#[derive(Debug, Clone)]
+enum BuildFnError {
+    Path(Path),
+    ValidationError(bool, Span),
+}
+
+impl BuildFnError {
+    fn as_path(&self) -> Option<&Path> {
+        match self {
+            BuildFnError::Path(p) => Some(p),
+            BuildFnError::ValidationError(_, _) => None,
+        }
+    }
+
+    fn as_validation_error(&self) -> Option<(bool, &Span)> {
+        match self {
+            BuildFnError::ValidationError(b, p) => Some((*b, p)),
+            BuildFnError::Path(_) => None,
+        }
+    }
+}
+
+impl FromMeta for BuildFnError {
+    fn from_list(items: &[syn::NestedMeta]) -> darling::Result<Self> {
+        let item = match items {
+            [] => Err(Error::too_few_items(1)),
+            [item] => Ok(item),
+            _ => Err(Error::too_many_items(1)),
+        }?;
+        let nested = match &item {
+            syn::NestedMeta::Meta(nested) => Ok(nested),
+            syn::NestedMeta::Lit(_) => Err(Error::unsupported_format("literal")),
+        }?;
+        match darling::util::path_to_string(nested.path()).as_ref() {
+            "validation_error" => {
+                let span = nested.span();
+                let boolean = FromMeta::from_meta(nested).map_err(|e| e.at("validation_error"))?;
+                Ok(BuildFnError::ValidationError(boolean, span))
+            }
+            other => {
+                Err(Error::unknown_field_with_alts(other, &["validation_error"]).with_span(nested))
+            }
+        }
+    }
+
+    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
+        if let syn::Lit::Str(s) = value {
+            let contents: Path = s.parse()?;
+            if contents.segments.is_empty() {
+                Err(Error::unknown_value("").with_span(s))
+            } else {
+                Ok(Self::Path(contents))
+            }
+        } else {
+            Err(Error::unexpected_lit_type(value))
+        }
+    }
+}
+
 /// Options for the `build_fn` property in struct-level builder options.
 /// There is no inheritance for these settings from struct-level to field-level,
 /// so we don't bother using `Option` for values in this struct.
@@ -81,12 +140,21 @@ pub struct BuildFn {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
-    /// The path to an existing error type that the build method should return.
+    /// Either the path to an existing error type that the build method should return or a meta
+    /// list of options to modify the generated error.
     ///
-    /// Setting this will prevent `derive_builder` from generating an error type for the build
-    /// method.
+    /// Setting this to a path will prevent `derive_builder` from generating an error type for the
+    /// build method.
     ///
-    /// # Type Bounds
+    /// This options supports to formats: path `error = "path::to::Error"` and meta list
+    /// `error(<options>)`. Supported mata list options are the following:
+    ///
+    /// * `validation_error = bool` - Whether to generate `ValidationError(String)` as a variant
+    ///   of the build error type. Setting this to `false` will prevent `derive_builder` from
+    ///   using the `validate` function but this also means it does not generate any usage of the
+    ///  `alloc` crate (useful when disabling the `alloc` feature in `no_std`).
+    ///
+    /// # Type Bounds for Custom Error
     /// This type's bounds depend on other settings of the builder.
     ///
     /// * If uninitialized fields cause `build()` to fail, then this type
@@ -94,25 +162,21 @@ pub struct BuildFn {
     ///   when default values are provided for every field or at the struct level.
     /// * If `validate` is specified, then this type must provide a conversion from the specified
     ///   function's error type.
-    error: Option<Path>,
-    /// Whether to generate `ValidationError(String)` as a variant of the build error type.
-    ///
-    /// Setting this to `false` will prevent `derive_builder` from using the `validate` function
-    /// but this also means it does not generate any usage of the `alloc` crate (useful when
-    /// disabling the `alloc` feature in `no_std`).
-    validation_error: bool,
+    error: Option<BuildFnError>,
 }
 
 impl BuildFn {
     fn validation_needs_error(self) -> darling::Result<Self> {
-        if self.validate.is_some() && !self.validation_error {
-            Err(darling::Error::custom(
-                "Cannot set `validation_error = false` when using `validate`",
-            )
-            .with_span(&self.validate))
-        } else {
-            Ok(self)
+        let mut acc = Error::accumulator();
+        if let (true, Some(BuildFnError::ValidationError(false, s))) =
+            (self.validate.is_some(), &self.error)
+        {
+            acc.push(
+                Error::custom("Cannot set `error(validation_error = false)` when using `validate`")
+                    .with_span(s),
+            );
         }
+        acc.finish_with(self)
     }
 }
 
@@ -126,7 +190,6 @@ impl Default for BuildFn {
             private: Default::default(),
             vis: None,
             error: None,
-            validation_error: true,
         }
     }
 }
@@ -661,7 +724,7 @@ impl Options {
     }
 
     pub fn builder_error_ident(&self) -> Path {
-        if let Some(existing) = self.build_fn.error.as_ref() {
+        if let Some(BuildFnError::Path(existing)) = self.build_fn.error.as_ref() {
             existing.clone()
         } else if let Some(ref custom) = self.name {
             format_ident!("{}Error", custom).into()
@@ -728,8 +791,18 @@ impl Options {
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
-            generate_error: self.build_fn.error.is_none(),
-            generate_validation_error: self.build_fn.validation_error,
+            generate_error: self
+                .build_fn
+                .error
+                .as_ref()
+                .and_then(BuildFnError::as_path)
+                .is_none(),
+            generate_validation_error: self
+                .build_fn
+                .error
+                .as_ref()
+                .and_then(BuildFnError::as_validation_error)
+                .map_or(true, |(b, _)| b),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
@@ -937,12 +1010,12 @@ impl<'a> FieldWithDefaults<'a> {
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
             conversion: self.conversion(),
-            custom_error_type_span: self
-                .parent
-                .build_fn
-                .error
-                .as_ref()
-                .map(|err_ty| err_ty.span()),
+            custom_error_type_span: self.parent.build_fn.error.as_ref().and_then(|err_ty| {
+                match err_ty {
+                    BuildFnError::Path(p) => Some(p.span()),
+                    _ => None,
+                }
+            }),
         }
     }
 

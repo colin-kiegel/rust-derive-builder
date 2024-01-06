@@ -19,7 +19,7 @@ pub struct Foo {
 }
 
 #[derive(Builder)]
-#[builder(no_std, build_fn(validation_error = false))]
+#[builder(no_std, build_fn(error(validation_error = false)))]
 pub struct Fee {
     pub bar: i32,
 }
