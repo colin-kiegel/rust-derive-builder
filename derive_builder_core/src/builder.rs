@@ -132,8 +132,8 @@ pub struct Builder<'a> {
     /// Whether to include `ValidationError` in the generated enum. Necessary to avoid dependency
     /// on `alloc::string`.
     ///
-    /// This would be `false` when `build_fn.validation_error == false`. This is ignored when
-    /// `generate_error` is `false`.
+    /// This would be `false` when `build_fn.error.as_validation_error() == Some((false, _))`. This
+    /// has no effect when `generate_error` is `false`.
     pub generate_validation_error: bool,
     /// Whether this builder must derive `Clone`.
     ///
