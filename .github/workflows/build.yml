@@ -15,7 +15,7 @@ jobs:
           - 1.56.0 # MSRV
         features:
           - ""
-          - --no-default-features
+          - --no-default-features --features alloc
           - --features clippy
 
     env:
