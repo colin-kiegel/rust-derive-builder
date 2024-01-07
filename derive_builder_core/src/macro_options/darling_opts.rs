@@ -803,6 +803,7 @@ impl Options {
                 .as_ref()
                 .and_then(BuildFnError::as_validation_error)
                 .map_or(true, |(b, _)| b),
+            no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),

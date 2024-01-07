@@ -6,6 +6,7 @@ edition = "2018"
 publish = false
 
 [features]
+alloc = [] # To satify workflows which set `alloc`
 clippy = ["derive_builder/clippy"]
 
 [dependencies]
