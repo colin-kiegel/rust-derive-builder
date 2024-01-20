@@ -1,5 +1,5 @@
 #![no_std]
-#![allow(unused, clippy::blacklisted_name)]
+#![allow(unused)]
 
 extern crate alloc;
 #[macro_use]
@@ -19,8 +19,8 @@ pub fn build_foo_ok() -> Foo {
 }
 
 pub fn build_foo_err() -> Option<String> {
-    let foo = FooBuilder::default().build();
-    foo.err().map(|err| err.to_string())
+    let item = FooBuilder::default().build();
+    item.err().map(|err| err.to_string())
 }
 
 #[cfg(test)]
