@@ -25,5 +25,5 @@ pub(crate) fn change_span(tokens: TokenStream, span: Span) -> TokenStream {
             }
         }
     }
-    FromIterator::from_iter(result.into_iter())
+    FromIterator::from_iter(result)
 }
