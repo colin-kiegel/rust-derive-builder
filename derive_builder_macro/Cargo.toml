@@ -19,7 +19,9 @@ readme = "README.md"
 proc-macro = true
 
 [features]
+alloc = ["derive_builder_core/alloc"]
 clippy = ["derive_builder_core/clippy"]
+lib_has_std = ["derive_builder_core/lib_has_std"]
 
 [dependencies]
 syn = { version = "1.0.91", features = ["full", "extra-traits"] }

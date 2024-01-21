@@ -17,8 +17,9 @@ readme = "README.md"
 
 [features]
 default = ["std"]
-std = []
+std = ["derive_builder_macro/lib_has_std"]
 clippy = ["derive_builder_macro/clippy"]
+alloc = ["derive_builder_macro/alloc"]
 
 [dependencies]
 derive_builder_macro = { version = "=0.12.0", path = "../derive_builder_macro" }

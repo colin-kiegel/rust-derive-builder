@@ -14,7 +14,9 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [features]
+alloc = []
 clippy = []
+lib_has_std = []
 
 [dependencies]
 darling = "0.14.0"

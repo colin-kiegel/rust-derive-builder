@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased] - 2023-12-21
+- Add `build_fn(error(validation_error = <bool>))` to disable generation of `ValidationError` within the builder's error so that `alloc::string` is avoided.
+- Add feature `alloc` for controlling linking of `alloc` crate during `no_std`. This way users can use `no_std` without providing a `global_allocator`.
+
 ## [Unreleased] - 2023-07-25
 - Make try-setters inherit `strip_option` from `setter` for `try_setter`. Using these settings together previously caused a compile error  #284
 

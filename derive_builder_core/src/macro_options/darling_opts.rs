@@ -2,7 +2,7 @@ use std::{borrow::Cow, vec::IntoIter};
 
 use crate::BuildMethod;
 
-use darling::util::{Flag, PathList};
+use darling::util::{Flag, PathList, SpannedValue};
 use darling::{self, Error, FromMeta};
 use proc_macro2::{Span, TokenStream};
 use syn::parse::{ParseStream, Parser};
@@ -69,11 +69,50 @@ fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
     }
 }
 
+#[derive(Debug, Clone, FromMeta)]
+struct BuildFnErrorGenerated {
+    /// Indicates whether or not the generated error should have
+    /// a validation variant that takes a `String` as its contents.
+    validation_error: SpannedValue<bool>,
+}
+
+#[derive(Debug, Clone)]
+enum BuildFnError {
+    Existing(Path),
+    Generated(BuildFnErrorGenerated),
+}
+
+impl BuildFnError {
+    fn as_existing(&self) -> Option<&Path> {
+        match self {
+            BuildFnError::Existing(p) => Some(p),
+            BuildFnError::Generated(_) => None,
+        }
+    }
+
+    fn as_generated(&self) -> Option<&BuildFnErrorGenerated> {
+        match self {
+            BuildFnError::Generated(e) => Some(e),
+            BuildFnError::Existing(_) => None,
+        }
+    }
+}
+
+impl FromMeta for BuildFnError {
+    fn from_meta(item: &Meta) -> darling::Result<Self> {
+        match item {
+            Meta::Path(_) => Err(Error::unsupported_format("word").with_span(item)),
+            Meta::List(_) => BuildFnErrorGenerated::from_meta(item).map(Self::Generated),
+            Meta::NameValue(i) => Path::from_value(&i.lit).map(Self::Existing),
+        }
+    }
+}
+
 /// Options for the `build_fn` property in struct-level builder options.
 /// There is no inheritance for these settings from struct-level to field-level,
 /// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
-#[darling(default)]
+#[darling(default, and_then = "Self::validation_needs_error")]
 pub struct BuildFn {
     skip: bool,
     name: Ident,
@@ -81,12 +120,21 @@ pub struct BuildFn {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
-    /// The path to an existing error type that the build method should return.
+    /// Either the path to an existing error type that the build method should return or a meta
+    /// list of options to modify the generated error.
     ///
-    /// Setting this will prevent `derive_builder` from generating an error type for the build
-    /// method.
+    /// Setting this to a path will prevent `derive_builder` from generating an error type for the
+    /// build method.
     ///
-    /// # Type Bounds
+    /// This options supports to formats: path `error = "path::to::Error"` and meta list
+    /// `error(<options>)`. Supported mata list options are the following:
+    ///
+    /// * `validation_error = bool` - Whether to generate `ValidationError(String)` as a variant
+    ///   of the build error type. Setting this to `false` will prevent `derive_builder` from
+    ///   using the `validate` function but this also means it does not generate any usage of the
+    ///  `alloc` crate (useful when disabling the `alloc` feature in `no_std`).
+    ///
+    /// # Type Bounds for Custom Error
     /// This type's bounds depend on other settings of the builder.
     ///
     /// * If uninitialized fields cause `build()` to fail, then this type
@@ -94,7 +142,27 @@ pub struct BuildFn {
     ///   when default values are provided for every field or at the struct level.
     /// * If `validate` is specified, then this type must provide a conversion from the specified
     ///   function's error type.
-    error: Option<Path>,
+    error: Option<BuildFnError>,
+}
+
+impl BuildFn {
+    fn validation_needs_error(self) -> darling::Result<Self> {
+        let mut acc = Error::accumulator();
+        if self.validate.is_some() {
+            if let Some(BuildFnError::Generated(e)) = &self.error {
+                if !*e.validation_error {
+                    acc.push(
+                        Error::custom(
+                            "Cannot set `error(validation_error = false)` when using `validate`",
+                        )
+                        .with_span(&e.validation_error),
+                    )
+                }
+            }
+        }
+
+        acc.finish_with(self)
+    }
 }
 
 impl Default for BuildFn {
@@ -641,7 +709,7 @@ impl Options {
     }
 
     pub fn builder_error_ident(&self) -> Path {
-        if let Some(existing) = self.build_fn.error.as_ref() {
+        if let Some(BuildFnError::Existing(existing)) = self.build_fn.error.as_ref() {
             existing.clone()
         } else if let Some(ref custom) = self.name {
             format_ident!("{}Error", custom).into()
@@ -708,7 +776,20 @@ impl Options {
             fields: Vec::with_capacity(self.field_count()),
             field_initializers: Vec::with_capacity(self.field_count()),
             functions: Vec::with_capacity(self.field_count()),
-            generate_error: self.build_fn.error.is_none(),
+            generate_error: self
+                .build_fn
+                .error
+                .as_ref()
+                .and_then(BuildFnError::as_existing)
+                .is_none(),
+            generate_validation_error: self
+                .build_fn
+                .error
+                .as_ref()
+                .and_then(BuildFnError::as_generated)
+                .map(|e| *e.validation_error)
+                .unwrap_or(true),
+            no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
@@ -916,12 +997,12 @@ impl<'a> FieldWithDefaults<'a> {
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
             conversion: self.conversion(),
-            custom_error_type_span: self
-                .parent
-                .build_fn
-                .error
-                .as_ref()
-                .map(|err_ty| err_ty.span()),
+            custom_error_type_span: self.parent.build_fn.error.as_ref().and_then(|err_ty| {
+                match err_ty {
+                    BuildFnError::Existing(p) => Some(p.span()),
+                    _ => None,
+                }
+            }),
         }
     }
 
