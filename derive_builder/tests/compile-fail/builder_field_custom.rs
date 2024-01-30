@@ -10,11 +10,6 @@ pub struct Lorem {
     )]
     ipsum: usize,
 
-    // Both `ty` and `type` are temporarily allowed to ease the transition
-    // to syn 2.0, but they are mutually exclusive.
-    #[builder(field(ty = "usize", type = "usize"))]
-    dolor: usize,
-
     // `default` is incompatible with `field.ty`, even without `field.build`
     #[builder(default = "2", field(ty = "usize"))]
     sit: usize,

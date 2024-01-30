@@ -7,7 +7,7 @@ authors = [
     "Jan-Erik Rediger <janerik@fnordig.de>",
     "Ted Driggs <ted.driggs@outlook.com>",
 ]
-
+edition = "2018"
 description = "Internal helper library for the derive_builder crate."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://docs.rs/derive_builder_core"
@@ -21,10 +21,10 @@ clippy = []
 lib_has_std = []
 
 [dependencies]
-darling = "0.14.0"
+darling = "0.20.5"
 proc-macro2 = "1.0.37"
-quote = "1.0.18"
-syn = { version = "1.0.91", features = ["full", "extra-traits"] }
+quote = "1.0.35"
+syn = { version = "2.0.15", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 pretty_assertions = "1.2.1"

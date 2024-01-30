@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use syn::{self, spanned::Spanned, Block, LitStr};
 
@@ -15,6 +15,10 @@ pub struct BlockContents(Block);
 impl BlockContents {
     pub fn is_empty(&self) -> bool {
         self.0.stmts.is_empty()
+    }
+
+    pub fn span(&self) -> Span {
+        self.0.span()
     }
 }
 
@@ -39,7 +43,7 @@ impl From<syn::Expr> for BlockContents {
     fn from(v: syn::Expr) -> Self {
         Self(Block {
             brace_token: syn::token::Brace(v.span()),
-            stmts: vec![syn::Stmt::Expr(v)],
+            stmts: vec![syn::Stmt::Expr(v, None)],
         })
     }
 }
@@ -71,7 +75,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = r#"lex error"#)]
+    #[should_panic(expected = r#"cannot parse"#)]
     fn block_invalid_token_trees() {
         parse("let x = 2; { x+1").unwrap();
     }

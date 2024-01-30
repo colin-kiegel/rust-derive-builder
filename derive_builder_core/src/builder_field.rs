@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
-use syn;
 
 /// Field for the builder struct, implementing `quote::ToTokens`.
 ///

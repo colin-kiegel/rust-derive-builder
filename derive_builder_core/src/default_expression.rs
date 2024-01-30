@@ -23,6 +23,13 @@ impl DefaultExpression {
         }
     }
 
+    pub fn span(&self) -> Span {
+        match self {
+            DefaultExpression::Explicit(block) => block.span(),
+            DefaultExpression::Trait => Span::call_site(),
+        }
+    }
+
     #[cfg(test)]
     pub fn explicit<I: Into<BlockContents>>(content: I) -> Self {
         DefaultExpression::Explicit(content.into())
@@ -36,15 +43,6 @@ impl darling::FromMeta for DefaultExpression {
 
     fn from_value(value: &syn::Lit) -> darling::Result<Self> {
         Ok(Self::Explicit(BlockContents::from_value(value)?))
-    }
-}
-
-impl syn::spanned::Spanned for DefaultExpression {
-    fn span(&self) -> Span {
-        match self {
-            DefaultExpression::Explicit(block) => block.span(),
-            DefaultExpression::Trait => Span::call_site(),
-        }
     }
 }
 
