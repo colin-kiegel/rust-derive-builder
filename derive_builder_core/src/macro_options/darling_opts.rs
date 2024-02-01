@@ -215,21 +215,49 @@ impl Visibility for StructLevelFieldMeta {
     }
 }
 
+fn preserve_field_span(meta: &Meta) -> darling::Result<(Span, syn::Type)> {
+    match meta {
+        Meta::Path(_) => Err(Error::unsupported_format("word").with_span(meta)),
+        Meta::List(_) => Err(Error::unsupported_format("list").with_span(meta)),
+        Meta::NameValue(mnv) => Ok((mnv.path.span(), syn::Type::from_value(&mnv.lit)?)),
+    }
+}
+
 /// Contents of the `field` meta in `builder` attributes at the field level.
 //
 // This is a superset of the attributes permitted in `field` at the struct level.
 // Perhaps in the future we will be able to use `#[darling(flatten)]`, but
 // that does not exist right now: https://github.com/TedDriggs/darling/issues/146
 #[derive(Debug, Clone, Default, FromMeta)]
+#[darling(and_then = "Self::finalize")]
 pub struct FieldLevelFieldMeta {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
+    #[darling(rename = "type", with = "preserve_field_span", map = "Some", default)]
+    builder_type_old: Option<(Span, syn::Type)>,
     /// Custom builder field type
-    #[darling(rename = "type")]
+    #[darling(rename = "ty")]
     builder_type: Option<syn::Type>,
     /// Custom builder field method, for making target struct field value
     build: Option<BlockContents>,
+}
+
+impl FieldLevelFieldMeta {
+    fn finalize(mut self) -> darling::Result<Self> {
+        if let Some((type_field_span, ty)) = self.builder_type_old.take() {
+            if self.builder_type.is_some() {
+                return Err(Error::custom(
+                    "duplicate field - `type` is a deprecated alias for `ty`.",
+                )
+                .with_span(&type_field_span));
+            }
+
+            self.builder_type = Some(ty);
+        }
+
+        Ok(self)
+    }
 }
 
 impl Visibility for FieldLevelFieldMeta {
