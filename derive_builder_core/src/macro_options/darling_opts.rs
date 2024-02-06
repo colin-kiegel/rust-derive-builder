@@ -366,7 +366,7 @@ pub struct Field {
     visibility: Option<syn::Visibility>,
     // See the documentation for `FieldSetterMeta` to understand how `darling`
     // is interpreting this field.
-    #[darling(default, with = "field_setter")]
+    #[darling(default, with = field_setter)]
     setter: FieldLevelSetter,
     /// The value for this field if the setter is never invoked.
     ///
@@ -555,7 +555,7 @@ fn default_create_empty() -> Ident {
     attributes(builder),
     forward_attrs(cfg, allow, builder_struct_attr, builder_impl_attr),
     supports(struct_named),
-    and_then = "Self::unnest_attrs"
+    and_then = Self::unnest_attrs
 )]
 pub struct Options {
     ident: Ident,
@@ -584,7 +584,7 @@ pub struct Options {
 
     /// The path to the root of the derive_builder crate used in generated
     /// code.
-    #[darling(rename = "crate", default = "default_crate_root")]
+    #[darling(rename = "crate", default = default_crate_root)]
     crate_root: Path,
 
     #[darling(default)]
@@ -601,7 +601,7 @@ pub struct Options {
 
     /// The ident of the inherent method which takes no arguments and returns
     /// an instance of the builder with all fields empty.
-    #[darling(default = "default_create_empty")]
+    #[darling(default = default_create_empty)]
     create_empty: Ident,
 
     /// Setter options applied to all field setters in the struct.
