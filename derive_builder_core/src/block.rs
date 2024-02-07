@@ -61,6 +61,14 @@ impl darling::FromMeta for BlockContents {
             Err(darling::Error::unexpected_lit_type(value))
         }
     }
+
+    fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
+        if let syn::Expr::Lit(lit) = expr {
+            Self::from_value(&lit.lit)
+        } else {
+            Ok(Self::from(expr.clone()))
+        }
+    }
 }
 
 #[cfg(test)]
