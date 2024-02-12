@@ -2,8 +2,8 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
-- Accept `field(ty = "...")` as an alias for `field(type = "...")` in preparation for moving to syn 2.0, which doesn't allow the use of keywords as meta item paths.
+## [0.13.1] - 2024-02-12
+- Accept `field(ty = "...")` as an alias for `field(type = "...")` in preparation for moving to syn 2.0, which doesn't allow the use of keywords as meta item paths. #306
 
 ## [0.13.0] - 2024-01-22
 - Bump MSRV to 1.56.0

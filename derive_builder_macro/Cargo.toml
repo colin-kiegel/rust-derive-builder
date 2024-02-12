@@ -1,14 +1,16 @@
 [package]
 name = "derive_builder_macro"
-version = "0.13.0"
-authors = ["Colin Kiegel <kiegel@gmx.de>",
-           "Pascal Hertleif <killercup@gmail.com>",
-           "Jan-Erik Rediger <janerik@fnordig.de>",
-           "Ted Driggs <ted.driggs@outlook.com>"]
+version = "0.13.1"
+authors = [
+    "Colin Kiegel <kiegel@gmx.de>",
+    "Pascal Hertleif <killercup@gmail.com>",
+    "Jan-Erik Rediger <janerik@fnordig.de>",
+    "Ted Driggs <ted.driggs@outlook.com>",
+]
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
-documentation = "https://docs.rs/derive_builder_macro/0.13.0"
+documentation = "https://docs.rs/derive_builder_macro/0.13.1"
 
 license = "MIT OR Apache-2.0"
 categories = ["development-tools", "rust-patterns"]
@@ -25,4 +27,4 @@ lib_has_std = ["derive_builder_core/lib_has_std"]
 
 [dependencies]
 syn = { version = "1.0.91", features = ["full", "extra-traits"] }
-derive_builder_core = { version = "=0.13.0", path = "../derive_builder_core" }
+derive_builder_core = { version = "=0.13.1", path = "../derive_builder_core" }

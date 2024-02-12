@@ -1,10 +1,12 @@
 [package]
 name = "derive_builder_core"
-version = "0.13.0"
-authors = ["Colin Kiegel <kiegel@gmx.de>",
-           "Pascal Hertleif <killercup@gmail.com>",
-           "Jan-Erik Rediger <janerik@fnordig.de>",
-           "Ted Driggs <ted.driggs@outlook.com>"]
+version = "0.13.1"
+authors = [
+    "Colin Kiegel <kiegel@gmx.de>",
+    "Pascal Hertleif <killercup@gmail.com>",
+    "Jan-Erik Rediger <janerik@fnordig.de>",
+    "Ted Driggs <ted.driggs@outlook.com>",
+]
 
 description = "Internal helper library for the derive_builder crate."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
