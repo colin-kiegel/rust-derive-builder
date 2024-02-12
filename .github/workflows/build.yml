@@ -3,54 +3,54 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust:
-          - nightly
-          - beta
-          - stable
-          - 1.56.0 # MSRV
-        features:
-          - ""
-          - --no-default-features --features alloc
-          - --features clippy
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                rust:
+                    - nightly
+                    - beta
+                    - stable
+                    - 1.56.0 # MSRV
+                features:
+                    - ""
+                    - --no-default-features --features alloc
+                    - --features clippy
 
-    env:
-      RUST_BACKTRACE: 1
+        env:
+            RUST_BACKTRACE: 1
 
-    steps:
-      - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
+            - uses: dtolnay/rust-toolchain@master
+              with:
+                  toolchain: ${{ matrix.rust }}
 
-      - name: core crate
-        run: |
-          cd derive_builder_core
-          cargo build ${{ matrix.features }} --verbose
-          cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
-          cargo doc
+            - name: core crate
+              run: |
+                  cd derive_builder_core
+                  cargo build ${{ matrix.features }} --verbose
+                  cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
+                  cargo doc
 
-      - name: macro crate
-        run: |
-          cd derive_builder_macro
-          cargo build ${{ matrix.features }} --verbose
-          cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
-          cargo doc
+            - name: macro crate
+              run: |
+                  cd derive_builder_macro
+                  cargo build ${{ matrix.features }} --verbose
+                  cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
+                  cargo doc
 
-      - name: main crate
-        run: |
-          cd derive_builder
-          cargo build ${{ matrix.features }} --verbose
-          cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
-          cargo doc
+            - name: main crate
+              run: |
+                  cd derive_builder
+                  cargo build ${{ matrix.features }} --verbose
+                  cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
+                  cargo doc
 
-      - name: no_std tests crate
-        run: |
-          cd derive_builder_no_std_tests
-          cargo build ${{ matrix.features }} --verbose
-          cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
+            - name: no_std tests crate
+              run: |
+                  cd derive_builder_no_std_tests
+                  cargo build ${{ matrix.features }} --verbose
+                  cargo test --no-fail-fast ${{ matrix.features }} --verbose -- --nocapture
