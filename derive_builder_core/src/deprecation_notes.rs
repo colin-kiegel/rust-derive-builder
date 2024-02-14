@@ -1,6 +1,5 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
-use syn;
 
 /// Deprecation notes we want to emit to the user, implementing
 /// `quote::ToTokens`.

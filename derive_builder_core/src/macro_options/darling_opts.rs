@@ -4,8 +4,7 @@ use crate::BuildMethod;
 
 use darling::util::{Flag, PathList, SpannedValue};
 use darling::{self, Error, FromMeta};
-use proc_macro2::{Span, TokenStream};
-use syn::parse::{ParseStream, Parser};
+use proc_macro2::Span;
 use syn::Meta;
 use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
 
@@ -62,7 +61,7 @@ fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
     } else if declares_public && declares_private {
         Err(
             Error::custom(r#"`public` and `private` cannot be used together"#)
-                .with_span(v.public()),
+                .with_span(&v.public().span()),
         )
     } else {
         Ok(())
@@ -103,7 +102,7 @@ impl FromMeta for BuildFnError {
         match item {
             Meta::Path(_) => Err(Error::unsupported_format("word").with_span(item)),
             Meta::List(_) => BuildFnErrorGenerated::from_meta(item).map(Self::Generated),
-            Meta::NameValue(i) => Path::from_value(&i.lit).map(Self::Existing),
+            Meta::NameValue(i) => Path::from_expr(&i.value).map(Self::Existing),
         }
     }
 }
@@ -112,7 +111,7 @@ impl FromMeta for BuildFnError {
 /// There is no inheritance for these settings from struct-level to field-level,
 /// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
-#[darling(default, and_then = "Self::validation_needs_error")]
+#[darling(default, and_then = Self::validation_needs_error)]
 pub struct BuildFn {
     skip: bool,
     name: Ident,
@@ -155,7 +154,7 @@ impl BuildFn {
                         Error::custom(
                             "Cannot set `error(validation_error = false)` when using `validate`",
                         )
-                        .with_span(&e.validation_error),
+                        .with_span(&e.validation_error.span()),
                     )
                 }
             }
@@ -215,49 +214,21 @@ impl Visibility for StructLevelFieldMeta {
     }
 }
 
-fn preserve_field_span(meta: &Meta) -> darling::Result<(Span, syn::Type)> {
-    match meta {
-        Meta::Path(_) => Err(Error::unsupported_format("word").with_span(meta)),
-        Meta::List(_) => Err(Error::unsupported_format("list").with_span(meta)),
-        Meta::NameValue(mnv) => Ok((mnv.path.span(), syn::Type::from_value(&mnv.lit)?)),
-    }
-}
-
 /// Contents of the `field` meta in `builder` attributes at the field level.
 //
 // This is a superset of the attributes permitted in `field` at the struct level.
 // Perhaps in the future we will be able to use `#[darling(flatten)]`, but
 // that does not exist right now: https://github.com/TedDriggs/darling/issues/146
 #[derive(Debug, Clone, Default, FromMeta)]
-#[darling(and_then = "Self::finalize")]
 pub struct FieldLevelFieldMeta {
     public: Flag,
     private: Flag,
     vis: Option<syn::Visibility>,
-    #[darling(rename = "type", with = "preserve_field_span", map = "Some", default)]
-    builder_type_old: Option<(Span, syn::Type)>,
     /// Custom builder field type
     #[darling(rename = "ty")]
     builder_type: Option<syn::Type>,
     /// Custom builder field method, for making target struct field value
     build: Option<BlockContents>,
-}
-
-impl FieldLevelFieldMeta {
-    fn finalize(mut self) -> darling::Result<Self> {
-        if let Some((type_field_span, ty)) = self.builder_type_old.take() {
-            if self.builder_type.is_some() {
-                return Err(Error::custom(
-                    "duplicate field - `type` is a deprecated alias for `ty`.",
-                )
-                .with_span(&type_field_span));
-            }
-
-            self.builder_type = Some(ty);
-        }
-
-        Ok(self)
-    }
 }
 
 impl Visibility for FieldLevelFieldMeta {
@@ -298,14 +269,10 @@ impl StructLevelSetter {
 /// * `each(name = "...")`, which allows setting additional options on the `each` setter
 fn parse_each(meta: &Meta) -> darling::Result<Option<Each>> {
     if let Meta::NameValue(mnv) = meta {
-        if let syn::Lit::Str(v) = &mnv.lit {
-            v.parse::<Ident>()
-                .map(Each::from)
-                .map(Some)
-                .map_err(|_| darling::Error::unknown_value(&v.value()).with_span(v))
-        } else {
-            Err(darling::Error::unexpected_lit_type(&mnv.lit))
-        }
+        Ident::from_meta(meta)
+            .map(Each::from)
+            .map(Some)
+            .map_err(|e| e.with_span(&mnv.value))
     } else {
         Each::from_meta(meta).map(Some)
     }
@@ -322,7 +289,7 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    #[darling(with = "parse_each")]
+    #[darling(with = parse_each)]
     each: Option<Each>,
 }
 
@@ -399,7 +366,7 @@ pub struct Field {
     visibility: Option<syn::Visibility>,
     // See the documentation for `FieldSetterMeta` to understand how `darling`
     // is interpreting this field.
-    #[darling(default, with = "field_setter")]
+    #[darling(default, with = field_setter)]
     setter: FieldLevelSetter,
     /// The value for this field if the setter is never invoked.
     ///
@@ -453,19 +420,19 @@ impl Field {
                     darling::Error::custom(
                         r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
                     )
-                    .with_span(field_default),
+                    .with_span(&field_default.span()),
                 );
             }
 
-            // `field.type` being set means `default` will not be used, since we don't know how
+            // `field.ty` being set means `default` will not be used, since we don't know how
             // to check a custom field type for the absence of a value and therefore we'll never
             // know that we should use the `default` value.
             if self.field.builder_type.is_some() {
                 errors.push(
                     darling::Error::custom(
-                        r#"#[builder(default)] and #[builder(field(type="..."))] cannot be used together"#,
+                        r#"#[builder(default)] and #[builder(field(ty="..."))] cannot be used together"#,
                     )
-                    .with_span(field_default)
+                    .with_span(&field_default.span())
                 )
             }
         };
@@ -510,7 +477,7 @@ fn distribute_and_unnest_attrs(
     for attr in input.drain(..) {
         let destination = outputs
             .iter_mut()
-            .find(|(ptattr, _)| attr.path.is_ident(ptattr));
+            .find(|(ptattr, _)| attr.path().is_ident(ptattr));
 
         if let Some((_, destination)) = destination {
             match unnest_from_one_attribute(attr) {
@@ -537,7 +504,7 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
         syn::AttrStyle::Inner(bang) => {
             return Err(darling::Error::unsupported_format(&format!(
                 "{} must be an outer attribute",
-                attr.path
+                attr.path()
                     .get_ident()
                     .map(Ident::to_string)
                     .unwrap_or_else(|| "Attribute".to_string())
@@ -546,34 +513,19 @@ fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute>
         }
     };
 
-    #[derive(Debug)]
-    struct ContainedAttribute(syn::Attribute);
-    impl syn::parse::Parse for ContainedAttribute {
-        fn parse(input: ParseStream) -> syn::Result<Self> {
-            // Strip parentheses, and save the span of the parenthesis token
-            let content;
-            let paren_token = parenthesized!(content in input);
-            let wrap_span = paren_token.span;
+    let original_span = attr.span();
 
-            // Wrap up in #[ ] instead.
-            let pound = Token![#](wrap_span); // We can't write a literal # inside quote
-            let content: TokenStream = content.parse()?;
-            let content = quote_spanned!(wrap_span=> #pound [ #content ]);
+    let pound = attr.pound_token;
+    let meta = attr.meta;
 
-            let parser = syn::Attribute::parse_outer;
-            let mut attrs = parser.parse2(content)?.into_iter();
-            // TryFrom for Array not available in Rust 1.40
-            // We think this error can never actually happen, since `#[...]` ought to make just one Attribute
-            let attr = match (attrs.next(), attrs.next()) {
-                (Some(attr), None) => attr,
-                _ => return Err(input.error("expected exactly one attribute")),
-            };
-            Ok(Self(attr))
+    match meta {
+        Meta::Path(_) => Err(Error::unsupported_format("word").with_span(&meta)),
+        Meta::NameValue(_) => Err(Error::unsupported_format("name-value").with_span(&meta)),
+        Meta::List(list) => {
+            let inner = list.tokens;
+            Ok(parse_quote_spanned!(original_span=> #pound [ #inner ]))
         }
     }
-
-    let ContainedAttribute(attr) = syn::parse2(attr.tokens)?;
-    Ok(attr)
 }
 
 impl Visibility for Field {
@@ -603,7 +555,7 @@ fn default_create_empty() -> Ident {
     attributes(builder),
     forward_attrs(cfg, allow, builder_struct_attr, builder_impl_attr),
     supports(struct_named),
-    and_then = "Self::unnest_attrs"
+    and_then = Self::unnest_attrs
 )]
 pub struct Options {
     ident: Ident,
@@ -632,7 +584,7 @@ pub struct Options {
 
     /// The path to the root of the derive_builder crate used in generated
     /// code.
-    #[darling(rename = "crate", default = "default_crate_root")]
+    #[darling(rename = "crate", default = default_crate_root)]
     crate_root: Path,
 
     #[darling(default)]
@@ -649,7 +601,7 @@ pub struct Options {
 
     /// The ident of the inherent method which takes no arguments and returns
     /// an instance of the builder with all fields empty.
-    #[darling(default = "default_create_empty")]
+    #[darling(default = default_create_empty)]
     create_empty: Ident,
 
     /// Setter options applied to all field setters in the struct.

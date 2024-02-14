@@ -3,12 +3,8 @@ use std::borrow::Cow;
 
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
-use syn;
 
-use BuilderFieldType;
-use BuilderPattern;
-use DeprecationNotes;
-use Each;
+use crate::{BuilderFieldType, BuilderPattern, DeprecationNotes, Each};
 
 /// Setter for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -243,7 +239,7 @@ fn wrap_expression_in_some(crate_root: &syn::Path, bare_value: impl ToTokens) ->
 // We cannot handle those arbitrary names.
 fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
     use syn::punctuated::Pair;
-    use syn::token::Colon2;
+    use syn::token::PathSep;
     use syn::{GenericArgument, Path, PathArguments, PathSegment};
 
     fn extract_type_path(ty: &syn::Type) -> Option<&Path> {
@@ -255,7 +251,7 @@ fn extract_type_from_option(ty: &syn::Type) -> Option<&syn::Type> {
 
     // TODO store (with lazy static) precomputed parsing of Option when support of rust 1.18 will be removed (incompatible with lazy_static)
     // TODO maybe optimization, reverse the order of segments
-    fn extract_option_segment(path: &Path) -> Option<Pair<&PathSegment, &Colon2>> {
+    fn extract_option_segment(path: &Path) -> Option<Pair<&PathSegment, &PathSep>> {
         let idents_of_path = path.segments.iter().fold(String::new(), |mut acc, v| {
             acc.push_str(&v.ident.to_string());
             acc.push('|');

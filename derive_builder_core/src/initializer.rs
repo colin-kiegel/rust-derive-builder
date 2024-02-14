@@ -1,10 +1,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
-use syn;
-use BuilderPattern;
-use DEFAULT_STRUCT_NAME;
 
-use crate::{change_span, BlockContents, DefaultExpression};
+use crate::{change_span, BlockContents, BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///

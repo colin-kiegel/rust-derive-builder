@@ -7,6 +7,7 @@ authors = [
     "Jan-Erik Rediger <janerik@fnordig.de>",
     "Ted Driggs <ted.driggs@outlook.com>",
 ]
+edition = "2018"
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
@@ -26,5 +27,5 @@ clippy = ["derive_builder_core/clippy"]
 lib_has_std = ["derive_builder_core/lib_has_std"]
 
 [dependencies]
-syn = { version = "1.0.91", features = ["full", "extra-traits"] }
 derive_builder_core = { version = "=0.13.1", path = "../derive_builder_core" }
+syn = { version = "2.0.15", features = ["full", "extra-traits"] }

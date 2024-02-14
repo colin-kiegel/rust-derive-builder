@@ -5,12 +5,9 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use doc_comment_from;
-use BuildMethod;
-use BuilderField;
-use BuilderPattern;
-use DeprecationNotes;
-use Setter;
+use crate::{
+    doc_comment_from, BuildMethod, BuilderField, BuilderPattern, DeprecationNotes, Setter,
+};
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -858,7 +855,7 @@ mod tests {
 
                 add_simple_foo_builder(&mut result);
 
-                result.append_all(quote!(compile_error! { #ALLOC_NOT_ENABLED_ERROR }));
+                result.append_all(quote!(::core::compile_error! { #ALLOC_NOT_ENABLED_ERROR }));
 
                 result
             }

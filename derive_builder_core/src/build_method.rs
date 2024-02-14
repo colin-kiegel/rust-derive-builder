@@ -1,15 +1,12 @@
 use std::borrow::Cow;
 
-use doc_comment_from;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
-use syn;
 use syn::spanned::Spanned;
-use BuilderPattern;
-use Initializer;
-use DEFAULT_STRUCT_NAME;
 
-use crate::DefaultExpression;
+use crate::{
+    doc_comment_from, BuilderPattern, DefaultExpression, Initializer, DEFAULT_STRUCT_NAME,
+};
 
 /// Initializer for the struct fields in the build method, implementing
 /// `quote::ToTokens`.

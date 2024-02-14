@@ -728,7 +728,7 @@ pub use error::UninitializedFieldError;
 pub mod export {
     pub mod core {
         #[cfg(feature = "alloc")]
-        pub use alloc::string;
+        pub use ::alloc::string;
         #[cfg(not(feature = "std"))]
         pub use core::*;
         #[cfg(feature = "std")]
