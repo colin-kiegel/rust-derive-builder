@@ -1,6 +1,6 @@
 use crate::BlockContents;
-use proc_macro2::Span;
 use quote::ToTokens;
+use syn::{meta::ParseNestedMeta, Token};
 
 /// A `DefaultExpression` can be either explicit or refer to the canonical trait.
 #[derive(Debug, Clone)]
@@ -10,6 +10,15 @@ pub enum DefaultExpression {
 }
 
 impl DefaultExpression {
+    pub(crate) fn parse_nested_meta(meta: &ParseNestedMeta) -> syn::Result<Self> {
+        if meta.input.peek(Token![=]) {
+            let block_contents = BlockContents::parse_nested_meta(meta)?;
+            Ok(DefaultExpression::Explicit(block_contents))
+        } else {
+            Ok(DefaultExpression::Trait)
+        }
+    }
+
     /// Add the crate root path so the default expression can be emitted
     /// to a `TokenStream`.
     ///
@@ -21,28 +30,6 @@ impl DefaultExpression {
             crate_root,
             expr: self,
         }
-    }
-
-    pub fn span(&self) -> Span {
-        match self {
-            DefaultExpression::Explicit(block) => block.span(),
-            DefaultExpression::Trait => Span::call_site(),
-        }
-    }
-
-    #[cfg(test)]
-    pub fn explicit<I: Into<BlockContents>>(content: I) -> Self {
-        DefaultExpression::Explicit(content.into())
-    }
-}
-
-impl darling::FromMeta for DefaultExpression {
-    fn from_word() -> darling::Result<Self> {
-        Ok(DefaultExpression::Trait)
-    }
-
-    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
-        Ok(Self::Explicit(BlockContents::from_value(value)?))
     }
 }
 

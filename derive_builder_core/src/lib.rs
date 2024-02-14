@@ -16,10 +16,6 @@
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
 #![deny(warnings, missing_docs)]
-#![cfg_attr(test, recursion_limit = "100")]
-
-#[macro_use]
-extern crate darling;
 
 extern crate proc_macro;
 extern crate proc_macro2;
@@ -49,7 +45,6 @@ pub(crate) use build_method::BuildMethod;
 pub(crate) use builder::Builder;
 pub(crate) use builder_field::{BuilderField, BuilderFieldType};
 pub(crate) use change_span::change_span;
-use darling::FromDeriveInput;
 pub(crate) use default_expression::DefaultExpression;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
@@ -63,9 +58,7 @@ const DEFAULT_STRUCT_NAME: &str = "__default";
 pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     let opts = match macro_options::Options::from_derive_input(&ast) {
         Ok(val) => val,
-        Err(err) => {
-            return err.write_errors();
-        }
+        Err(err) => return err.into_compile_error(),
     };
 
     let mut builder = opts.as_builder();

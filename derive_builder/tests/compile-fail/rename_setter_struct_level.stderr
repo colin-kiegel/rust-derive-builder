@@ -1,4 +1,4 @@
-error: Unknown field: `name`
+error: unrecognized derive_builder attribute
  --> tests/compile-fail/rename_setter_struct_level.rs:7:18
   |
 7 | #[builder(setter(name = "foo"))]

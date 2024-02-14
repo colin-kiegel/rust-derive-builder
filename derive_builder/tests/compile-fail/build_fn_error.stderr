@@ -1,31 +1,23 @@
-error: Unknown field: `path`
+error: unrecognized derive_builder attribute
  --> tests/compile-fail/build_fn_error.rs:4:52
   |
 4 | #[builder(build_fn(error(validation_error = false, path = "hello")))]
   |                                                    ^^^^
 
-error: Cannot set `error(validation_error = false)` when using `validate`
-  --> tests/compile-fail/build_fn_error.rs:10:45
+error: `error(validation_error = false)` and `validate` cannot be used together
+  --> tests/compile-fail/build_fn_error.rs:10:53
    |
 10 | #[builder(build_fn(error(validation_error = false), validate = "hello"))]
-   |                                             ^^^^^
+   |                                                     ^^^^^^^^^^^^^^^^^^
 
-error: Unknown field: `path`
+error: unrecognized derive_builder attribute
   --> tests/compile-fail/build_fn_error.rs:16:26
    |
 16 | #[builder(build_fn(error(path = "hello")))]
    |                          ^^^^
 
-error: Missing field `validation_error` at build_fn/error
-  --> tests/compile-fail/build_fn_error.rs:15:10
-   |
-15 | #[derive(Builder)]
-   |          ^^^^^^^
-   |
-   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error: Missing field `validation_error`
-  --> tests/compile-fail/build_fn_error.rs:22:20
+error: unexpected end of input, expected nested attribute
+  --> tests/compile-fail/build_fn_error.rs:22:26
    |
 22 | #[builder(build_fn(error()))]
-   |                    ^^^^^
+   |                          ^

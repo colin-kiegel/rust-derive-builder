@@ -21,10 +21,9 @@ clippy = []
 lib_has_std = []
 
 [dependencies]
-darling = "0.20.6"
 proc-macro2 = "1.0.37"
 quote = "1.0.35"
-syn = { version = "2.0.15", features = ["full", "extra-traits"] }
+syn = { version = "2.0.49", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 pretty_assertions = "1.2.1"

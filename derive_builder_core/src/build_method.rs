@@ -159,8 +159,8 @@ macro_rules! default_build_method {
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
+    use crate::BlockContents;
 
     #[test]
     fn std() {
@@ -184,7 +184,7 @@ mod tests {
     fn default_struct() {
         let mut build_method = default_build_method!();
         let alt_default =
-            DefaultExpression::explicit::<syn::Expr>(parse_quote!(Default::default()));
+            DefaultExpression::Explicit(BlockContents::new(parse_quote!({ Default::default() })));
         build_method.default_struct = Some(&alt_default);
 
         #[rustfmt::skip]

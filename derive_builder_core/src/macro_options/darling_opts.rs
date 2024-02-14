@@ -1,11 +1,13 @@
-use std::{borrow::Cow, vec::IntoIter};
+use std::{borrow::Cow, slice};
 
+use crate::macro_options::{parse_optional_bool, set, Diagnostic};
 use crate::BuildMethod;
 
-use darling::util::{Flag, PathList, SpannedValue};
-use darling::{Error, FromMeta};
 use proc_macro2::Span;
-use syn::{spanned::Spanned, Attribute, Generics, Ident, Meta, Path};
+use syn::{
+    meta::ParseNestedMeta, spanned::Spanned, token, Attribute, Data, Generics, Ident, LitBool,
+    LitStr, Meta, Path, Visibility,
+};
 
 use crate::{
     BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,
@@ -13,74 +15,120 @@ use crate::{
 };
 
 /// `derive_builder` uses separate sibling keywords to represent
-/// mutually-exclusive visibility states. This trait requires implementers to
-/// expose those property values and provides a method to compute any explicit visibility
-/// bounds.
-trait Visibility {
-    fn public(&self) -> &Flag;
-    fn private(&self) -> &Flag;
-    fn explicit(&self) -> Option<&syn::Visibility>;
+/// mutually-exclusive visibility states.
+#[derive(Debug)]
+enum VisibilityAttr {
+    /// `public`
+    Public,
+    /// `private`
+    Private,
+    /// `vis = "pub(crate)"`
+    Explicit(Visibility),
+    None,
+}
+
+impl Default for VisibilityAttr {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl VisibilityAttr {
+    fn parse_nested_meta(
+        &mut self,
+        meta: &ParseNestedMeta,
+        diag: &mut Diagnostic,
+    ) -> syn::Result<bool> {
+        if meta.path.is_ident("public") {
+            self.report_conflict(meta, diag);
+            *self = Self::Public;
+            Ok(true)
+        } else if meta.path.is_ident("private") {
+            self.report_conflict(meta, diag);
+            *self = Self::Private;
+            Ok(true)
+        } else if meta.path.is_ident("vis") {
+            let vis: Visibility = meta.value()?.parse::<LitStr>()?.parse()?;
+            self.report_conflict(meta, diag);
+            *self = Self::Explicit(vis);
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn report_conflict(&self, meta: &ParseNestedMeta, diag: &mut Diagnostic) {
+        match self {
+            Self::Public => {
+                let msg = "this visibility conflicts with a `public` specified earlier";
+                diag.push(meta.error(msg));
+            }
+            Self::Private => {
+                let msg = "this visibility conflicts with a `private` specified earlier";
+                diag.push(meta.error(msg));
+            }
+            Self::Explicit(_) => {
+                let msg = r#"this visibility conflicts with a `vis = "..."` specified earlier"#;
+                diag.push(meta.error(msg));
+            }
+            Self::None => {}
+        }
+    }
 
     /// Get the explicitly-expressed visibility preference from the attribute.
     /// This returns `None` if the input didn't include either keyword.
-    ///
-    /// # Panics
-    /// This method panics if the input specifies both `public` and `private`.
-    fn as_expressed_vis(&self) -> Option<Cow<syn::Visibility>> {
-        let declares_public = self.public().is_present();
-        let declares_private = self.private().is_present();
-        let declares_explicit = self.explicit().is_some();
-
-        if declares_private {
-            assert!(!declares_public && !declares_explicit);
-            Some(Cow::Owned(syn::Visibility::Inherited))
-        } else if let Some(vis) = self.explicit() {
-            assert!(!declares_public);
-            Some(Cow::Borrowed(vis))
-        } else if declares_public {
-            Some(Cow::Owned(syn::parse_quote!(pub)))
-        } else {
-            None
+    fn as_expressed_vis(&self) -> Option<Cow<Visibility>> {
+        match self {
+            Self::Public => Some(Cow::Owned(parse_quote!(pub))),
+            Self::Private => Some(Cow::Owned(Visibility::Inherited)),
+            Self::Explicit(vis) => Some(Cow::Borrowed(vis)),
+            Self::None => None,
         }
     }
 }
 
-fn no_visibility_conflict<T: Visibility>(v: &T) -> darling::Result<()> {
-    let declares_public = v.public().is_present();
-    let declares_private = v.private().is_present();
-    if let Some(vis) = v.explicit() {
-        if declares_public || declares_private {
-            Err(
-                Error::custom(r#"`vis="..."` cannot be used with `public` or `private`"#)
-                    .with_span(vis),
-            )
-        } else {
-            Ok(())
-        }
-    } else if declares_public && declares_private {
-        Err(
-            Error::custom(r#"`public` and `private` cannot be used together"#)
-                .with_span(&v.public().span()),
-        )
-    } else {
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, FromMeta)]
+#[derive(Debug)]
 struct BuildFnErrorGenerated {
     /// Indicates whether or not the generated error should have
     /// a validation variant that takes a `String` as its contents.
-    validation_error: SpannedValue<bool>,
+    validation_error: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum BuildFnError {
     Existing(Path),
     Generated(BuildFnErrorGenerated),
 }
 
 impl BuildFnError {
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let lookahead = meta.input.lookahead1();
+        if lookahead.peek(Token![=]) {
+            let path: Path = meta.value()?.parse::<LitStr>()?.parse()?;
+            return Ok(Self::Existing(path));
+        } else if !lookahead.peek(token::Paren) {
+            return Err(lookahead.error());
+        }
+
+        let mut validation_error = None;
+
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("validation_error") {
+                let lit: LitBool = meta.value()?.parse()?;
+                set(&meta, &mut validation_error, lit.value, diag);
+            } else {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
+
+        Ok(Self::Generated(BuildFnErrorGenerated {
+            validation_error: validation_error.ok_or_else(|| {
+                syn::Error::new_spanned(&meta.path, "missing attribute `validation_error`")
+            })?,
+        }))
+    }
+
     fn as_existing(&self) -> Option<&Path> {
         match self {
             BuildFnError::Existing(p) => Some(p),
@@ -96,28 +144,15 @@ impl BuildFnError {
     }
 }
 
-impl FromMeta for BuildFnError {
-    fn from_meta(item: &Meta) -> darling::Result<Self> {
-        match item {
-            Meta::Path(_) => Err(Error::unsupported_format("word").with_span(item)),
-            Meta::List(_) => BuildFnErrorGenerated::from_meta(item).map(Self::Generated),
-            Meta::NameValue(i) => Path::from_expr(&i.value).map(Self::Existing),
-        }
-    }
-}
-
 /// Options for the `build_fn` property in struct-level builder options.
 /// There is no inheritance for these settings from struct-level to field-level,
 /// so we don't bother using `Option` for values in this struct.
-#[derive(Debug, Clone, FromMeta)]
-#[darling(default, and_then = Self::validation_needs_error)]
+#[derive(Debug)]
 pub struct BuildFn {
     skip: bool,
     name: Ident,
     validate: Option<Path>,
-    public: Flag,
-    private: Flag,
-    vis: Option<syn::Visibility>,
+    vis: VisibilityAttr,
     /// Either the path to an existing error type that the build method should return or a meta
     /// list of options to modify the generated error.
     ///
@@ -144,22 +179,58 @@ pub struct BuildFn {
 }
 
 impl BuildFn {
-    fn validation_needs_error(self) -> darling::Result<Self> {
-        let mut acc = Error::accumulator();
-        if self.validate.is_some() {
-            if let Some(BuildFnError::Generated(e)) = &self.error {
-                if !*e.validation_error {
-                    acc.push(
-                        Error::custom(
-                            "Cannot set `error(validation_error = false)` when using `validate`",
-                        )
-                        .with_span(&e.validation_error.span()),
-                    )
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let mut skip = None;
+        let mut name = None;
+        let mut validate = None;
+        let mut vis = VisibilityAttr::None;
+        let mut build_fn_error = None;
+
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("skip") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut skip, value, diag);
+            } else if meta.path.is_ident("name") {
+                let value: Ident = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut name, value, diag);
+            } else if meta.path.is_ident("validate") {
+                let value: Path = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut validate, value, diag);
+                Self::check_validation(&meta, &validate, &build_fn_error, diag);
+            } else if meta.path.is_ident("error") {
+                let value = BuildFnError::parse_nested_meta(&meta, diag)?;
+                set(&meta, &mut build_fn_error, value, diag);
+                Self::check_validation(&meta, &validate, &build_fn_error, diag);
+            } else if !vis.parse_nested_meta(&meta, diag)? {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
+
+        Ok(BuildFn {
+            skip: skip.unwrap_or(false),
+            name: name.unwrap_or_else(|| Ident::new("build", Span::call_site())),
+            validate,
+            vis,
+            error: build_fn_error,
+        })
+    }
+
+    fn check_validation(
+        meta: &ParseNestedMeta,
+        validate: &Option<Path>,
+        build_fn_error: &Option<BuildFnError>,
+        diag: &mut Diagnostic,
+    ) {
+        if validate.is_some() {
+            if let Some(BuildFnError::Generated(e)) = build_fn_error {
+                if !e.validation_error {
+                    diag.push(meta.error(
+                        "`error(validation_error = false)` and `validate` cannot be used together",
+                    ));
                 }
             }
         }
-
-        acc.finish_with(self)
     }
 }
 
@@ -169,82 +240,74 @@ impl Default for BuildFn {
             skip: false,
             name: Ident::new("build", Span::call_site()),
             validate: None,
-            public: Default::default(),
-            private: Default::default(),
-            vis: None,
+            vis: VisibilityAttr::None,
             error: None,
         }
     }
 }
 
-impl Visibility for BuildFn {
-    fn public(&self) -> &Flag {
-        &self.public
-    }
-
-    fn private(&self) -> &Flag {
-        &self.private
-    }
-
-    fn explicit(&self) -> Option<&syn::Visibility> {
-        self.vis.as_ref()
-    }
-}
-
 /// Contents of the `field` meta in `builder` attributes at the struct level.
-#[derive(Debug, Clone, Default, FromMeta)]
+#[derive(Debug, Default)]
 pub struct StructLevelFieldMeta {
-    public: Flag,
-    private: Flag,
-    vis: Option<syn::Visibility>,
+    vis: VisibilityAttr,
 }
 
-impl Visibility for StructLevelFieldMeta {
-    fn public(&self) -> &Flag {
-        &self.public
-    }
+impl StructLevelFieldMeta {
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let mut vis = VisibilityAttr::None;
 
-    fn private(&self) -> &Flag {
-        &self.private
-    }
+        meta.parse_nested_meta(|meta| {
+            if !vis.parse_nested_meta(&meta, diag)? {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
 
-    fn explicit(&self) -> Option<&syn::Visibility> {
-        self.vis.as_ref()
+        Ok(StructLevelFieldMeta { vis })
     }
 }
 
 /// Contents of the `field` meta in `builder` attributes at the field level.
 //
 // This is a superset of the attributes permitted in `field` at the struct level.
-// Perhaps in the future we will be able to use `#[darling(flatten)]`, but
-// that does not exist right now: https://github.com/TedDriggs/darling/issues/146
-#[derive(Debug, Clone, Default, FromMeta)]
+// Perhaps the data structures can be refactored to share common parts.
+#[derive(Debug, Default)]
 pub struct FieldLevelFieldMeta {
-    public: Flag,
-    private: Flag,
-    vis: Option<syn::Visibility>,
+    vis: VisibilityAttr,
     /// Custom builder field type
-    #[darling(rename = "ty")]
     builder_type: Option<syn::Type>,
     /// Custom builder field method, for making target struct field value
     build: Option<BlockContents>,
 }
 
-impl Visibility for FieldLevelFieldMeta {
-    fn public(&self) -> &Flag {
-        &self.public
-    }
+impl FieldLevelFieldMeta {
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let mut vis = VisibilityAttr::None;
+        let mut builder_type = None;
+        let mut build = None;
 
-    fn private(&self) -> &Flag {
-        &self.private
-    }
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("ty") || meta.path.is_ident("type") {
+                let value: syn::Type = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut builder_type, value, diag);
+            } else if meta.path.is_ident("build") {
+                let value = BlockContents::parse_nested_meta(&meta)?;
+                set(&meta, &mut build, value, diag);
+            } else if !vis.parse_nested_meta(&meta, diag)? {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
 
-    fn explicit(&self) -> Option<&syn::Visibility> {
-        self.vis.as_ref()
+        Ok(FieldLevelFieldMeta {
+            vis,
+            builder_type,
+            build,
+        })
     }
 }
 
-#[derive(Debug, Clone, Default, FromMeta)]
+#[derive(Debug, Default)]
 pub struct StructLevelSetter {
     prefix: Option<Ident>,
     into: Option<bool>,
@@ -253,6 +316,39 @@ pub struct StructLevelSetter {
 }
 
 impl StructLevelSetter {
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let mut prefix = None;
+        let mut into = None;
+        let mut strip_option = None;
+        let mut skip = None;
+
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("prefix") {
+                let value = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut prefix, value, diag);
+            } else if meta.path.is_ident("into") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut into, value, diag);
+            } else if meta.path.is_ident("strip_option") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut strip_option, value, diag);
+            } else if meta.path.is_ident("skip") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut skip, value, diag);
+            } else {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
+
+        Ok(StructLevelSetter {
+            prefix,
+            into,
+            strip_option,
+            skip,
+        })
+    }
+
     /// Check if setters are explicitly enabled or disabled at
     /// the struct level.
     pub fn enabled(&self) -> Option<bool> {
@@ -260,27 +356,10 @@ impl StructLevelSetter {
     }
 }
 
-/// Create `Each` from an attribute's `Meta`.
-///
-/// Two formats are supported:
-///
-/// * `each = "..."`, which provides the name of the `each` setter and otherwise uses default values
-/// * `each(name = "...")`, which allows setting additional options on the `each` setter
-fn parse_each(meta: &Meta) -> darling::Result<Option<Each>> {
-    if let Meta::NameValue(mnv) = meta {
-        Ident::from_meta(meta)
-            .map(Each::from)
-            .map(Some)
-            .map_err(|e| e.with_span(&mnv.value))
-    } else {
-        Each::from_meta(meta).map(Some)
-    }
-}
-
 /// The `setter` meta item on fields in the input type.
 /// Unlike the `setter` meta item at the struct level, this allows specific
 /// name overrides.
-#[derive(Debug, Clone, Default, FromMeta)]
+#[derive(Debug, Default)]
 pub struct FieldLevelSetter {
     prefix: Option<Ident>,
     name: Option<Ident>,
@@ -288,11 +367,68 @@ pub struct FieldLevelSetter {
     strip_option: Option<bool>,
     skip: Option<bool>,
     custom: Option<bool>,
-    #[darling(with = parse_each)]
     each: Option<Each>,
 }
 
 impl FieldLevelSetter {
+    fn parse_nested_meta(meta: &ParseNestedMeta, diag: &mut Diagnostic) -> syn::Result<Self> {
+        if !meta.input.peek(token::Paren) {
+            // `setter` as a word is equivalent to `setter(skip = false)`. This
+            // is useful for re-enabling setter for one field when they've been
+            // disabled at the struct level.
+            return Ok(FieldLevelSetter {
+                skip: Some(false),
+                ..Default::default()
+            });
+        }
+
+        let mut prefix = None;
+        let mut name = None;
+        let mut into = None;
+        let mut strip_option = None;
+        let mut skip = None;
+        let mut custom = None;
+        let mut each = None;
+
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("prefix") {
+                let value: Ident = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut prefix, value, diag);
+            } else if meta.path.is_ident("name") {
+                let value: Ident = meta.value()?.parse::<LitStr>()?.parse()?;
+                set(&meta, &mut name, value, diag);
+            } else if meta.path.is_ident("into") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut into, value, diag);
+            } else if meta.path.is_ident("strip_option") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut strip_option, value, diag);
+            } else if meta.path.is_ident("skip") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut skip, value, diag);
+            } else if meta.path.is_ident("custom") {
+                let value = parse_optional_bool(&meta)?;
+                set(&meta, &mut custom, value, diag);
+            } else if meta.path.is_ident("each") {
+                let value = Each::parse_nested_meta(&meta, diag)?;
+                set(&meta, &mut each, value, diag);
+            } else {
+                return Err(meta.error("unrecognized derive_builder attribute"));
+            }
+            Ok(())
+        })?;
+
+        Ok(FieldLevelSetter {
+            prefix,
+            name,
+            into,
+            strip_option,
+            skip,
+            custom,
+            each,
+        })
+    }
+
     /// Get whether the setter should be emitted. The rules are the same as
     /// for `field_enabled`, except we only skip the setter if `setter(custom)` is present.
     pub fn setter_enabled(&self) -> Option<bool> {
@@ -325,47 +461,18 @@ impl FieldLevelSetter {
     }
 }
 
-/// `derive_builder` allows the calling code to use `setter` as a word to enable
-/// setters when they've been disabled at the struct level.
-fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
-    // it doesn't matter what the path is; the fact that this function
-    // has been called means that a valueless path is the shorthand case.
-    if let Meta::Path(_) = meta {
-        Ok(FieldLevelSetter {
-            skip: Some(false),
-            ..Default::default()
-        })
-    } else {
-        FieldLevelSetter::from_meta(meta)
-    }
-}
-
 /// Data extracted from the fields of the input struct.
-#[derive(Debug, Clone, FromField)]
-#[darling(
-    attributes(builder),
-    forward_attrs(doc, cfg, allow, builder_field_attr, builder_setter_attr),
-    and_then = "Self::resolve"
-)]
+#[derive(Debug)]
 pub struct Field {
     ident: Option<Ident>,
-    /// Raw input attributes, for consumption by Field::unnest_attrs.  Do not use elsewhere.
-    attrs: Vec<syn::Attribute>,
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
     pattern: Option<BuilderPattern>,
-    public: Flag,
-    private: Flag,
     /// Declared visibility for the field in the builder, e.g. `#[builder(vis = "...")]`.
-    ///
-    /// This cannot be named `vis` or `darling` would put the deriving field's visibility into the
-    /// field instead.
-    #[darling(rename = "vis")]
-    visibility: Option<syn::Visibility>,
-    // See the documentation for `FieldSetterMeta` to understand how `darling`
-    // is interpreting this field.
-    #[darling(default, with = field_setter)]
+    vis: VisibilityAttr,
+    /// `derive_builder` allows the calling code to use `setter` as a word to enable
+    /// setters when they've been disabled at the struct level.
     setter: FieldLevelSetter,
     /// The value for this field if the setter is never invoked.
     ///
@@ -378,203 +485,134 @@ pub struct Field {
     ///
     /// This property only captures the first two, the third is computed in `FieldWithDefaults`.
     default: Option<DefaultExpression>,
-    try_setter: Flag,
-    #[darling(default)]
+    try_setter: bool,
     field: FieldLevelFieldMeta,
-    #[darling(skip)]
     field_attrs: Vec<Attribute>,
-    #[darling(skip)]
     setter_attrs: Vec<Attribute>,
 }
 
 impl Field {
-    fn no_visibility_conflicts(&self) -> darling::Result<()> {
-        let mut errors = Error::accumulator();
-        errors.handle(no_visibility_conflict(&self.field));
-        errors.handle(no_visibility_conflict(self));
-        errors.finish()
+    fn from_field(ast: &syn::Field, diag: &mut Diagnostic) -> syn::Result<Self> {
+        let mut pattern = None;
+        let mut vis = VisibilityAttr::None;
+        let mut setter = None;
+        let mut default = None;
+        let mut try_setter = None;
+        let mut field = None;
+        let mut field_attrs = Vec::new();
+        let mut setter_attrs = Vec::new();
+
+        for attr in &ast.attrs {
+            if attr.path().is_ident("builder") {
+                if let Err(err) = attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("pattern") {
+                        let value = BuilderPattern::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut pattern, value, diag);
+                    } else if meta.path.is_ident("setter") {
+                        let value = FieldLevelSetter::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut setter, value, diag)
+                    } else if meta.path.is_ident("default") {
+                        let value = DefaultExpression::parse_nested_meta(&meta)?;
+                        set(&meta, &mut default, value, diag);
+                        Self::check_field_vs_default(&meta, &field, &default, diag);
+                    } else if meta.path.is_ident("try_setter") {
+                        set(&meta, &mut try_setter, true, diag);
+                    } else if meta.path.is_ident("field") {
+                        let value = FieldLevelFieldMeta::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut field, value, diag);
+                        Self::check_field_vs_default(&meta, &field, &default, diag);
+                    } else if !vis.parse_nested_meta(&meta, diag)? {
+                        return Err(meta.error("unrecognized derive_builder attribute"));
+                    }
+                    Ok(())
+                }) {
+                    diag.push(err);
+                }
+            } else if attr.path().is_ident("doc")
+                || attr.path().is_ident("cfg")
+                || attr.path().is_ident("allow")
+            {
+                field_attrs.push(attr.clone());
+                setter_attrs.push(attr.clone());
+            } else if attr.path().is_ident("builder_field_attr") {
+                unnest_attr(attr, &mut field_attrs, diag);
+            } else if attr.path().is_ident("builder_setter_attr") {
+                unnest_attr(attr, &mut setter_attrs, diag);
+            }
+        }
+
+        Ok(Field {
+            ident: ast.ident.clone(),
+            ty: ast.ty.clone(),
+            pattern,
+            vis,
+            setter: setter.unwrap_or_default(),
+            default,
+            try_setter: try_setter.unwrap_or(false),
+            field: field.unwrap_or_default(),
+            field_attrs,
+            setter_attrs,
+        })
     }
 
-    /// Resolve and check (post-parsing) options which come from multiple darling options
-    ///
-    ///  * Check that we don't have a custom field type or builder *and* a default value
-    ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
-    fn resolve(mut self) -> darling::Result<Self> {
-        let mut errors = darling::Error::accumulator();
-
+    /// Check that we don't have a custom field type or builder *and* a default value.
+    fn check_field_vs_default(
+        meta: &ParseNestedMeta,
+        field: &Option<FieldLevelFieldMeta>,
+        default: &Option<DefaultExpression>,
+        diag: &mut Diagnostic,
+    ) {
         // `default` can be preempted by properties in `field`. Silently ignoring a
         // `default` could cause the direct user of `derive_builder` to see unexpected
         // behavior from the builder, so instead we require that the deriving struct
         // not pass any ignored instructions.
-        if let Field {
-            default: Some(field_default),
-            ..
-        } = &self
-        {
+        if let (Some(field), Some(_default)) = (field, default) {
             // `field.build` is stronger than `default`, as it contains both instructions on how to
             // deal with a missing value and conversions to do on the value during target type
             // construction.
-            if self.field.build.is_some() {
-                errors.push(
-                    darling::Error::custom(
-                        r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
-                    )
-                    .with_span(&field_default.span()),
-                );
+            if field.build.is_some() {
+                diag.push(meta.error(
+                    r#"#[builder(default)] and #[builder(field(build="..."))] cannot be used together"#,
+                ));
             }
 
             // `field.ty` being set means `default` will not be used, since we don't know how
             // to check a custom field type for the absence of a value and therefore we'll never
             // know that we should use the `default` value.
-            if self.field.builder_type.is_some() {
-                errors.push(
-                    darling::Error::custom(
-                        r#"#[builder(default)] and #[builder(field(ty="..."))] cannot be used together"#,
-                    )
-                    .with_span(&field_default.span())
-                )
-            }
-        };
-
-        errors.handle(distribute_and_unnest_attrs(
-            &mut self.attrs,
-            &mut [
-                ("builder_field_attr", &mut self.field_attrs),
-                ("builder_setter_attr", &mut self.setter_attrs),
-            ],
-        ));
-
-        errors.finish_with(self)
-    }
-}
-
-/// Divide a list of attributes into multiple partially-overlapping output lists.
-///
-/// Some attributes from the macro input will be added to the output in multiple places;
-/// for example, a `cfg` attribute must be replicated to both the struct and its impl block or
-/// the resulting code will not compile.
-///
-/// Other attributes are scoped to a specific output by their path, e.g. `builder_field_attr`.
-/// These attributes will only appear in one output list, but need that outer path removed.
-///
-/// For performance reasons, we want to do this in one pass through the list instead of
-/// first distributing and then iterating through each of the output lists.
-///
-/// Each item in `outputs` contains the attribute name unique to that output, and the `Vec` where all attributes for that output should be inserted.
-/// Attributes whose path matches any value in `outputs` will be added only to the first matching one, and will be "unnested".
-/// Other attributes are not unnested, and simply copied for each decoratee.
-fn distribute_and_unnest_attrs(
-    input: &mut Vec<Attribute>,
-    outputs: &mut [(&'static str, &mut Vec<Attribute>)],
-) -> darling::Result<()> {
-    let mut errors = vec![];
-
-    for (name, list) in &*outputs {
-        assert!(list.is_empty(), "Output Vec for '{}' was not empty", name);
-    }
-
-    for attr in input.drain(..) {
-        let destination = outputs
-            .iter_mut()
-            .find(|(ptattr, _)| attr.path().is_ident(ptattr));
-
-        if let Some((_, destination)) = destination {
-            match unnest_from_one_attribute(attr) {
-                Ok(n) => destination.push(n),
-                Err(e) => errors.push(e),
-            }
-        } else {
-            for (_, output) in outputs.iter_mut() {
-                output.push(attr.clone());
+            if field.builder_type.is_some() {
+                diag.push(meta.error(
+                    r#"#[builder(default)] and #[builder(field(ty="..."))] cannot be used together"#,
+                ));
             }
         }
     }
-
-    if !errors.is_empty() {
-        return Err(darling::Error::multiple(errors));
-    }
-
-    Ok(())
 }
 
-fn unnest_from_one_attribute(attr: syn::Attribute) -> darling::Result<Attribute> {
-    match &attr.style {
-        syn::AttrStyle::Outer => (),
-        syn::AttrStyle::Inner(bang) => {
-            return Err(darling::Error::unsupported_format(&format!(
-                "{} must be an outer attribute",
-                attr.path()
-                    .get_ident()
-                    .map(Ident::to_string)
-                    .unwrap_or_else(|| "Attribute".to_string())
-            ))
-            .with_span(bang));
-        }
-    };
-
-    let original_span = attr.span();
-
-    let pound = attr.pound_token;
-    let meta = attr.meta;
-
-    match meta {
-        Meta::Path(_) => Err(Error::unsupported_format("word").with_span(&meta)),
-        Meta::NameValue(_) => Err(Error::unsupported_format("name-value").with_span(&meta)),
-        Meta::List(list) => {
-            let inner = list.tokens;
-            Ok(parse_quote_spanned!(original_span=> #pound [ #inner ]))
-        }
+/// Convert an attribute like `#[builder_struct_attr(doc(hidden))]` into `#[doc(hidden)]`.
+fn unnest_attr(attr: &Attribute, out: &mut Vec<Attribute>, diag: &mut Diagnostic) {
+    match attr.parse_args() {
+        Ok(meta) => out.push(Attribute {
+            pound_token: attr.pound_token,
+            style: attr.style,
+            bracket_token: attr.bracket_token,
+            meta,
+        }),
+        Err(err) => diag.push(err),
     }
 }
 
-impl Visibility for Field {
-    fn public(&self) -> &Flag {
-        &self.public
-    }
-
-    fn private(&self) -> &Flag {
-        &self.private
-    }
-
-    fn explicit(&self) -> Option<&syn::Visibility> {
-        self.visibility.as_ref()
-    }
-}
-
-fn default_crate_root() -> Path {
-    parse_quote!(::derive_builder)
-}
-
-fn default_create_empty() -> Ident {
-    Ident::new("create_empty", Span::call_site())
-}
-
-#[derive(Debug, Clone, FromDeriveInput)]
-#[darling(
-    attributes(builder),
-    forward_attrs(cfg, allow, builder_struct_attr, builder_impl_attr),
-    supports(struct_named),
-    and_then = Self::unnest_attrs
-)]
+#[derive(Debug)]
 pub struct Options {
     ident: Ident,
 
-    /// DO NOT USE.
-    ///
-    /// Initial receiver for forwarded attributes from the struct; these are split
-    /// into `Options::struct_attrs` and `Options::impl_attrs` before `FromDeriveInput`
-    /// returns.
-    attrs: Vec<Attribute>,
-
-    #[darling(skip)]
     struct_attrs: Vec<Attribute>,
 
-    #[darling(skip)]
     impl_attrs: Vec<Attribute>,
 
-    /// The visibility of the deriving struct. Do not confuse this with `#[builder(vis = "...")]`,
-    /// which is received by `Options::visibility`.
-    vis: syn::Visibility,
+    /// The visibility of the deriving struct.
+    ///
+    /// Do not confuse this with `builder_vis` which is the visibility received by `#[builder(vis = "...")]`,
+    struct_vis: Visibility,
 
     generics: Generics,
 
@@ -583,97 +621,163 @@ pub struct Options {
 
     /// The path to the root of the derive_builder crate used in generated
     /// code.
-    #[darling(rename = "crate", default = default_crate_root)]
     crate_root: Path,
 
-    #[darling(default)]
     pattern: BuilderPattern,
 
-    #[darling(default)]
     build_fn: BuildFn,
 
     /// Additional traits to derive on the builder.
-    #[darling(default)]
-    derive: PathList,
+    derive: Vec<syn::Path>,
 
-    custom_constructor: Flag,
+    custom_constructor: bool,
 
     /// The ident of the inherent method which takes no arguments and returns
     /// an instance of the builder with all fields empty.
-    #[darling(default = default_create_empty)]
     create_empty: Ident,
 
     /// Setter options applied to all field setters in the struct.
-    #[darling(default)]
     setter: StructLevelSetter,
 
     /// Struct-level value to use in place of any unfilled fields
     default: Option<DefaultExpression>,
 
-    public: Flag,
-
-    private: Flag,
-
     /// Desired visibility of the builder struct.
     ///
-    /// Do not confuse this with `Options::vis`, which is the visibility of the deriving struct.
-    #[darling(rename = "vis")]
-    visibility: Option<syn::Visibility>,
+    /// Do not confuse this with `struct_vis`, which is the visibility of the deriving struct.
+    builder_vis: VisibilityAttr,
 
     /// The parsed body of the derived struct.
-    data: darling::ast::Data<darling::util::Ignored, Field>,
+    data: Vec<Field>,
 
-    no_std: Flag,
+    no_std: bool,
 
     /// When present, emit additional fallible setters alongside each regular
     /// setter.
-    try_setter: Flag,
+    try_setter: bool,
 
-    #[darling(default)]
     field: StructLevelFieldMeta,
 
-    #[darling(skip, default)]
     deprecation_notes: DeprecationNotes,
 }
 
-impl Visibility for Options {
-    fn public(&self) -> &Flag {
-        &self.public
-    }
-
-    fn private(&self) -> &Flag {
-        &self.private
-    }
-
-    fn explicit(&self) -> Option<&syn::Visibility> {
-        self.visibility.as_ref()
-    }
-}
-
 impl Options {
-    /// Populate `self.struct_attrs` and `self.impl_attrs` by draining `self.attrs`
-    fn unnest_attrs(mut self) -> darling::Result<Self> {
-        let mut errors = Error::accumulator();
+    pub(crate) fn from_derive_input(ast: &syn::DeriveInput) -> syn::Result<Self> {
+        let diag = &mut Diagnostic::new();
 
-        errors.handle(distribute_and_unnest_attrs(
-            &mut self.attrs,
-            &mut [
-                ("builder_struct_attr", &mut self.struct_attrs),
-                ("builder_impl_attr", &mut self.impl_attrs),
-            ],
-        ));
+        let mut struct_attrs = Vec::new();
+        let mut impl_attrs = Vec::new();
+        let mut name = None;
+        let mut crate_root = None;
+        let mut pattern = None;
+        let mut build_fn = None;
+        let mut derive = None;
+        let mut custom_constructor = None;
+        let mut create_empty = None;
+        let mut setter = None;
+        let mut default = None;
+        let mut builder_vis = VisibilityAttr::None;
+        let mut data = Vec::new();
+        let mut no_std = None;
+        let mut try_setter = None;
+        let mut field = None;
 
-        // Check for conflicting visibility declarations. These cannot be pushed
-        // down into `FieldMeta` et al because of the call to `no_visibility_conflict(&self)`,
-        // as all sub-fields must be valid for this `Options` function to run.
-        errors.handle(no_visibility_conflict(&self.field));
-        errors.handle(no_visibility_conflict(&self.build_fn));
-        self.data
-            .as_ref()
-            .map_struct_fields(|f| errors.handle(f.no_visibility_conflicts()));
-        errors.handle(no_visibility_conflict(&self));
+        for attr in &ast.attrs {
+            if attr.path().is_ident("builder") {
+                if let Meta::Path(_) = attr.meta {
+                    continue; // Ignore empty #[builder], which would otherwise be an error.
+                }
+                if let Err(err) = attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("name") {
+                        let value: Ident = meta.value()?.parse::<LitStr>()?.parse()?;
+                        set(&meta, &mut name, value, diag);
+                    } else if meta.path.is_ident("crate") {
+                        let value: Path = meta.value()?.parse::<LitStr>()?.parse()?;
+                        set(&meta, &mut crate_root, value, diag);
+                    } else if meta.path.is_ident("pattern") {
+                        let value = BuilderPattern::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut pattern, value, diag);
+                    } else if meta.path.is_ident("build_fn") {
+                        let value = BuildFn::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut build_fn, value, diag);
+                    } else if meta.path.is_ident("derive") {
+                        let mut value = Vec::new();
+                        meta.parse_nested_meta(|meta| {
+                            value.push(meta.path);
+                            Ok(())
+                        })?;
+                        set(&meta, &mut derive, value, diag);
+                    } else if meta.path.is_ident("custom_constructor") {
+                        set(&meta, &mut custom_constructor, true, diag);
+                    } else if meta.path.is_ident("create_empty") {
+                        let value: Ident = meta.value()?.parse::<LitStr>()?.parse()?;
+                        set(&meta, &mut create_empty, value, diag);
+                    } else if meta.path.is_ident("setter") {
+                        let value = StructLevelSetter::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut setter, value, diag);
+                    } else if meta.path.is_ident("default") {
+                        let value = DefaultExpression::parse_nested_meta(&meta)?;
+                        set(&meta, &mut default, value, diag);
+                    } else if meta.path.is_ident("no_std") {
+                        set(&meta, &mut no_std, true, diag);
+                    } else if meta.path.is_ident("try_setter") {
+                        set(&meta, &mut try_setter, true, diag);
+                    } else if meta.path.is_ident("field") {
+                        let value = StructLevelFieldMeta::parse_nested_meta(&meta, diag)?;
+                        set(&meta, &mut field, value, diag);
+                    } else if !builder_vis.parse_nested_meta(&meta, diag)? {
+                        return Err(meta.error("unrecognized derive_builder attribute"));
+                    }
+                    Ok(())
+                }) {
+                    diag.push(err);
+                }
+            } else if attr.path().is_ident("cfg") || attr.path().is_ident("allow") {
+                struct_attrs.push(attr.clone());
+                impl_attrs.push(attr.clone());
+            } else if attr.path().is_ident("builder_struct_attr") {
+                unnest_attr(attr, &mut struct_attrs, diag);
+            } else if attr.path().is_ident("builder_impl_attr") {
+                unnest_attr(attr, &mut impl_attrs, diag);
+            }
+        }
 
-        errors.finish_with(self)
+        if let Data::Struct(ast) = &ast.data {
+            for field in &ast.fields {
+                let field = Field::from_field(field, diag)?;
+                data.push(field);
+            }
+        } else {
+            let msg = "this derive macro requires a struct with named fields";
+            diag.push(syn::Error::new(Span::call_site(), msg));
+        }
+
+        if let Some(error) = diag.take() {
+            return Err(error);
+        }
+
+        Ok(Options {
+            ident: ast.ident.clone(),
+            struct_attrs,
+            impl_attrs,
+            struct_vis: ast.vis.clone(),
+            generics: ast.generics.clone(),
+            name,
+            crate_root: crate_root.unwrap_or_else(|| parse_quote!(::derive_builder)),
+            pattern: pattern.unwrap_or_default(),
+            build_fn: build_fn.unwrap_or_default(),
+            derive: derive.unwrap_or_default(),
+            custom_constructor: custom_constructor.unwrap_or(false),
+            create_empty: create_empty.unwrap_or_else(|| parse_quote!(create_empty)),
+            setter: setter.unwrap_or_default(),
+            default,
+            builder_vis,
+            data,
+            no_std: no_std.unwrap_or(false),
+            try_setter: try_setter.unwrap_or(false),
+            field: field.unwrap_or_default(),
+            deprecation_notes: DeprecationNotes::default(),
+        })
     }
 }
 
@@ -700,24 +804,19 @@ impl Options {
     /// The visibility of the builder struct.
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
-    pub fn builder_vis(&self) -> Cow<syn::Visibility> {
-        self.as_expressed_vis().unwrap_or(Cow::Borrowed(&self.vis))
+    pub fn builder_vis(&self) -> Cow<Visibility> {
+        self.builder_vis
+            .as_expressed_vis()
+            .unwrap_or(Cow::Borrowed(&self.struct_vis))
     }
 
     /// Get the visibility of the emitted `build` method.
     /// This defaults to the visibility of the parent builder, but can be overridden.
-    pub fn build_method_vis(&self) -> Cow<syn::Visibility> {
+    pub fn build_method_vis(&self) -> Cow<Visibility> {
         self.build_fn
+            .vis
             .as_expressed_vis()
             .unwrap_or_else(|| self.builder_vis())
-    }
-
-    pub fn raw_fields(&self) -> Vec<&Field> {
-        self.data
-            .as_ref()
-            .take_struct()
-            .expect("Only structs supported")
-            .fields
     }
 
     /// A builder requires `Clone` to be derived if its build method or any of its setters
@@ -729,11 +828,11 @@ impl Options {
     /// Get an iterator over the input struct's fields which pulls fallback
     /// values from struct-level settings.
     pub fn fields(&self) -> FieldIter {
-        FieldIter(self, self.raw_fields().into_iter())
+        FieldIter(self, self.data.iter())
     }
 
     pub fn field_count(&self) -> usize {
-        self.raw_fields().len()
+        self.data.len()
     }
 }
 
@@ -748,7 +847,7 @@ impl Options {
             derives: &self.derive,
             struct_attrs: &self.struct_attrs,
             impl_attrs: &self.impl_attrs,
-            impl_default: !self.custom_constructor.is_present(),
+            impl_default: !self.custom_constructor,
             create_empty: self.create_empty.clone(),
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
@@ -766,13 +865,13 @@ impl Options {
                 .error
                 .as_ref()
                 .and_then(BuildFnError::as_generated)
-                .map(|e| *e.validation_error)
+                .map(|e| e.validation_error)
                 .unwrap_or(true),
             no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
             deprecation_notes: Default::default(),
-            std: !self.no_std.is_present(),
+            std: !self.no_std,
         }
     }
 
@@ -825,7 +924,7 @@ impl<'a> FieldWithDefaults<'a> {
     /// Check if this field should emit a fallible setter.
     /// This depends on the `TryFrom` trait, which hasn't yet stabilized.
     pub fn try_setter(&self) -> bool {
-        self.field.try_setter.is_present() || self.parent.try_setter.is_present()
+        self.field.try_setter || self.parent.try_setter
     }
 
     /// Get the prefix that should be applied to the field name to produce
@@ -874,10 +973,11 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Get the visibility of the emitted setter, if there will be one.
-    pub fn setter_vis(&self) -> Cow<syn::Visibility> {
+    pub fn setter_vis(&self) -> Cow<Visibility> {
         self.field
+            .vis
             .as_expressed_vis()
-            .or_else(|| self.parent.as_expressed_vis())
+            .or_else(|| self.parent.builder_vis.as_expressed_vis())
             .unwrap_or_else(|| Cow::Owned(syn::parse_quote!(pub)))
     }
 
@@ -890,9 +990,10 @@ impl<'a> FieldWithDefaults<'a> {
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Cow<syn::Visibility> {
+    pub fn field_vis(&self) -> Cow<Visibility> {
         self.field
             .field
+            .vis
             .as_expressed_vis()
             .or_else(
                 // Disabled fields become a PhantomData in the builder.  We make that field
@@ -902,12 +1003,12 @@ impl<'a> FieldWithDefaults<'a> {
                     if self.field_enabled() {
                         None
                     } else {
-                        Some(Cow::Owned(syn::Visibility::Inherited))
+                        Some(Cow::Owned(Visibility::Inherited))
                     }
                 },
             )
-            .or_else(|| self.parent.field.as_expressed_vis())
-            .unwrap_or(Cow::Owned(syn::Visibility::Inherited))
+            .or_else(|| self.parent.field.vis.as_expressed_vis())
+            .unwrap_or(Cow::Owned(Visibility::Inherited))
     }
 
     pub fn field_type(&'a self) -> BuilderFieldType<'a> {
@@ -996,7 +1097,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 }
 
-pub struct FieldIter<'a>(&'a Options, IntoIter<&'a Field>);
+pub struct FieldIter<'a>(&'a Options, slice::Iter<'a, Field>);
 
 impl<'a> Iterator for FieldIter<'a> {
     type Item = FieldWithDefaults<'a>;

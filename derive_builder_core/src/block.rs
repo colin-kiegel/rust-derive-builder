@@ -1,8 +1,9 @@
-use std::convert::TryFrom;
-
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{spanned::Spanned, Block, LitStr};
+use syn::{
+    meta::ParseNestedMeta, parse::ParseStream, spanned::Spanned, token, Block, Expr, ExprLit, Lit,
+    Stmt,
+};
 
 /// A wrapper for expressions/blocks which automatically adds the start and end
 /// braces.
@@ -13,12 +14,35 @@ use syn::{spanned::Spanned, Block, LitStr};
 pub struct BlockContents(Block);
 
 impl BlockContents {
-    pub fn is_empty(&self) -> bool {
-        self.0.stmts.is_empty()
+    #[cfg(test)]
+    pub(crate) fn new(block: Block) -> Self {
+        Self(block)
     }
 
-    pub fn span(&self) -> Span {
-        self.0.span()
+    pub(crate) fn parse_nested_meta(meta: &ParseNestedMeta) -> syn::Result<Self> {
+        let expr: Expr = meta.value()?.parse()?;
+        if let Expr::Lit(ExprLit {
+            lit: Lit::Str(lit), ..
+        }) = expr
+        {
+            Ok(Self(Block {
+                brace_token: token::Brace(lit.span()),
+                stmts: lit.parse_with(parse_nonempty_block)?,
+            }))
+        } else {
+            Ok(Self(Block {
+                brace_token: token::Brace(expr.span()),
+                stmts: vec![Stmt::Expr(expr, None)],
+            }))
+        }
+    }
+}
+
+fn parse_nonempty_block(input: ParseStream) -> syn::Result<Vec<Stmt>> {
+    if input.is_empty() {
+        Err(input.error("expected expression"))
+    } else {
+        Block::parse_within(input)
     }
 }
 
@@ -28,57 +52,19 @@ impl ToTokens for BlockContents {
     }
 }
 
-impl TryFrom<&'_ LitStr> for BlockContents {
-    type Error = syn::Error;
-
-    fn try_from(s: &LitStr) -> Result<Self, Self::Error> {
-        let mut block_str = s.value();
-        block_str.insert(0, '{');
-        block_str.push('}');
-        LitStr::new(&block_str, s.span()).parse().map(Self)
-    }
-}
-
-impl From<syn::Expr> for BlockContents {
-    fn from(v: syn::Expr) -> Self {
-        Self(Block {
-            brace_token: syn::token::Brace(v.span()),
-            stmts: vec![syn::Stmt::Expr(v, None)],
-        })
-    }
-}
-
-impl darling::FromMeta for BlockContents {
-    fn from_value(value: &syn::Lit) -> darling::Result<Self> {
-        if let syn::Lit::Str(s) = value {
-            let contents = BlockContents::try_from(s)?;
-            if contents.is_empty() {
-                Err(darling::Error::unknown_value("").with_span(s))
-            } else {
-                Ok(contents)
-            }
-        } else {
-            Err(darling::Error::unexpected_lit_type(value))
-        }
-    }
-
-    fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
-        if let syn::Expr::Lit(lit) = expr {
-            Self::from_value(&lit.lit)
-        } else {
-            Ok(Self::from(expr.clone()))
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use std::convert::TryInto;
-
     use super::*;
+    use syn::MetaList;
 
     fn parse(s: &str) -> Result<BlockContents, syn::Error> {
-        (&LitStr::new(s, Span::call_site())).try_into()
+        let mut block_contents = None;
+        let attr: MetaList = parse_quote!(field(build = #s));
+        attr.parse_nested_meta(|meta| {
+            block_contents = Some(BlockContents::parse_nested_meta(&meta)?);
+            Ok(())
+        })
+        .map(|()| block_contents.unwrap())
     }
 
     #[test]

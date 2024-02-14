@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn default_value() {
         let mut initializer = default_initializer!();
-        let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
+        let default_value = DefaultExpression::Explicit(BlockContents::new(parse_quote!({ 42 })));
         initializer.default_value = Some(&default_value);
 
         assert_eq!(

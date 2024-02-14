@@ -28,4 +28,4 @@ lib_has_std = ["derive_builder_core/lib_has_std"]
 
 [dependencies]
 derive_builder_core = { version = "=0.20.0", path = "../derive_builder_core" }
-syn = { version = "2.0.15", features = ["full", "extra-traits"] }
+syn = { version = "2.0.49", features = ["full", "extra-traits"] }
