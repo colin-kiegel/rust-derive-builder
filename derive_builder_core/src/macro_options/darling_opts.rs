@@ -3,10 +3,9 @@ use std::{borrow::Cow, vec::IntoIter};
 use crate::BuildMethod;
 
 use darling::util::{Flag, PathList, SpannedValue};
-use darling::{self, Error, FromMeta};
+use darling::{Error, FromMeta};
 use proc_macro2::Span;
-use syn::Meta;
-use syn::{self, spanned::Spanned, Attribute, Generics, Ident, Path};
+use syn::{spanned::Spanned, Attribute, Generics, Ident, Meta, Path};
 
 use crate::{
     BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,

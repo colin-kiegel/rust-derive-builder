@@ -4,7 +4,6 @@ extern crate derive_builder;
 use std::convert::TryFrom;
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
-use std::string::ToString;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MyAddr(IpAddr);
