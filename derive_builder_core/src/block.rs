@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
-use syn::{self, spanned::Spanned, Block, LitStr};
+use syn::{spanned::Spanned, Block, LitStr};
 
 /// A wrapper for expressions/blocks which automatically adds the start and end
 /// braces.
@@ -76,7 +76,6 @@ mod test {
     use std::convert::TryInto;
 
     use super::*;
-    use proc_macro2::Span;
 
     fn parse(s: &str) -> Result<BlockContents, syn::Error> {
         (&LitStr::new(s, Span::call_site())).try_into()

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
-use syn::{self, Path, TraitBound, TraitBoundModifier, TypeParamBound};
+use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
 use crate::{
     doc_comment_from, BuildMethod, BuilderField, BuilderPattern, DeprecationNotes, Setter,
@@ -405,7 +405,6 @@ macro_rules! default_builder {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
-    use proc_macro2::TokenStream;
     use syn::Ident;
 
     fn add_simple_foo_builder(result: &mut TokenStream) {
