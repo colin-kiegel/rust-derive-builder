@@ -1,28 +1,16 @@
-error: `public` and `private` cannot be used together
- --> tests/compile-fail/vis_conflict.rs:7:15
-  |
-7 |     #[builder(public, private)]
-  |               ^^^^^^
-
-error: `vis="..."` cannot be used with `public` or `private`
+error: `public` and `vis` cannot be used together
  --> tests/compile-fail/vis_conflict.rs:5:25
   |
 5 | #[builder(public, vis = "pub(crate)")]
   |                         ^^^^^^^^^^^^
 
 error: `public` and `private` cannot be used together
-  --> tests/compile-fail/vis_conflict.rs:12:57
+  --> tests/compile-fail/vis_conflict.rs:12:48
    |
 12 | #[builder(public, vis = "pub(crate)", build_fn(private, public))]
-   |                                                         ^^^^^^
+   |                                                ^^^^^^^
 
-error: `vis="..."` cannot be used with `public` or `private`
-  --> tests/compile-fail/vis_conflict.rs:14:30
-   |
-14 |     #[builder(private, vis = "pub")]
-   |                              ^^^^^
-
-error: `vis="..."` cannot be used with `public` or `private`
+error: `public` and `vis` cannot be used together
   --> tests/compile-fail/vis_conflict.rs:12:25
    |
 12 | #[builder(public, vis = "pub(crate)", build_fn(private, public))]
