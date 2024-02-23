@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::{borrow::Cow, vec::IntoIter};
 
 use crate::BuildMethod;
@@ -305,6 +306,28 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+struct FieldForwardedAttrs {
+    pub field: Vec<Attribute>,
+    pub setter: Vec<Attribute>,
+}
+
+impl TryFrom<Vec<Attribute>> for FieldForwardedAttrs {
+    type Error = Error;
+
+    fn try_from(value: Vec<Attribute>) -> Result<Self, Self::Error> {
+        let mut result = Self::default();
+        distribute_and_unnest_attrs(
+            value,
+            &mut [
+                ("builder_field_attr", &mut result.field),
+                ("builder_setter_attr", &mut result.setter),
+            ],
+        )?;
+        Ok(result)
+    }
+}
+
 /// Data extracted from the fields of the input struct.
 #[derive(Debug, Clone, FromField)]
 #[darling(
@@ -314,8 +337,8 @@ fn field_setter(meta: &Meta) -> darling::Result<FieldLevelSetter> {
 )]
 pub struct Field {
     ident: Option<Ident>,
-    /// Raw input attributes, for consumption by Field::unnest_attrs.  Do not use elsewhere.
-    attrs: Vec<syn::Attribute>,
+    #[darling(with = TryFrom::try_from)]
+    attrs: FieldForwardedAttrs,
     ty: syn::Type,
     /// Field-level override for builder pattern.
     /// Note that setting this may force the builder to derive `Clone`.
@@ -340,18 +363,13 @@ pub struct Field {
     try_setter: Flag,
     #[darling(default)]
     field: FieldLevelFieldMeta,
-    #[darling(skip)]
-    field_attrs: Vec<Attribute>,
-    #[darling(skip)]
-    setter_attrs: Vec<Attribute>,
 }
 
 impl Field {
     /// Resolve and check (post-parsing) options which come from multiple darling options
     ///
     ///  * Check that we don't have a custom field type or builder *and* a default value
-    ///  * Populate `self.field_attrs` and `self.setter_attrs` by draining `self.attrs`
-    fn resolve(mut self) -> darling::Result<Self> {
+    fn resolve(self) -> darling::Result<Self> {
         let mut errors = darling::Error::accumulator();
 
         // `default` can be preempted by properties in `field`. Silently ignoring a
@@ -388,14 +406,6 @@ impl Field {
             }
         };
 
-        errors.handle(distribute_and_unnest_attrs(
-            &mut self.attrs,
-            &mut [
-                ("builder_field_attr", &mut self.field_attrs),
-                ("builder_setter_attr", &mut self.setter_attrs),
-            ],
-        ));
-
         errors.finish_with(self)
     }
 }
@@ -416,7 +426,7 @@ impl Field {
 /// Attributes whose path matches any value in `outputs` will be added only to the first matching one, and will be "unnested".
 /// Other attributes are not unnested, and simply copied for each decoratee.
 fn distribute_and_unnest_attrs(
-    input: &mut Vec<Attribute>,
+    mut input: Vec<Attribute>,
     outputs: &mut [(&'static str, &mut Vec<Attribute>)],
 ) -> darling::Result<()> {
     let mut errors = vec![];
@@ -487,28 +497,40 @@ fn default_create_empty() -> Ident {
     Ident::new("create_empty", Span::call_site())
 }
 
+#[derive(Debug, Clone, Default)]
+struct StructForwardedAttrs {
+    struct_attrs: Vec<Attribute>,
+    impl_attrs: Vec<Attribute>,
+}
+
+impl TryFrom<Vec<Attribute>> for StructForwardedAttrs {
+    type Error = Error;
+
+    fn try_from(value: Vec<Attribute>) -> Result<Self, Self::Error> {
+        let mut result = Self::default();
+        distribute_and_unnest_attrs(
+            value,
+            &mut [
+                ("builder_struct_attr", &mut result.struct_attrs),
+                ("builder_impl_attr", &mut result.impl_attrs),
+            ],
+        )?;
+
+        Ok(result)
+    }
+}
+
 #[derive(Debug, Clone, FromDeriveInput)]
 #[darling(
     attributes(builder),
     forward_attrs(cfg, allow, builder_struct_attr, builder_impl_attr),
-    supports(struct_named),
-    and_then = Self::unnest_attrs
+    supports(struct_named)
 )]
 pub struct Options {
     ident: Ident,
 
-    /// DO NOT USE.
-    ///
-    /// Initial receiver for forwarded attributes from the struct; these are split
-    /// into `Options::struct_attrs` and `Options::impl_attrs` before `FromDeriveInput`
-    /// returns.
-    attrs: Vec<Attribute>,
-
-    #[darling(skip)]
-    struct_attrs: Vec<Attribute>,
-
-    #[darling(skip)]
-    impl_attrs: Vec<Attribute>,
+    #[darling(with = TryFrom::try_from)]
+    attrs: StructForwardedAttrs,
 
     /// The visibility of the deriving struct. Do not confuse this with `#[builder(vis = "...")]`,
     /// which is received by `Options::visibility`.
@@ -568,21 +590,6 @@ pub struct Options {
 
     #[darling(skip, default)]
     deprecation_notes: DeprecationNotes,
-}
-
-impl Options {
-    /// Populate `self.struct_attrs` and `self.impl_attrs` by draining `self.attrs`
-    fn unnest_attrs(mut self) -> darling::Result<Self> {
-        distribute_and_unnest_attrs(
-            &mut self.attrs,
-            &mut [
-                ("builder_struct_attr", &mut self.struct_attrs),
-                ("builder_impl_attr", &mut self.impl_attrs),
-            ],
-        )?;
-
-        Ok(self)
-    }
 }
 
 /// Accessors for parsed properties.
@@ -657,8 +664,8 @@ impl Options {
             ident: self.builder_ident(),
             pattern: self.pattern,
             derives: &self.derive,
-            struct_attrs: &self.struct_attrs,
-            impl_attrs: &self.impl_attrs,
+            struct_attrs: &self.attrs.struct_attrs,
+            impl_attrs: &self.attrs.impl_attrs,
             impl_default: !self.custom_constructor.is_present(),
             create_empty: self.create_empty.clone(),
             generics: Some(&self.generics),
@@ -864,7 +871,7 @@ impl<'a> FieldWithDefaults<'a> {
             try_setter: self.try_setter(),
             visibility: self.setter_vis(),
             pattern: self.pattern(),
-            attrs: &self.field.setter_attrs,
+            attrs: &self.field.attrs.setter,
             ident: self.setter_ident(),
             field_ident: self.field_ident(),
             field_type: self.field_type(),
@@ -904,7 +911,7 @@ impl<'a> FieldWithDefaults<'a> {
             field_ident: self.field_ident(),
             field_type: self.field_type(),
             field_visibility: self.field_vis(),
-            attrs: &self.field.field_attrs,
+            attrs: &self.field.attrs.field,
         }
     }
 }
