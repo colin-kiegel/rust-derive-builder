@@ -1,5 +1,4 @@
-#[macro_use]
-extern crate derive_builder;
+use derive_builder::Builder;
 
 #[derive(Builder, PartialEq, Debug)]
 struct Lorem {

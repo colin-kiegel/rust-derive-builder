@@ -3,8 +3,7 @@
 //       cargo expand --example readme_example
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate derive_builder;
+use derive_builder::Builder;
 
 #[derive(Default, Builder, Debug)]
 #[builder(setter(into))]

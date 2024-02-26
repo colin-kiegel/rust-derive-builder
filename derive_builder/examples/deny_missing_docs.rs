@@ -3,8 +3,7 @@
 //! NOTE: This can only be tested in examples, but not integration tests.
 #![deny(missing_docs)]
 
-#[macro_use]
-extern crate derive_builder;
+use derive_builder::Builder;
 
 /// Traditional form of communication.
 #[derive(Debug, Builder)]

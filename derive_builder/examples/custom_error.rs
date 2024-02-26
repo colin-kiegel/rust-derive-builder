@@ -5,11 +5,9 @@
 //! the generated `FooBuilderError` type is valid.
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate derive_builder;
-
-use derive_builder::UninitializedFieldError;
 use std::fmt;
+
+use derive_builder::{Builder, UninitializedFieldError};
 
 fn validate_age(builder: &ExampleBuilder) -> Result<(), Error> {
     match builder.age {
