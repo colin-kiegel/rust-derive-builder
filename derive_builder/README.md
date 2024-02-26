@@ -12,8 +12,7 @@
 ## How it Works
 
 ```rust
-#[macro_use]
-extern crate derive_builder;
+use derive_builder::Builder;
 
 #[derive(Default, Builder, Debug)]
 #[builder(setter(into))]
@@ -105,40 +104,40 @@ It's as simple as three steps:
 1. Add `derive_builder` to your `Cargo.toml` either manually or
    with [cargo-edit](https://github.com/killercup/cargo-edit):
 
-- `cargo add derive_builder`
+-   `cargo add derive_builder`
 
 2. Add `use derive_builder::Builder;`
 3. Annotate your struct with `#[derive(Builder)]`
 
 ## Usage and Features
 
-- **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
-- **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern = "owned")]` or `#[builder(pattern = "immutable")]`.
-- **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
-- **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
-- **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
-- **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
-- **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
-- **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter'type for field of type `Option<T>`.
-- **Collection setters**: Adding `#[builder(setter(each(name = "method_name")))]` to fields whose types implement `Default` and `Extend` will generate a setter which adds items to the builder collection for that field. It's possible for these setters to be generic over the `Into<T>` trait too, like so: `#[builder(setter(each(name = "foo", into)))]`.
-- **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
-- **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
-- **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via ` = ".."`. This works both on the struct and field level.
-- **Pre-build validation**: You can use `#[builder(build_fn(validate = "path::to::fn"))]` to add your own validation before the target struct is generated.
-- **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
-- **Custom build method error types**: You can use `#[builder(build_fn(error = "path::to::Error"))]` to have your builder return an error type of your choosing. By default, the macro will emit an error type alongside the builder.
-- **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
-- **Pass-through attributes**: Use `#[builder_struct_attr(...)]`, `#[builder_impl_attr(...)]`, `#[builder_field_attr(...)]`, and `#[builder_setter_attr(...)]` to declare attributes that will be added to the relevant part of the generated builder.
-- **no_std support**: Just add `#[builder(no_std)]` to your struct, use feature `alloc`, and add `extern crate alloc` to your crate.
-- **No alloc no_std support**: Do not use `alloc` feature and then either add `#[builder(no_std, build_fn(error(validation_error = false)))]` or `#[builder(no_std, build_fn(error = "path::to::Error"))]` to your struct.
-- **Renaming and re-export support**: Use `#[builder(crate = "...")]` to set the root for `derive_builder`. This is useful if you want to rename `derive_builder` in `Cargo.toml` or if your crate is re-exporting `derive_builder::Builder` and needs the generated code to not directly reference the `derive_builder` crate.
+-   **Chaining**: The setter calls can be chained, because they consume and return `&mut self` by default.
+-   **Builder patterns**: You can opt into other builder patterns by preceding your struct (or field) with `#[builder(pattern = "owned")]` or `#[builder(pattern = "immutable")]`.
+-   **Extensible**: You can still define your own implementations for the builder struct and define additional methods. Just make sure to name them differently than the setter and build methods.
+-   **Documentation and attributes**: Setter methods can be documented by simply documenting the corresponding field. Similarly `#[cfg(...)]` and `#[allow(...)]` attributes are also applied to the setter methods.
+-   **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
+-   **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
+-   **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
+-   **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter'type for field of type `Option<T>`.
+-   **Collection setters**: Adding `#[builder(setter(each(name = "method_name")))]` to fields whose types implement `Default` and `Extend` will generate a setter which adds items to the builder collection for that field. It's possible for these setters to be generic over the `Into<T>` trait too, like so: `#[builder(setter(each(name = "foo", into)))]`.
+-   **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
+-   **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
+-   **Default values**: You can use `#[builder(default)]` to delegate to the `Default` implementation or any explicit value via ` = ".."`. This works both on the struct and field level.
+-   **Pre-build validation**: You can use `#[builder(build_fn(validate = "path::to::fn"))]` to add your own validation before the target struct is generated.
+-   **Build method suppression**: You can use `#[builder(build_fn(skip))]` to disable auto-implementation of the build method and provide your own.
+-   **Custom build method error types**: You can use `#[builder(build_fn(error = "path::to::Error"))]` to have your builder return an error type of your choosing. By default, the macro will emit an error type alongside the builder.
+-   **Builder derivations**: You can use `#[builder(derive(Trait1, Trait2, ...))]` to have the builder derive additonal traits. All builders derive `Default` and `Clone`, so you should not declare those in this attribute.
+-   **Pass-through attributes**: Use `#[builder_struct_attr(...)]`, `#[builder_impl_attr(...)]`, `#[builder_field_attr(...)]`, and `#[builder_setter_attr(...)]` to declare attributes that will be added to the relevant part of the generated builder.
+-   **no_std support**: Just add `#[builder(no_std)]` to your struct, use feature `alloc`, and add `extern crate alloc` to your crate.
+-   **No alloc no_std support**: Do not use `alloc` feature and then either add `#[builder(no_std, build_fn(error(validation_error = false)))]` or `#[builder(no_std, build_fn(error = "path::to::Error"))]` to your struct.
+-   **Renaming and re-export support**: Use `#[builder(crate = "...")]` to set the root for `derive_builder`. This is useful if you want to rename `derive_builder` in `Cargo.toml` or if your crate is re-exporting `derive_builder::Builder` and needs the generated code to not directly reference the `derive_builder` crate.
 
 For more information and examples please take a look at our [documentation][doc].
 
 ## Gotchas
 
-- Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
-- When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
+-   Tuple structs and unit structs are not supported as they have no field names. We do not intend to support them.
+-   When defining a generic struct, you cannot use `VALUE` as a generic parameter as this is what all setters are using.
 
 ## [Documentation][doc]
 
@@ -157,8 +156,8 @@ Yes, we keep a changelog.
 
 Licensed under either of
 
-- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+-   Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+-   MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 

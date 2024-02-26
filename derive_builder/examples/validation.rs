@@ -1,11 +1,10 @@
 //! This example illustrates the use of `validate` to add a pre-build validation
 //! step.
 
-#[macro_use]
-extern crate derive_builder;
+use derive_builder::Builder;
 
 #[derive(Builder, Debug, PartialEq)]
-#[builder(build_fn(validate = "Self::validate"))]
+#[builder(build_fn(validate = Self::validate))]
 struct Lorem {
     pub ipsum: u8,
 }

@@ -1,9 +1,8 @@
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate derive_builder;
-
 use std::convert::From;
+
+use derive_builder::Builder;
 
 #[derive(PartialEq, Default, Debug, Clone)]
 struct Uuid(i32);

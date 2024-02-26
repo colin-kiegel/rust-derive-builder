@@ -3,10 +3,7 @@
 //! Note the use of the type parameter in the `#[builder(...)]` attribute.
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate derive_builder;
-
-use derive_builder::UninitializedFieldError;
+use derive_builder::{Builder, UninitializedFieldError};
 
 trait Popular {
     fn is_popular(&self) -> bool;
