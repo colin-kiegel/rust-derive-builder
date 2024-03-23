@@ -41,6 +41,10 @@ pub struct FieldDefaultValue<'a> {
 
 impl<'a> ToTokens for FieldDefaultValue<'a> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        if !self.field_enabled {
+            // disabled fields have their value calculated in the initializer
+            return;
+        }
         // should be:
         // ```
         // let $prefix$fieldname = match self.$field.as_ref() {
@@ -59,53 +63,30 @@ impl<'a> ToTokens for FieldDefaultValue<'a> {
             Span::call_site(),
         );
 
-        // token stream to generate the calculation of the default value
         let default_calculation = (|| {
             let mut tokens = TokenStream::new();
-            if !self.field_enabled {
-                // If the field is disabled we just calculate the default here.
-                // It is later set in the initializer
-                let value = self.disabled_field_value();
-                tokens.append_all(quote!(#value));
-            } else {
-                match &self.conversion {
-                    FieldConversion::Block(_) | FieldConversion::Move => {
-                        // value is directly accessed, therfor there is no default
-                        tokens.append_all(quote!(None))
-                    }
-                    FieldConversion::OptionOrDefault => {
-                        let default = self.default_value();
-                        tokens.append_all(quote!(#default));
-                    }
-                }
-            }
+            let default = self.default_value();
+            tokens.append_all(quote!(#default));
             tokens
         })();
 
-        tokens.append_all(quote!(
-            let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
-                Some(_) => None,
-                None => #default_calculation,
-            };
-        ));
+        match &self.conversion {
+            FieldConversion::Block(_) | FieldConversion::Move => {
+                // there is no defaul value.
+            }
+            FieldConversion::OptionOrDefault => {
+                tokens.append_all(quote!(
+                    let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
+                        Some(_) => None,
+                        None => #default_calculation,
+                    };
+                ));
+            }
+        }
     }
 }
 
 impl<'a> FieldDefaultValue<'a> {
-    fn disabled_field_value(&'a self) -> TokenStream {
-        let crate_root = self.crate_root;
-        match self.default_value {
-            Some(expr) => expr.with_crate_root(crate_root).into_token_stream(),
-            None if self.use_default_struct => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
-                let field_ident = self.field_ident;
-                quote!(#struct_ident.#field_ident)
-            }
-            None => {
-                quote!(#crate_root::export::core::default::Default::default())
-            }
-        }
-    }
     fn default_value(&'a self) -> DefaultValue<'a> {
         match self.default_value {
             Some(expr) => DefaultValue::DefaultTo {
