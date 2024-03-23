@@ -37,33 +37,33 @@ use crate::{
 /// ```
 #[derive(Debug, Clone)]
 pub struct Initializer<'a> {
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a syn::Path,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Whether the builder implements a setter for this field.
     pub field_enabled: bool,
-    /// Method to use to to convert the builder's field to the target field
-    ///
-    /// For sub-builder fields, this will be `build` (or similar)
-    pub conversion: FieldConversion<'a>,
+    /// How the build method takes and returns `self` (e.g. mutably).
+    pub builder_pattern: BuilderPattern,
     /// Default value for the target field.
     ///
     /// This takes precedence over a default struct identifier.
     pub default_value: Option<&'a DefaultExpression>,
     /// Whether the build_method defines a default struct.
     pub use_default_struct: bool,
-    /// Path to the root of the derive_builder crate.
-    pub crate_root: &'a syn::Path,
+    /// Method to use to to convert the builder's field to the target field
+    ///
+    /// For sub-builder fields, this will be `build` (or similar)
+    pub conversion: FieldConversion<'a>,
 
     // TODO delete fields below here
     //
-    /// How the build method takes and returns `self` (e.g. mutably).
-    pub builder_pattern: BuilderPattern,
     /// Span where the macro was told to use a preexisting error type, instead of creating one,
     /// to represent failures of the `build` method.
     ///
     /// An initializer can force early-return if a field has no set value and no default is
     /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
-    /// into thereturn type of its enclosing `build` method. That conversion is guaranteed to
+    /// into the return type of its enclosing `build` method. That conversion is guaranteed to
     /// work for generated error types, but if the caller specified an error type to use instead
     /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
     /// error type.
