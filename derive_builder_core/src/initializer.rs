@@ -1,7 +1,7 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 
-use crate::{change_span, BlockContents, BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
+use crate::{BuilderPattern, DefaultExpression, FieldConversion, DEFAULT_FIELD_NAME_PREFIX};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
@@ -34,12 +34,15 @@ use crate::{change_span, BlockContents, BuilderPattern, DefaultExpression, DEFAU
 /// ```
 #[derive(Debug, Clone)]
 pub struct Initializer<'a> {
-    /// Path to the root of the derive_builder crate.
-    pub crate_root: &'a syn::Path,
     /// Name of the target field.
     pub field_ident: &'a syn::Ident,
     /// Whether the builder implements a setter for this field.
     pub field_enabled: bool,
+
+    // TODO delete fields below here
+    //
+    /// Path to the root of the derive_builder crate.
+    pub crate_root: &'a syn::Path,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
     /// Default value for the target field.
@@ -53,7 +56,7 @@ pub struct Initializer<'a> {
     ///
     /// An initializer can force early-return if a field has no set value and no default is
     /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
-    /// into the return type of its enclosing `build` method. That conversion is guaranteed to
+    /// into thereturn type of its enclosing `build` method. That conversion is guaranteed to
     /// work for generated error types, but if the caller specified an error type to use instead
     /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
     /// error type.
@@ -69,167 +72,23 @@ impl<'a> ToTokens for Initializer<'a> {
         let struct_field = &self.field_ident;
         let builder_field = struct_field;
 
+        let default_value = Ident::new(
+            &format!("{}{}", DEFAULT_FIELD_NAME_PREFIX, struct_field),
+            Span::call_site(),
+        );
+
         // This structure prevents accidental failure to add the trailing `,` due to incautious `return`
         let append_rhs = |tokens: &mut TokenStream| {
             if !self.field_enabled {
-                let default = self.default();
-                tokens.append_all(quote!(
-                    #default
-                ));
+                tokens.append_all(quote!(#default_value));
             } else {
-                match &self.conversion {
-                    FieldConversion::Block(conv) => {
-                        conv.to_tokens(tokens);
-                    }
-                    FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),
-                    FieldConversion::OptionOrDefault => {
-                        let match_some = self.match_some();
-                        let match_none = self.match_none();
-                        tokens.append_all(quote!(
-                            match self.#builder_field {
-                                #match_some,
-                                #match_none,
-                            }
-                        ));
-                    }
-                }
+                tokens.append_all(quote!( self.#builder_field.or(#default_value).unwrap()));
             }
         };
 
         tokens.append_all(quote!(#struct_field:));
         append_rhs(tokens);
         tokens.append_all(quote!(,));
-    }
-}
-
-impl<'a> Initializer<'a> {
-    /// To be used inside of `#struct_field: match self.#builder_field { ... }`
-    fn match_some(&'a self) -> MatchSome {
-        match self.builder_pattern {
-            BuilderPattern::Owned => MatchSome::Move,
-            BuilderPattern::Mutable | BuilderPattern::Immutable => MatchSome::Clone {
-                crate_root: self.crate_root,
-            },
-        }
-    }
-
-    /// To be used inside of `#struct_field: match self.#builder_field { ... }`
-    fn match_none(&'a self) -> MatchNone<'a> {
-        match self.default_value {
-            Some(expr) => MatchNone::DefaultTo {
-                expr,
-                crate_root: self.crate_root,
-            },
-            None => {
-                if self.use_default_struct {
-                    MatchNone::UseDefaultStructField(self.field_ident)
-                } else {
-                    MatchNone::ReturnError {
-                        crate_root: self.crate_root,
-                        field_name: self.field_ident.to_string(),
-                        span: self.custom_error_type_span,
-                    }
-                }
-            }
-        }
-    }
-
-    fn default(&'a self) -> TokenStream {
-        let crate_root = self.crate_root;
-        match self.default_value {
-            Some(expr) => expr.with_crate_root(crate_root).into_token_stream(),
-            None if self.use_default_struct => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
-                let field_ident = self.field_ident;
-                quote!(#struct_ident.#field_ident)
-            }
-            None => {
-                quote!(#crate_root::export::core::default::Default::default())
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum FieldConversion<'a> {
-    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
-    OptionOrDefault,
-    /// Custom conversion is a block contents expression
-    Block(&'a BlockContents),
-    /// Custom conversion is just to move the field from the builder
-    Move,
-}
-
-/// To be used inside of `#struct_field: match self.#builder_field { ... }`
-enum MatchNone<'a> {
-    /// Inner value must be a valid Rust expression
-    DefaultTo {
-        expr: &'a DefaultExpression,
-        crate_root: &'a syn::Path,
-    },
-    /// Inner value must be the field identifier
-    ///
-    /// The default struct must be in scope in the build_method.
-    UseDefaultStructField(&'a syn::Ident),
-    /// Inner value must be the field name
-    ReturnError {
-        crate_root: &'a syn::Path,
-        field_name: String,
-        span: Option<Span>,
-    },
-}
-
-impl<'a> ToTokens for MatchNone<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match *self {
-            MatchNone::DefaultTo { expr, crate_root } => {
-                let expr = expr.with_crate_root(crate_root);
-                tokens.append_all(quote!(None => #expr));
-            }
-            MatchNone::UseDefaultStructField(field_ident) => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
-                tokens.append_all(quote!(
-                    None => #struct_ident.#field_ident
-                ))
-            }
-            MatchNone::ReturnError {
-                ref field_name,
-                ref span,
-                crate_root,
-            } => {
-                let conv_span = span.unwrap_or_else(Span::call_site);
-                // If the conversion fails, the compiler error should point to the error declaration
-                // rather than the crate root declaration, but the compiler will see the span of #crate_root
-                // and produce an undesired behavior (possibly because that's the first span in the bad expression?).
-                // Creating a copy with deeply-rewritten spans preserves the desired error behavior.
-                let crate_root = change_span(crate_root.into_token_stream(), conv_span);
-                let err_conv = quote_spanned!(conv_span => #crate_root::export::core::convert::Into::into(
-                    #crate_root::UninitializedFieldError::from(#field_name)
-                ));
-                tokens.append_all(quote!(
-                    None => return #crate_root::export::core::result::Result::Err(#err_conv)
-                ));
-            }
-        }
-    }
-}
-
-/// To be used inside of `#struct_field: match self.#builder_field { ... }`
-enum MatchSome<'a> {
-    Move,
-    Clone { crate_root: &'a syn::Path },
-}
-
-impl ToTokens for MatchSome<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match *self {
-            Self::Move => tokens.append_all(quote!(
-                Some(value) => value
-            )),
-            Self::Clone { crate_root } => tokens.append_all(quote!(
-                Some(ref value) => #crate_root::export::core::clone::Clone::clone(value)
-            )),
-        }
     }
 }
 

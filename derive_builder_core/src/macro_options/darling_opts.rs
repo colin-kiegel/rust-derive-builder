@@ -10,7 +10,7 @@ use syn::{spanned::Spanned, Attribute, Generics, Ident, Meta, Path};
 
 use crate::{
     BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,
-    DeprecationNotes, Each, FieldConversion, Initializer, Setter,
+    DeprecationNotes, Each, FieldConversion, FieldDefaultValue, Initializer, Setter,
 };
 
 #[derive(Debug, Clone)]
@@ -706,6 +706,7 @@ impl Options {
             target_ty_generics: Some(ty_generics),
             error_ty: self.builder_error_ident(),
             initializers: Vec::with_capacity(self.field_count()),
+            defaults: Vec::with_capacity(self.field_count()),
             doc_comment: None,
             default_struct: self.default.as_ref(),
             validate_fn: self.build_fn.validate.as_ref(),
@@ -893,6 +894,24 @@ impl<'a> FieldWithDefaults<'a> {
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
+            default_value: self.field.default.as_ref(),
+            use_default_struct: self.use_parent_default(),
+            conversion: self.conversion(),
+            custom_error_type_span: self.parent.build_fn.error.as_ref().and_then(|err_ty| {
+                match err_ty {
+                    BuildFnError::Existing(p) => Some(p.span()),
+                    _ => None,
+                }
+            }),
+        }
+    }
+
+    pub fn as_default_value(&'a self) -> FieldDefaultValue<'a> {
+        FieldDefaultValue {
+            crate_root: &self.parent.crate_root,
+            field_ident: self.field_ident(),
+            field_enabled: self.field_enabled(),
+            field_type: &self.field.ty,
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
             conversion: self.conversion(),

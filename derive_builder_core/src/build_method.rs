@@ -5,7 +5,8 @@ use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
 use crate::{
-    doc_comment_from, BuilderPattern, DefaultExpression, Initializer, DEFAULT_STRUCT_NAME,
+    doc_comment_from, BuilderPattern, DefaultExpression, FieldDefaultValue, Initializer,
+    DEFAULT_STRUCT_NAME,
 };
 
 /// Initializer for the struct fields in the build method, implementing
@@ -57,6 +58,8 @@ pub struct BuildMethod<'a> {
     pub error_ty: syn::Path,
     /// Field initializers for the target type.
     pub initializers: Vec<TokenStream>,
+    /// Default values for the target type
+    pub defaults: Vec<TokenStream>,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Default value for the whole struct.
@@ -74,6 +77,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
         let vis = &self.visibility;
         let target_ty = &self.target_ty;
         let target_ty_generics = &self.target_ty_generics;
+        let defaults = &self.defaults;
         let initializers = &self.initializers;
         let self_param = match self.pattern {
             BuilderPattern::Owned => quote!(self),
@@ -100,6 +104,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 {
                     #validate_fn
                     #default_struct
+                    #(#defaults)*
                     Ok(#target_ty {
                         #(#initializers)*
                     })
@@ -123,6 +128,16 @@ impl<'a> BuildMethod<'a> {
     /// initializer.
     pub fn push_initializer(&mut self, init: Initializer) -> &mut Self {
         self.initializers.push(quote!(#init));
+        self
+    }
+
+    /// Populate the `BuildMethod` with appropiate default values of
+    /// the underlying struct.
+    ///
+    /// For each struct field this must be called with the appropriate
+    /// default value.
+    pub fn push_default(&mut self, default: FieldDefaultValue) -> &mut Self {
+        self.defaults.push(quote!(#default));
         self
     }
 }
@@ -150,6 +165,8 @@ macro_rules! default_build_method {
             target_ty_generics: None,
             error_ty: syn::parse_quote!(FooBuilderError),
             initializers: vec![quote!(foo: self.foo,)],
+            defaults: vec![quote!(todo!("default value"))], // TODO what is the correct default for
+                                                            // test
             doc_comment: None,
             default_struct: None,
             validate_fn: None,
