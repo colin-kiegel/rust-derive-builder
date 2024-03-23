@@ -154,12 +154,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+               foo: self.foo.as_ref()
+                   .map(|value| ::db::export::core::clone::Clone::clone(value))
+                   .or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -173,12 +170,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+                foo: self.foo.as_ref()
+                    .map(|value| ::db::export::core::clone::Clone::clone(value))
+                    .or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -192,12 +186,7 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(value) => value,
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+                foo: self.foo.or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -206,16 +195,14 @@ mod tests {
     #[test]
     fn default_value() {
         let mut initializer = default_initializer!();
+        initializer.field_enabled = false;
         let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
         initializer.default_value = Some(&default_value);
 
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => { 42 },
-                },
+                foo: { 42 },
             )
             .to_string()
         );
@@ -224,15 +211,13 @@ mod tests {
     #[test]
     fn default_struct() {
         let mut initializer = default_initializer!();
+        initializer.field_enabled = false;
         initializer.use_default_struct = true;
 
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => __default.foo,
-                },
+                foo:  __default.foo,
             )
             .to_string()
         );
@@ -256,12 +241,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+                foo: self.foo.as_ref()
+                    .map(|value| ::db::export::core::clone::Clone::clone(value))
+                    .or(__default_foo).unwrap(),
             )
             .to_string()
         );
