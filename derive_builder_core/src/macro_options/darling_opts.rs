@@ -897,12 +897,6 @@ impl<'a> FieldWithDefaults<'a> {
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
             conversion: self.conversion(),
-            custom_error_type_span: self.parent.build_fn.error.as_ref().and_then(|err_ty| {
-                match err_ty {
-                    BuildFnError::Existing(p) => Some(p.span()),
-                    _ => None,
-                }
-            }),
         }
     }
 

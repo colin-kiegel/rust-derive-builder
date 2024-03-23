@@ -55,19 +55,6 @@ pub struct Initializer<'a> {
     ///
     /// For sub-builder fields, this will be `build` (or similar)
     pub conversion: FieldConversion<'a>,
-
-    // TODO delete fields below here
-    //
-    /// Span where the macro was told to use a preexisting error type, instead of creating one,
-    /// to represent failures of the `build` method.
-    ///
-    /// An initializer can force early-return if a field has no set value and no default is
-    /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
-    /// into the return type of its enclosing `build` method. That conversion is guaranteed to
-    /// work for generated error types, but if the caller specified an error type to use instead
-    /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
-    /// error type.
-    pub custom_error_type_span: Option<Span>,
 }
 
 impl<'a> ToTokens for Initializer<'a> {
@@ -150,7 +137,6 @@ macro_rules! default_initializer {
             default_value: None,
             use_default_struct: false,
             conversion: FieldConversion::OptionOrDefault,
-            custom_error_type_span: None,
         }
     };
 }
