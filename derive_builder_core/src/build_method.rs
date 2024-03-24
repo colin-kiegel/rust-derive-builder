@@ -165,8 +165,7 @@ macro_rules! default_build_method {
             target_ty_generics: None,
             error_ty: syn::parse_quote!(FooBuilderError),
             initializers: vec![quote!(foo: self.foo,)],
-            defaults: vec![quote!(todo!("default value"))], // TODO what is the correct default for
-                                                            // test
+            defaults: vec![quote!()],
             doc_comment: None,
             default_struct: None,
             validate_fn: None,
