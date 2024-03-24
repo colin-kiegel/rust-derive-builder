@@ -170,3 +170,115 @@ pub enum FieldConversion<'a> {
     /// Custom conversion is just to move the field from the builder
     Move,
 }
+
+/// Helper macro for unit tests. This is _only_ public in order to be accessible
+/// from doc-tests too.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! default_field_default_value {
+    () => {
+        FieldDefaultValue {
+            // Deliberately don't use the default value here - make sure
+            // that all test cases are passing crate_root through properly.
+            crate_root: &parse_quote!(::db),
+            field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
+            field_type: &Type::Verbatim(proc_macro2::TokenStream::from_str("usize").unwrap()),
+            field_enabled: true,
+            default_value: None,
+            use_default_struct: false,
+            conversion: FieldConversion::OptionOrDefault,
+            custom_error_type_span: None,
+        }
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    use syn::LitStr;
+
+    #[allow(unused_imports)]
+    use super::*;
+
+    use std::{convert::TryInto, str::FromStr};
+
+    #[test]
+    fn disabled() {
+        let mut default = default_field_default_value!();
+        default.field_enabled = false;
+
+        assert_eq!(quote!(#default).to_string(), quote!().to_string());
+    }
+
+    #[test]
+    fn block_conversion() {
+        let mut default = default_field_default_value!();
+        let block_content = &LitStr::new("8", Span::call_site());
+        let block: BlockContents = block_content.try_into().unwrap();
+        default.conversion = FieldConversion::Block(&block);
+
+        assert_eq!(quote!(#default).to_string(), quote!().to_string());
+    }
+
+    #[test]
+    fn move_conversion() {
+        let mut default = default_field_default_value!();
+        default.conversion = FieldConversion::Move;
+
+        assert_eq!(quote!(#default).to_string(), quote!().to_string());
+    }
+
+    #[test]
+    fn default_value() {
+        let mut default = default_field_default_value!();
+        let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
+        default.default_value = Some(&default_value);
+
+        assert_eq!(
+            quote!(#default).to_string(),
+            quote!(
+                let __default_foo: Option<usize> = match self.foo.as_ref() {
+                    Some(_) => None,
+                    None => Some({ 42 }),
+                };
+            )
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn default_struct() {
+        let mut default = default_field_default_value!();
+        default.use_default_struct = true;
+
+        assert_eq!(
+            quote!(#default).to_string(),
+            quote!(
+                let __default_foo: Option<usize> = match self.foo.as_ref() {
+                    Some(_) => None,
+                    None => Some(__default.foo),
+                };
+            )
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn no_default() {
+        let default = default_field_default_value!();
+
+        assert_eq!(
+            quote!(#default).to_string(),
+            quote!(
+                let __default_foo: Option<usize> = match self.foo.as_ref() {
+                    Some(_) => None,
+                    None => return ::db::export::core::result::Result::Err(
+                        ::db::export::core::convert::Into::into(
+                            ::db::UninitializedFieldError::from("foo")
+                            )
+                        ),
+                };
+            )
+            .to_string()
+        );
+    }
+}
