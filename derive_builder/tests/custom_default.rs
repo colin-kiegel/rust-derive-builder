@@ -136,3 +136,53 @@ mod struct_level {
         assert_eq!(ipsum.not_type_default, None);
     }
 }
+
+mod owned_field {
+
+    #[derive(Debug, Clone, PartialEq, Eq, Builder)]
+    #[builder(pattern = "owned")]
+    struct Lorem {
+        #[builder(default = "self.ipsum_default()")]
+        ipsum: String,
+
+        #[builder(setter(skip), default = "self.dolor_default()")]
+        dolor: String,
+    }
+
+    impl LoremBuilder {
+        fn ipsum_default(&self) -> String {
+            "ipsum".to_string()
+        }
+        fn dolor_default(&self) -> String {
+            "dolor".to_string()
+        }
+    }
+
+    #[test]
+    fn builder_test() {
+        let x = LoremBuilder::create_empty()
+            .ipsum("Ipsum".to_string())
+            .build()
+            .unwrap();
+
+        assert_eq!(
+            x,
+            Lorem {
+                ipsum: "Ipsum".to_string(),
+                dolor: "dolor".to_string(),
+            }
+        );
+    }
+    #[test]
+    fn defaults_test() {
+        let x = LoremBuilder::create_empty().build().unwrap();
+
+        assert_eq!(
+            x,
+            Lorem {
+                ipsum: "ipsum".to_string(),
+                dolor: "dolor".to_string(),
+            }
+        );
+    }
+}

@@ -67,17 +67,9 @@ pub struct FieldDefaultValue<'a> {
 
 impl<'a> ToTokens for FieldDefaultValue<'a> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        if !self.field_enabled || !self.enabled {
-            // disabled fields have their value calculated in the initializer
+        if !self.enabled {
             return;
         }
-        // should be:
-        // ```
-        // let $prefix$fieldname = match self.$field.as_ref() {
-        //      Some(_) => None,
-        //      None => Some($default_value)
-        //  }
-        //  ```
 
         let struct_field = &self.field_ident;
         let builder_field = struct_field;
@@ -89,19 +81,40 @@ impl<'a> ToTokens for FieldDefaultValue<'a> {
             Span::call_site(),
         );
 
-        let default_calculation = self.default_value();
-
-        tokens.append_all(quote!(
-            let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
-                Some(_) => None,
-                None => #default_calculation,
-            };
-        ));
+        if self.field_enabled {
+            let default_calculation = self.default_value_calculation();
+            tokens.append_all(quote!(
+                let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
+                    Some(_) => None,
+                    None => #default_calculation,
+                };
+            ));
+        } else {
+            let default_calculation = self.default_value_for_disabled();
+            tokens.append_all(quote!(
+                let #default_value: #field_type = #default_calculation;
+            ));
+        }
     }
 }
 
 impl<'a> FieldDefaultValue<'a> {
-    fn default_value(&'a self) -> DefaultValue<'a> {
+    fn default_value_for_disabled(&'a self) -> TokenStream {
+        let crate_root = self.crate_root;
+        match self.default_value {
+            Some(expr) => expr.with_crate_root(crate_root).into_token_stream(),
+            None if self.use_default_struct => {
+                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
+                let field_ident = self.field_ident;
+                quote!(#struct_ident.#field_ident)
+            }
+            None => {
+                quote!(#crate_root::export::core::default::Default::default())
+            }
+        }
+    }
+
+    fn default_value_calculation(&'a self) -> DefaultValue<'a> {
         match self.default_value {
             Some(expr) => DefaultValue::DefaultTo {
                 expr,
@@ -216,8 +229,16 @@ mod tests {
     fn disabled_field() {
         let mut default = default_field_default_value!();
         default.field_enabled = false;
+        let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
+        default.default_value = Some(&default_value);
 
-        assert_eq!(quote!(#default).to_string(), quote!().to_string());
+        assert_eq!(
+            quote!(#default).to_string(),
+            quote!(
+                let __default_foo: usize = { 42 };
+            )
+            .to_string()
+        );
     }
 
     #[test]

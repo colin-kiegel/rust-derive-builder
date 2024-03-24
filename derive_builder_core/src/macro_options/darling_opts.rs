@@ -894,8 +894,6 @@ impl<'a> FieldWithDefaults<'a> {
             field_enabled: self.field_enabled(),
             field_ident: self.field_ident(),
             builder_pattern: self.pattern(),
-            default_value: self.field.default.as_ref(),
-            use_default_struct: self.use_parent_default(),
             conversion: self.conversion(),
         }
     }
