@@ -89,12 +89,7 @@ impl<'a> ToTokens for FieldDefaultValue<'a> {
             Span::call_site(),
         );
 
-        let default_calculation = (|| {
-            let mut tokens = TokenStream::new();
-            let default = self.default_value();
-            tokens.append_all(quote!(#default));
-            tokens
-        })();
+        let default_calculation = self.default_value();
 
         tokens.append_all(quote!(
             let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
