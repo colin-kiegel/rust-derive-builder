@@ -2,11 +2,39 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn::Type;
 
-use crate::{
-    change_span, BlockContents, DefaultExpression, DEFAULT_FIELD_NAME_PREFIX, DEFAULT_STRUCT_NAME,
-};
+use crate::{change_span, DefaultExpression, DEFAULT_FIELD_NAME_PREFIX, DEFAULT_STRUCT_NAME};
 
-// TODO: remove no longer needed code from Initializer
+/// Calculates the default value or error for fields, implementing `quote::ToTokens
+///
+/// Lives in the body of `BuildMethod`.
+///
+/// # Examples
+///
+/// Will expand to something like the following (depending on settings):
+///
+/// ```rust,ignore
+/// # extern crate proc_macro2;
+/// # #[macro_use]
+/// # extern crate quote;
+/// # extern crate syn;
+/// # #[macro_use]
+/// # extern crate derive_builder_core;
+/// # use derive_builder_core::{DeprecationNotes, Initializer, BuilderPattern};
+/// # fn main() {
+/// #    let mut default = default_field_default_value!();
+/// #    let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
+/// #    default.default_value = Some(&default_value);
+/// #    assert_eq!(quote!(#default).to_string(), quote!(
+///        let __default_foo: Option<usize> = match self.foo.as_ref() {
+///            Some(_) => None,
+///            None => Some({ 42 }),
+///        };
+/// #    ).to_string());
+/// # }
+/// ```
+/// In case there is no default value
+/// (`default_value == None && use_default_struct == false`)
+/// the `None` case will return an error.
 #[derive(Debug, Clone)]
 pub struct FieldDefaultValue<'a> {
     /// Path to the root of the derive_builder crate.
@@ -17,6 +45,8 @@ pub struct FieldDefaultValue<'a> {
     pub field_type: &'a Type,
     /// Whether the builder implements a setter for this field.
     pub field_enabled: bool,
+    /// Whether the builder uses the default value.
+    pub enabled: bool,
     /// Default value for the target field.
     ///
     /// This takes precedence over a default struct identifier.
@@ -29,19 +59,15 @@ pub struct FieldDefaultValue<'a> {
     /// An initializer can force early-return if a field has no set value and no default is
     /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
     /// into the return type of its enclosing `build` method. That conversion is guaranteed to
-    /// work for generated error types, but if the caller specified an error type to use instead
+    /// work fr generated error types, but if the caller specified an error type to use instead
     /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
     /// error type.
     pub custom_error_type_span: Option<Span>,
-    /// Method to use to to convert the builder's field to the target field
-    ///
-    /// For sub-builder fields, this will be `build` (or similar)
-    pub conversion: FieldConversion<'a>,
 }
 
 impl<'a> ToTokens for FieldDefaultValue<'a> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        if !self.field_enabled {
+        if !self.field_enabled || !self.enabled {
             // disabled fields have their value calculated in the initializer
             return;
         }
@@ -70,19 +96,12 @@ impl<'a> ToTokens for FieldDefaultValue<'a> {
             tokens
         })();
 
-        match &self.conversion {
-            FieldConversion::Block(_) | FieldConversion::Move => {
-                // there is no defaul value.
-            }
-            FieldConversion::OptionOrDefault => {
-                tokens.append_all(quote!(
-                    let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
-                        Some(_) => None,
-                        None => #default_calculation,
-                    };
-                ));
-            }
-        }
+        tokens.append_all(quote!(
+            let #default_value: Option<#field_type> = match self.#builder_field.as_ref() {
+                Some(_) => None,
+                None => #default_calculation,
+            };
+        ));
     }
 }
 
@@ -161,16 +180,6 @@ impl<'a> ToTokens for DefaultValue<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum FieldConversion<'a> {
-    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
-    OptionOrDefault,
-    /// Custom conversion is a block contents expression
-    Block(&'a BlockContents),
-    /// Custom conversion is just to move the field from the builder
-    Move,
-}
-
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
 #[doc(hidden)]
@@ -184,9 +193,9 @@ macro_rules! default_field_default_value {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: &Type::Verbatim(proc_macro2::TokenStream::from_str("usize").unwrap()),
             field_enabled: true,
+            enabled: true,
             default_value: None,
             use_default_struct: false,
-            conversion: FieldConversion::OptionOrDefault,
             custom_error_type_span: None,
         }
     };
@@ -194,35 +203,24 @@ macro_rules! default_field_default_value {
 
 #[cfg(test)]
 mod tests {
-    use syn::LitStr;
 
     #[allow(unused_imports)]
     use super::*;
 
-    use std::{convert::TryInto, str::FromStr};
+    use std::str::FromStr;
 
     #[test]
     fn disabled() {
         let mut default = default_field_default_value!();
+        default.enabled = false;
+
+        assert_eq!(quote!(#default).to_string(), quote!().to_string());
+    }
+
+    #[test]
+    fn disabled_field() {
+        let mut default = default_field_default_value!();
         default.field_enabled = false;
-
-        assert_eq!(quote!(#default).to_string(), quote!().to_string());
-    }
-
-    #[test]
-    fn block_conversion() {
-        let mut default = default_field_default_value!();
-        let block_content = &LitStr::new("8", Span::call_site());
-        let block: BlockContents = block_content.try_into().unwrap();
-        default.conversion = FieldConversion::Block(&block);
-
-        assert_eq!(quote!(#default).to_string(), quote!().to_string());
-    }
-
-    #[test]
-    fn move_conversion() {
-        let mut default = default_field_default_value!();
-        default.conversion = FieldConversion::Move;
 
         assert_eq!(quote!(#default).to_string(), quote!().to_string());
     }

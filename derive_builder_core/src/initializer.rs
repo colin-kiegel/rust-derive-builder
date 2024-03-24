@@ -2,13 +2,14 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 
 use crate::{
-    BuilderPattern, DefaultExpression, FieldConversion, DEFAULT_FIELD_NAME_PREFIX,
+    BlockContents, BuilderPattern, DefaultExpression, DEFAULT_FIELD_NAME_PREFIX,
     DEFAULT_STRUCT_NAME,
 };
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
 /// Lives in the body of `BuildMethod`.
+///
 ///
 /// # Examples
 ///
@@ -24,14 +25,10 @@ use crate::{
 /// # use derive_builder_core::{DeprecationNotes, Initializer, BuilderPattern};
 /// # fn main() {
 /// #    let mut initializer = default_initializer!();
-/// #    initializer.default_value = Some("42".parse().unwrap());
 /// #    initializer.builder_pattern = BuilderPattern::Owned;
 /// #
 /// #    assert_eq!(quote!(#initializer).to_string(), quote!(
-/// foo: match self.foo {
-///     Some(value) => value,
-///     None => { 42 },
-/// },
+///        foo: self.foo.or(__default_foo).unwrap(),
 /// #    ).to_string());
 /// # }
 /// ```
@@ -54,6 +51,10 @@ pub struct Initializer<'a> {
     /// Method to use to to convert the builder's field to the target field
     ///
     /// For sub-builder fields, this will be `build` (or similar)
+    /// If the `conversion` is `FieldConversion::OptionOrDefault` this will
+    /// use the default value calculated in `FieldDefaultValue`. Otherwise
+    /// the default value is calculated based on `default_value` and
+    /// `use_default_struct`.
     pub conversion: FieldConversion<'a>,
 }
 
@@ -119,6 +120,16 @@ impl<'a> Initializer<'a> {
             }
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum FieldConversion<'a> {
+    /// Usual conversion: unwrap the Option from the builder, or (hope to) use a default value
+    OptionOrDefault,
+    /// Custom conversion is a block contents expression
+    Block(&'a BlockContents),
+    /// Custom conversion is just to move the field from the builder
+    Move,
 }
 
 /// Helper macro for unit tests. This is _only_ public in order to be accessible

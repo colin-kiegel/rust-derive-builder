@@ -901,14 +901,18 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     pub fn as_default_value(&'a self) -> FieldDefaultValue<'a> {
+        let enabled = match self.conversion() {
+            FieldConversion::OptionOrDefault => true,
+            FieldConversion::Block(_) | FieldConversion::Move => false,
+        };
         FieldDefaultValue {
             crate_root: &self.parent.crate_root,
             field_ident: self.field_ident(),
             field_enabled: self.field_enabled(),
+            enabled,
             field_type: &self.field.ty,
             default_value: self.field.default.as_ref(),
             use_default_struct: self.use_parent_default(),
-            conversion: self.conversion(),
             custom_error_type_span: self.parent.build_fn.error.as_ref().and_then(|err_ty| {
                 match err_ty {
                     BuildFnError::Existing(p) => Some(p.span()),

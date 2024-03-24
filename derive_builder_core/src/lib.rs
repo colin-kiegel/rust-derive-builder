@@ -15,8 +15,7 @@
 //! [`derive_builder`]: https://!crates.io/crates/derive_builder
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
-// TODO reenable warnings for missing docs
-// #![deny(warnings, missing_docs)]
+#![deny(warnings, missing_docs)]
 #![cfg_attr(test, recursion_limit = "100")]
 
 #[macro_use]
@@ -55,8 +54,8 @@ use darling::FromDeriveInput;
 pub(crate) use default_expression::DefaultExpression;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
-pub(crate) use field_default_value::{FieldConversion, FieldDefaultValue};
-pub(crate) use initializer::Initializer;
+pub(crate) use field_default_value::FieldDefaultValue;
+pub(crate) use initializer::{FieldConversion, Initializer};
 pub(crate) use options::{BuilderPattern, Each};
 pub(crate) use setter::Setter;
 
