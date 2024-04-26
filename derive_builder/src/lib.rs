@@ -299,10 +299,8 @@
 //! ## Fallible Setters
 //!
 //! Alongside the normal setter methods, you can expose fallible setters which are generic over
-//! the `TryInto` trait. TryInto is a not-yet-stable trait
-//! (see rust-lang issue [#33417](https://github.com/rust-lang/rust/issues/33417)) similar to
-//! `Into` with the key distinction that the conversion can fail, and therefore produces a
-//! `Result`.
+//! the `TryInto` trait. TryInto is similar to `Into` with the key distinction that the conversion
+//! can fail, and therefore produces a `Result`.
 //!
 //! You can only declare the `try_setter` attribute today if you're targeting nightly, and you have
 //! to add `#![feature(try_from)]` to your crate to use it.
