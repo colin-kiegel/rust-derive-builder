@@ -39,6 +39,7 @@ mod change_span;
 mod default_expression;
 mod deprecation_notes;
 mod doc_comment;
+mod field_default_value;
 mod initializer;
 mod macro_options;
 mod options;
@@ -53,11 +54,13 @@ use darling::FromDeriveInput;
 pub(crate) use default_expression::DefaultExpression;
 pub(crate) use deprecation_notes::DeprecationNotes;
 pub(crate) use doc_comment::doc_comment_from;
+pub(crate) use field_default_value::FieldDefaultValue;
 pub(crate) use initializer::{FieldConversion, Initializer};
 pub(crate) use options::{BuilderPattern, Each};
 pub(crate) use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
+const DEFAULT_FIELD_NAME_PREFIX: &str = "__default_";
 
 /// Derive a builder for a struct
 pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
@@ -83,6 +86,7 @@ pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     for field in opts.fields() {
         builder.push_field(field.as_builder_field());
         builder.push_setter_fn(field.as_setter());
+        build_fn.push_default(field.as_default_value());
         build_fn.push_initializer(field.as_initializer());
     }
 
