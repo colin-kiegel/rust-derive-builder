@@ -590,6 +590,11 @@ pub struct Options {
 
     #[darling(skip, default)]
     deprecation_notes: DeprecationNotes,
+
+    /// Suppress the `derive(Clone)` attribute.
+    ///
+    /// If `Clone` is needed, it must be generated in some other way.
+    suppress_derive_clone: Flag,
 }
 
 /// Accessors for parsed properties.
@@ -687,7 +692,7 @@ impl Options {
                 .map(|e| *e.validation_error)
                 .unwrap_or(true),
             no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
-            must_derive_clone: self.requires_clone(),
+            must_derive_clone: self.requires_clone() && !self.suppress_derive_clone.is_present(),
             doc_comment: None,
             deprecation_notes: Default::default(),
             std: !self.no_std.is_present(),

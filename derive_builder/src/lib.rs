@@ -504,6 +504,11 @@
 //! }
 //! ```
 //!
+//! The `Builder` will also automatically `derive(Clone)` in some cases. This may not always be
+//! suitable if there are generic types involved. This may be suppressed using the
+//! `suppress_derive_clone` attribute. The generated code may still need an `impl Clone for
+//! Builder`; when using this attribute, it will need to be implemented in another way.
+//!
 //! Attributes declared for those traits are _not_ forwarded to the fields on the builder.
 //!
 //! ## Documentation Comments and Attributes

@@ -1,0 +1,12 @@
+error[E0599]: no method named `clone` found for struct `ExampleBuilder` in the current scope
+  --> tests/compile-fail/suppress_derive_clone.rs:11:39
+   |
+4  | #[derive(Builder)]
+   |          ------- method `clone` not found for this
+...
+11 |     let _ = ExampleBuilder::default().clone();
+   |                                       ^^^^^ method not found in `ExampleBuilder`
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `clone`, perhaps you need to implement it:
+           candidate #1: `Clone`
