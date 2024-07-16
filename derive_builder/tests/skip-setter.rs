@@ -12,10 +12,10 @@ fn new_notdefaultable() -> NotDefaultable {
 }
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
-#[builder(setter(skip = "false"))]
+#[builder(setter(skip = false))]
 struct SetterOptOut {
     setter_present_by_explicit_default: u32,
-    #[builder(setter(skip = "true"))]
+    #[builder(setter(skip = true))]
     setter_skipped_by_explicit_opt_out: u32,
     #[builder(setter(skip))]
     setter_skipped_by_shorthand_opt_out: u32,
@@ -27,7 +27,7 @@ struct SetterOptOut {
 #[builder(setter(skip))]
 struct SetterOptIn {
     setter_skipped_by_shorthand_default: u32,
-    #[builder(setter(skip = false))] // Should be still OK without quotes
+    #[builder(setter(skip = false))]
     setter_present_by_explicit_opt_in: u32,
     #[builder(setter)]
     setter_present_by_shorthand_opt_in: u32,
