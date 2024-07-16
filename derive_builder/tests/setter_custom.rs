@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 #[macro_use]
 extern crate pretty_assertions;
 #[macro_use]
@@ -51,15 +49,6 @@ impl SetterCustomBuilder {
     fn setter_custom_with_strip_option_try_setter(&mut self) -> &mut Self {
         self.setter_custom_with_strip_option_try_setter = Some(Some(32));
         self
-    }
-}
-
-struct TryIntoU32 {}
-impl TryInto<u32> for TryIntoU32 {
-    type Error = ();
-
-    fn try_into(self) -> Result<u32, Self::Error> {
-        Ok(32)
     }
 }
 
