@@ -1,11 +1,12 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 
-use crate::{change_span, BlockContents, BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
+use crate::{BlockContents, BuilderPattern, DEFAULT_FIELD_NAME_PREFIX};
 
 /// Initializer for the target struct fields, implementing `quote::ToTokens`.
 ///
 /// Lives in the body of `BuildMethod`.
+///
 ///
 /// # Examples
 ///
@@ -21,14 +22,10 @@ use crate::{change_span, BlockContents, BuilderPattern, DefaultExpression, DEFAU
 /// # use derive_builder_core::{DeprecationNotes, Initializer, BuilderPattern};
 /// # fn main() {
 /// #    let mut initializer = default_initializer!();
-/// #    initializer.default_value = Some("42".parse().unwrap());
 /// #    initializer.builder_pattern = BuilderPattern::Owned;
 /// #
 /// #    assert_eq!(quote!(#initializer).to_string(), quote!(
-/// foo: match self.foo {
-///     Some(value) => value,
-///     None => { 42 },
-/// },
+///        foo: self.foo.or(__default_foo).unwrap(),
 /// #    ).to_string());
 /// # }
 /// ```
@@ -42,25 +39,13 @@ pub struct Initializer<'a> {
     pub field_enabled: bool,
     /// How the build method takes and returns `self` (e.g. mutably).
     pub builder_pattern: BuilderPattern,
-    /// Default value for the target field.
-    ///
-    /// This takes precedence over a default struct identifier.
-    pub default_value: Option<&'a DefaultExpression>,
-    /// Whether the build_method defines a default struct.
-    pub use_default_struct: bool,
-    /// Span where the macro was told to use a preexisting error type, instead of creating one,
-    /// to represent failures of the `build` method.
-    ///
-    /// An initializer can force early-return if a field has no set value and no default is
-    /// defined. In these cases, it will convert from `derive_builder::UninitializedFieldError`
-    /// into the return type of its enclosing `build` method. That conversion is guaranteed to
-    /// work for generated error types, but if the caller specified an error type to use instead
-    /// they may have forgotten the conversion from `UninitializedFieldError` into their specified
-    /// error type.
-    pub custom_error_type_span: Option<Span>,
     /// Method to use to to convert the builder's field to the target field
     ///
     /// For sub-builder fields, this will be `build` (or similar)
+    /// If the `conversion` is `FieldConversion::OptionOrDefault` this will
+    /// use the default value calculated in `FieldDefaultValue`. Otherwise
+    /// the default value is calculated based on `default_value` and
+    /// `use_default_struct`.
     pub conversion: FieldConversion<'a>,
 }
 
@@ -68,30 +53,24 @@ impl<'a> ToTokens for Initializer<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
         let builder_field = struct_field;
+        let default_value = Ident::new(
+            &format!("{}{}", DEFAULT_FIELD_NAME_PREFIX, struct_field),
+            Span::call_site(),
+        );
 
         // This structure prevents accidental failure to add the trailing `,` due to incautious `return`
         let append_rhs = |tokens: &mut TokenStream| {
             if !self.field_enabled {
-                let default = self.default();
-                tokens.append_all(quote!(
-                    #default
-                ));
+                tokens.append(default_value);
             } else {
                 match &self.conversion {
-                    FieldConversion::Block(conv) => {
-                        conv.to_tokens(tokens);
-                    }
-                    FieldConversion::Move => tokens.append_all(quote!( self.#builder_field )),
+                    FieldConversion::Move => tokens.append_all(quote!(self.#builder_field)),
                     FieldConversion::OptionOrDefault => {
-                        let match_some = self.match_some();
-                        let match_none = self.match_none();
-                        tokens.append_all(quote!(
-                            match self.#builder_field {
-                                #match_some,
-                                #match_none,
-                            }
-                        ));
+                        let moved_or_cloned =
+                            self.move_or_clone_option(quote!(self.#builder_field));
+                        tokens.append_all(quote!( #moved_or_cloned.or(#default_value).unwrap()))
                     }
+                    FieldConversion::Block(content) => content.to_tokens(tokens),
                 }
             }
         };
@@ -103,48 +82,16 @@ impl<'a> ToTokens for Initializer<'a> {
 }
 
 impl<'a> Initializer<'a> {
-    /// To be used inside of `#struct_field: match self.#builder_field { ... }`
-    fn match_some(&'a self) -> MatchSome {
-        match self.builder_pattern {
-            BuilderPattern::Owned => MatchSome::Move,
-            BuilderPattern::Mutable | BuilderPattern::Immutable => MatchSome::Clone {
-                crate_root: self.crate_root,
-            },
-        }
-    }
-
-    /// To be used inside of `#struct_field: match self.#builder_field { ... }`
-    fn match_none(&'a self) -> MatchNone<'a> {
-        match self.default_value {
-            Some(expr) => MatchNone::DefaultTo {
-                expr,
-                crate_root: self.crate_root,
-            },
-            None => {
-                if self.use_default_struct {
-                    MatchNone::UseDefaultStructField(self.field_ident)
-                } else {
-                    MatchNone::ReturnError {
-                        crate_root: self.crate_root,
-                        field_name: self.field_ident.to_string(),
-                        span: self.custom_error_type_span,
-                    }
-                }
-            }
-        }
-    }
-
-    fn default(&'a self) -> TokenStream {
+    fn move_or_clone_option(&'a self, value_in_option: TokenStream) -> TokenStream {
         let crate_root = self.crate_root;
-        match self.default_value {
-            Some(expr) => expr.with_crate_root(crate_root).into_token_stream(),
-            None if self.use_default_struct => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
-                let field_ident = self.field_ident;
-                quote!(#struct_ident.#field_ident)
-            }
-            None => {
-                quote!(#crate_root::export::core::default::Default::default())
+
+        match self.builder_pattern {
+            BuilderPattern::Owned => value_in_option,
+            BuilderPattern::Mutable | BuilderPattern::Immutable => {
+                quote!(
+                    #value_in_option.as_ref()
+                        .map(|value| #crate_root::export::core::clone::Clone::clone(value))
+                )
             }
         }
     }
@@ -160,79 +107,6 @@ pub enum FieldConversion<'a> {
     Move,
 }
 
-/// To be used inside of `#struct_field: match self.#builder_field { ... }`
-enum MatchNone<'a> {
-    /// Inner value must be a valid Rust expression
-    DefaultTo {
-        expr: &'a DefaultExpression,
-        crate_root: &'a syn::Path,
-    },
-    /// Inner value must be the field identifier
-    ///
-    /// The default struct must be in scope in the build_method.
-    UseDefaultStructField(&'a syn::Ident),
-    /// Inner value must be the field name
-    ReturnError {
-        crate_root: &'a syn::Path,
-        field_name: String,
-        span: Option<Span>,
-    },
-}
-
-impl<'a> ToTokens for MatchNone<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match *self {
-            MatchNone::DefaultTo { expr, crate_root } => {
-                let expr = expr.with_crate_root(crate_root);
-                tokens.append_all(quote!(None => #expr));
-            }
-            MatchNone::UseDefaultStructField(field_ident) => {
-                let struct_ident = syn::Ident::new(DEFAULT_STRUCT_NAME, Span::call_site());
-                tokens.append_all(quote!(
-                    None => #struct_ident.#field_ident
-                ))
-            }
-            MatchNone::ReturnError {
-                ref field_name,
-                ref span,
-                crate_root,
-            } => {
-                let conv_span = span.unwrap_or_else(Span::call_site);
-                // If the conversion fails, the compiler error should point to the error declaration
-                // rather than the crate root declaration, but the compiler will see the span of #crate_root
-                // and produce an undesired behavior (possibly because that's the first span in the bad expression?).
-                // Creating a copy with deeply-rewritten spans preserves the desired error behavior.
-                let crate_root = change_span(crate_root.into_token_stream(), conv_span);
-                let err_conv = quote_spanned!(conv_span => #crate_root::export::core::convert::Into::into(
-                    #crate_root::UninitializedFieldError::from(#field_name)
-                ));
-                tokens.append_all(quote!(
-                    None => return #crate_root::export::core::result::Result::Err(#err_conv)
-                ));
-            }
-        }
-    }
-}
-
-/// To be used inside of `#struct_field: match self.#builder_field { ... }`
-enum MatchSome<'a> {
-    Move,
-    Clone { crate_root: &'a syn::Path },
-}
-
-impl ToTokens for MatchSome<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match *self {
-            Self::Move => tokens.append_all(quote!(
-                Some(value) => value
-            )),
-            Self::Clone { crate_root } => tokens.append_all(quote!(
-                Some(ref value) => #crate_root::export::core::clone::Clone::clone(value)
-            )),
-        }
-    }
-}
-
 /// Helper macro for unit tests. This is _only_ public in order to be accessible
 /// from doc-tests too.
 #[doc(hidden)]
@@ -246,10 +120,7 @@ macro_rules! default_initializer {
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_enabled: true,
             builder_pattern: BuilderPattern::Mutable,
-            default_value: None,
-            use_default_struct: false,
             conversion: FieldConversion::OptionOrDefault,
-            custom_error_type_span: None,
         }
     };
 }
@@ -267,12 +138,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+               foo: self.foo.as_ref()
+                   .map(|value| ::db::export::core::clone::Clone::clone(value))
+                   .or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -286,12 +154,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+                foo: self.foo.as_ref()
+                    .map(|value| ::db::export::core::clone::Clone::clone(value))
+                    .or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -305,47 +170,7 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(value) => value,
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
-            )
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn default_value() {
-        let mut initializer = default_initializer!();
-        let default_value = DefaultExpression::explicit::<syn::Expr>(parse_quote!(42));
-        initializer.default_value = Some(&default_value);
-
-        assert_eq!(
-            quote!(#initializer).to_string(),
-            quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => { 42 },
-                },
-            )
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn default_struct() {
-        let mut initializer = default_initializer!();
-        initializer.use_default_struct = true;
-
-        assert_eq!(
-            quote!(#initializer).to_string(),
-            quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => __default.foo,
-                },
+                foo: self.foo.or(__default_foo).unwrap(),
             )
             .to_string()
         );
@@ -358,7 +183,10 @@ mod tests {
 
         assert_eq!(
             quote!(#initializer).to_string(),
-            quote!(foo: ::db::export::core::default::Default::default(),).to_string()
+            quote!(
+                foo: __default_foo,
+            )
+            .to_string()
         );
     }
 
@@ -369,12 +197,9 @@ mod tests {
         assert_eq!(
             quote!(#initializer).to_string(),
             quote!(
-                foo: match self.foo {
-                    Some(ref value) => ::db::export::core::clone::Clone::clone(value),
-                    None => return ::db::export::core::result::Result::Err(::db::export::core::convert::Into::into(
-                        ::db::UninitializedFieldError::from("foo")
-                    )),
-                },
+                foo: self.foo.as_ref()
+                    .map(|value| ::db::export::core::clone::Clone::clone(value))
+                    .or(__default_foo).unwrap(),
             )
             .to_string()
         );
