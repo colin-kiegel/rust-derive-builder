@@ -158,13 +158,14 @@ impl<'a> ToTokens for Builder<'a> {
             let crate_root = self.crate_root;
             let builder_vis = &self.visibility;
             let builder_ident = &self.ident;
+            // Splitting because Generics doesn't output WhereClause, see dtolnay/syn#782
+            let (struct_generics, struct_where_clause) = (
+                self.generics,
+                self.generics.and_then(|g| g.where_clause.as_ref()),
+            );
             let bounded_generics = self.compute_impl_bounds();
-            let (impl_generics, _, _) = bounded_generics.split_for_impl();
-            let (struct_generics, ty_generics, where_clause) = self
-                .generics
-                .map(syn::Generics::split_for_impl)
-                .map(|(i, t, w)| (Some(i), Some(t), Some(w)))
-                .unwrap_or((None, None, None));
+            let (impl_generics, impl_ty_generics, impl_where_clause) =
+                bounded_generics.split_for_impl();
             let builder_fields = &self.fields;
             let builder_field_initializers = &self.field_initializers;
             let create_empty = &self.create_empty;
@@ -203,7 +204,7 @@ impl<'a> ToTokens for Builder<'a> {
                 #derive_attr
                 #(#struct_attrs)*
                 #builder_doc_comment
-                #builder_vis struct #builder_ident #struct_generics #where_clause {
+                #builder_vis struct #builder_ident #struct_generics #struct_where_clause {
                     #(#builder_fields)*
                 }
             ));
@@ -214,7 +215,7 @@ impl<'a> ToTokens for Builder<'a> {
             tokens.append_all(quote!(
                 #(#impl_attrs)*
                 #[allow(dead_code)]
-                impl #impl_generics #builder_ident #ty_generics #where_clause {
+                impl #impl_generics #builder_ident #impl_ty_generics #impl_where_clause {
                     #(#functions)*
                     #deprecation_notes
 
@@ -229,7 +230,7 @@ impl<'a> ToTokens for Builder<'a> {
 
             if self.impl_default {
                 tokens.append_all(quote!(
-                    impl #impl_generics #crate_root::export::core::default::Default for #builder_ident #ty_generics #where_clause {
+                    impl #impl_generics #crate_root::export::core::default::Default for #builder_ident #impl_ty_generics #impl_where_clause {
                         fn default() -> Self {
                             Self::#create_empty()
                         }
@@ -662,6 +663,67 @@ mod tests {
                     }
 
                     impl<'a, T: 'a + Default + ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
+                        fn default() -> Self {
+                            Self::create_empty()
+                        }
+                    }
+                ));
+
+                add_generated_error(&mut result);
+
+                result
+            }.to_string()
+        );
+    }
+
+    // This test depends on the exact formatting of the `stringify`'d code,
+    // so we don't automatically format the test
+    #[rustfmt::skip]
+    #[test]
+    fn generic_with_default_type() {
+        let ast: syn::DeriveInput = parse_quote! {
+            struct Lorem<T = ()> { }
+        };
+
+        let generics = ast.generics;
+        let mut builder = default_builder!();
+        builder.generics = Some(&generics);
+
+        assert_eq!(
+            quote!(#builder).to_string(),
+            {
+                let mut result = quote!();
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[derive(Clone)]
+                    pub struct FooBuilder<T = ()> {
+                        foo: u32,
+                    }
+                ));
+
+                #[cfg(not(feature = "clippy"))]
+                result.append_all(quote!(#[allow(clippy::all)]));
+
+                result.append_all(quote!(
+                    #[allow(dead_code)]
+                    impl<T: ::db::export::core::clone::Clone> FooBuilder<T>
+                    {
+                        fn bar() -> {
+                            unimplemented!()
+                        }
+
+                        /// Create an empty builder, with all fields set to `None` or `PhantomData`.
+                        fn create_empty() -> Self {
+                            Self {
+                                foo: ::db::export::core::default::Default::default(),
+                            }
+                        }
+                    }
+
+                    impl<T: ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<T> {
                         fn default() -> Self {
                             Self::create_empty()
                         }
