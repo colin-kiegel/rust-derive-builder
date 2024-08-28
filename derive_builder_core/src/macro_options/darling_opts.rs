@@ -151,7 +151,7 @@ pub struct BuildFn {
     /// * `validation_error = bool` - Whether to generate `ValidationError(String)` as a variant
     ///   of the build error type. Setting this to `false` will prevent `derive_builder` from
     ///   using the `validate` function but this also means it does not generate any usage of the
-    ///  `alloc` crate (useful when disabling the `alloc` feature in `no_std`).
+    ///   `alloc` crate (useful when disabling the `alloc` feature in `no_std`).
     ///
     /// # Type Bounds for Custom Error
     /// This type's bounds depend on other settings of the builder.

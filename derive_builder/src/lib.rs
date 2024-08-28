@@ -667,7 +667,7 @@
 //! - Tuple structs and unit structs are not supported as they have no field
 //!   names.
 //! - Generic setters introduce a type parameter `VALUE: Into<_>`. Therefore you can't use
-//!  `VALUE` as a type parameter on a generic struct in combination with generic setters.
+//!   `VALUE` as a type parameter on a generic struct in combination with generic setters.
 //! - The `try_setter` attribute and `owned` builder pattern are not compatible in practice;
 //!   an error during building will consume the builder, making it impossible to continue
 //!   construction.
