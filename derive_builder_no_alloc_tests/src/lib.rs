@@ -1,5 +1,5 @@
 #![no_std]
-#![allow(unused, clippy::blacklisted_name)]
+#![allow(unused, clippy::disallowed_names)]
 
 use derive_builder::{self, Builder};
 
