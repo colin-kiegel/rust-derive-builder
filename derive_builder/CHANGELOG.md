@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.20.1] - 2024-08-28
+- Forward default type params #319
+
 ## [0.20.0] - 2024-02-14
 - Bump `syn` to version 2 #308
 - Bump `darling` to version 0.20.6 #308
