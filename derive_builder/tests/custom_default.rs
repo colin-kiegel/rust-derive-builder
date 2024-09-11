@@ -8,17 +8,17 @@ mod field_level {
         required: String,
         #[builder(default)]
         explicit_default: String,
-        #[builder(default = "\"foo\".to_string()")]
+        #[builder(default = "foo".to_string())]
         escaped_default: String,
-        #[builder(default = r#"format!("Hello {}!", "World")"#)]
+        #[builder(default = format!("Hello {}!", "World"))]
         raw_default: String,
-        #[builder(default = r#"format!("{}-{}-{}-{}",
+        #[builder(default = {format!("{}-{}-{}-{}",
                              Clone::clone(self.required
                                 .as_ref()
                                 .ok_or_else(|| UninitializedFieldError::new("required"))?),
                              match self.explicit_default { Some(ref x) => x, None => "EMPTY" },
                              self.escaped_default.as_ref().map(|x| x.as_ref()).unwrap_or("EMPTY"),
-                             if let Some(ref x) = self.raw_default { x } else { "EMPTY" })"#)]
+                             if let Some(ref x) = self.raw_default { x } else { "EMPTY" })})]
         computed_default: String,
     }
 
@@ -72,9 +72,9 @@ mod field_level {
 
 mod struct_level {
     #[derive(Debug, Clone, PartialEq, Eq, Builder)]
-    #[builder(default = "explicit_default()")]
+    #[builder(default = explicit_default())]
     struct Lorem {
-        #[builder(default = "true")]
+        #[builder(default = true)]
         overwritten: bool,
         not_type_default: Option<&'static str>,
     }

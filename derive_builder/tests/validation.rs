@@ -8,7 +8,7 @@ pub struct Lorem {
     my_effort: u8,
 
     /// A percentile. Must be less than or equal to `Lorem::my_effort`.
-    #[builder(default = "40")]
+    #[builder(default = 40)]
     their_effort: u8,
 
     /// A percentile. Must be between 0 and 100.
