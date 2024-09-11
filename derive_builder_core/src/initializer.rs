@@ -104,7 +104,7 @@ impl<'a> ToTokens for Initializer<'a> {
 
 impl<'a> Initializer<'a> {
     /// To be used inside of `#struct_field: match self.#builder_field { ... }`
-    fn match_some(&'a self) -> MatchSome {
+    fn match_some(&'a self) -> MatchSome<'a> {
         match self.builder_pattern {
             BuilderPattern::Owned => MatchSome::Move,
             BuilderPattern::Mutable | BuilderPattern::Immutable => MatchSome::Clone {
