@@ -41,6 +41,16 @@ impl darling::FromMeta for DefaultExpression {
         Ok(DefaultExpression::Trait)
     }
 
+    fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
+        if let syn::Expr::Lit(el) = expr {
+            if let syn::Lit::Str(_) = el.lit {
+                return Self::from_value(&el.lit);
+            }
+        }
+
+        Ok(Self::Explicit(expr.clone().into()))
+    }
+
     fn from_value(value: &syn::Lit) -> darling::Result<Self> {
         Ok(Self::Explicit(BlockContents::from_value(value)?))
     }
