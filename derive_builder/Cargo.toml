@@ -35,3 +35,6 @@ serde_json = "1"
 
 [target.'cfg(compiletests)'.dev-dependencies]
 trybuild = "1.0.38"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(compiletests)'] }
