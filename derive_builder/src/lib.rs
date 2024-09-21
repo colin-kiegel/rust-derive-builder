@@ -438,6 +438,8 @@
 //! your own version. Suppression is done using `#[builder(build_fn(skip))]` at the struct level,
 //! and renaming is done with `#[builder(build_fn(name = "YOUR_NAME"))]`.
 //!
+//! Additionally if you want to make the build method private you can apply `#[builder(build_fn(private))]`.
+//!
 //! ## Pre-Build Validation
 //!
 //! If you're using the provided `build` method, you can declare
