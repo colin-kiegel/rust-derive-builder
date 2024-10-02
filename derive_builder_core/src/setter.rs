@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 
-use crate::{BuilderFieldType, BuilderPattern, DeprecationNotes, Each};
+use crate::{BuilderFieldType, BuilderPattern, Each};
 
 /// Setter for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -62,8 +62,6 @@ pub struct Setter<'a> {
     /// Make the setter remove the Option wrapper from the setter, remove the need to call Some(...).
     /// when combined with into, the into is used on the content Type of the Option.
     pub strip_option: bool,
-    /// Emit deprecation notes to the user.
-    pub deprecation_notes: &'a DeprecationNotes,
     /// Emit extend method.
     pub each: Option<&'a Each>,
 }
@@ -77,7 +75,6 @@ impl<'a> ToTokens for Setter<'a> {
             let field_ident = self.field_ident;
             let ident = &self.ident;
             let attrs = self.attrs;
-            let deprecation_notes = self.deprecation_notes;
 
             let self_param: TokenStream;
             let return_ty: TokenStream;
@@ -143,7 +140,6 @@ impl<'a> ToTokens for Setter<'a> {
                 #vis fn #ident #ty_params (#self_param, value: #param_ty)
                     -> #return_ty
                 {
-                    #deprecation_notes
                     let mut new = #self_into_return_ty;
                     new.#field_ident = #into_value;
                     new
@@ -214,7 +210,6 @@ impl<'a> ToTokens for Setter<'a> {
                     where
                         #ty: #crate_root::export::core::default::Default + #crate_root::export::core::iter::Extend<VALUE>,
                     {
-                        #deprecation_notes
                         let mut new = #self_into_return_ty;
                         new.#field_ident
                             .#get_initialized_collection
@@ -299,7 +294,6 @@ macro_rules! default_setter {
             field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(Foo)))),
             generic_into: false,
             strip_option: false,
-            deprecation_notes: &Default::default(),
             each: None,
         }
     };
@@ -508,13 +502,9 @@ mod tests {
         //let attrs = outer_attrs.parse_str("#[some_attr]").unwrap();
         let attrs: Vec<syn::Attribute> = vec![parse_quote!(#[some_attr])];
 
-        let mut deprecated = DeprecationNotes::default();
-        deprecated.push("Some example.".to_string());
-
         let mut setter = default_setter!();
         setter.attrs = attrs.as_slice();
         setter.generic_into = true;
-        setter.deprecation_notes = &deprecated;
         setter.try_setter = true;
 
         assert_eq!(
@@ -523,7 +513,6 @@ mod tests {
             #[some_attr]
             #[allow(unused_mut)]
             pub fn foo <VALUE: ::db::export::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
-                #deprecated
                 let mut new = self;
                 new.foo = ::db::export::core::option::Option::Some(value.into());
                 new

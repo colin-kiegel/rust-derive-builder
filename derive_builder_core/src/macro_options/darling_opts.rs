@@ -10,7 +10,7 @@ use syn::{spanned::Spanned, Attribute, Generics, Ident, Meta, Path};
 
 use crate::{
     BlockContents, Builder, BuilderField, BuilderFieldType, BuilderPattern, DefaultExpression,
-    DeprecationNotes, Each, FieldConversion, Initializer, Setter,
+    Each, FieldConversion, Initializer, Setter,
 };
 
 #[derive(Debug, Clone)]
@@ -587,9 +587,6 @@ pub struct Options {
 
     #[darling(default)]
     field: VisibilityAttr,
-
-    #[darling(skip, default)]
-    deprecation_notes: DeprecationNotes,
 }
 
 /// Accessors for parsed properties.
@@ -689,7 +686,6 @@ impl Options {
             no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
             must_derive_clone: self.requires_clone(),
             doc_comment: None,
-            deprecation_notes: Default::default(),
             std: !self.no_std.is_present(),
         }
     }
@@ -855,10 +851,6 @@ impl<'a> FieldWithDefaults<'a> {
     pub fn use_parent_default(&self) -> bool {
         self.field.default.is_none() && self.parent.default.is_some()
     }
-
-    pub fn deprecation_notes(&self) -> &DeprecationNotes {
-        &self.parent.deprecation_notes
-    }
 }
 
 /// Converters to codegen structs
@@ -877,7 +869,6 @@ impl<'a> FieldWithDefaults<'a> {
             field_type: self.field_type(),
             generic_into: self.setter_into(),
             strip_option: self.setter_strip_option(),
-            deprecation_notes: self.deprecation_notes(),
             each: self.field.setter.each.as_ref(),
         }
     }

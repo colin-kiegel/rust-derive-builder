@@ -5,9 +5,7 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use crate::{
-    doc_comment_from, BuildMethod, BuilderField, BuilderPattern, DeprecationNotes, Setter,
-};
+use crate::{doc_comment_from, BuildMethod, BuilderField, BuilderPattern, Setter};
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -146,8 +144,6 @@ pub struct Builder<'a> {
     pub must_derive_clone: bool,
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
-    /// Emit deprecation notes to the user.
-    pub deprecation_notes: DeprecationNotes,
     /// Whether or not a libstd is used.
     pub std: bool,
 }
@@ -192,7 +188,6 @@ impl<'a> ToTokens for Builder<'a> {
             let impl_attrs = self.impl_attrs;
 
             let builder_doc_comment = &self.doc_comment;
-            let deprecation_notes = &self.deprecation_notes.as_item();
 
             #[cfg(not(feature = "clippy"))]
             tokens.append_all(quote!(#[allow(clippy::all)]));
@@ -217,7 +212,6 @@ impl<'a> ToTokens for Builder<'a> {
                 #[allow(dead_code)]
                 impl #impl_generics #builder_ident #impl_ty_generics #impl_where_clause {
                     #(#functions)*
-                    #deprecation_notes
 
                     /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                     fn #create_empty() -> Self {
@@ -396,7 +390,6 @@ macro_rules! default_builder {
             no_alloc: false,
             must_derive_clone: true,
             doc_comment: None,
-            deprecation_notes: DeprecationNotes::default(),
             std: true,
         }
     };
