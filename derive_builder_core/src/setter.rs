@@ -507,6 +507,7 @@ mod tests {
         setter.generic_into = true;
         setter.try_setter = true;
 
+        #[rustfmt::skip]
         assert_eq!(
             quote!(#setter).to_string(),
             quote!(
