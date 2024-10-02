@@ -28,7 +28,6 @@ alloc = ["derive_builder_macro/alloc"]
 derive_builder_macro = { version = "=0.20.1", path = "../derive_builder_macro" }
 
 [dev-dependencies]
-pretty_assertions = "0.6.1"
 rustversion = "1.0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

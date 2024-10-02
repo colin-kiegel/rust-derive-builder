@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate pretty_assertions;
-#[macro_use]
 extern crate derive_builder;
 
 use std::collections::HashMap;

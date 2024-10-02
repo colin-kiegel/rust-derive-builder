@@ -1,7 +1,5 @@
 // https://github.com/colin-kiegel/rust-derive-builder/issues/15
 #[macro_use]
-extern crate pretty_assertions;
-#[macro_use]
 extern crate derive_builder;
 
 #[derive(Debug, Clone, PartialEq)]

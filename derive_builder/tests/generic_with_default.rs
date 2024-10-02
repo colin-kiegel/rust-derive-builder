@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate derive_builder;
-#[macro_use]
-extern crate pretty_assertions;
 
 /// Struct taken from `@shockham/caper` to make sure we emit the correct
 /// code for struct-level defaults in tandem with generics.

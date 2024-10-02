@@ -27,10 +27,6 @@ extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
-#[cfg(test)]
-#[macro_use]
-extern crate pretty_assertions;
-
 mod block;
 mod build_method;
 mod builder;

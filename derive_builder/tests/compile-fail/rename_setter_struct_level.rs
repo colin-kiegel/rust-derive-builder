@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate pretty_assertions;
-#[macro_use]
 extern crate derive_builder;
 
 #[derive(Debug, PartialEq, Default, Builder, Clone)]
@@ -17,9 +15,11 @@ fn main() {
         .build()
         .unwrap();
 
-    assert_eq!(x,
-               Lorem {
-                   ipsum: "ipsum",
-                   dolor: "dolor",
-               });
+    assert_eq!(
+        x,
+        Lorem {
+            ipsum: "ipsum",
+            dolor: "dolor",
+        }
+    );
 }
