@@ -26,5 +26,3 @@ proc-macro2 = "1.0.37"
 quote = "1.0.35"
 syn = { version = "2.0.15", features = ["full", "extra-traits"] }
 
-[dev-dependencies]
-pretty_assertions = "1.2.1"
