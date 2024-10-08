@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.20.2] - 2024-10-08
+- Allow unquoted expressions in `builder(default = ...)` #331
+
 ## [0.20.1] - 2024-08-28
 - Forward default type params #319
 
@@ -9,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Bump `syn` to version 2 #308
 - Bump `darling` to version 0.20.6 #308
 - **BREAKING CHANGE**: Remove support for `field(type = "...")` as `syn` no longer allows this. #308
-- Allow omitting quotes on `builder(default = ...)` expressions #308
+- ~~Allow omitting quotes on `builder(default = ...)` expressions #308~~ _See #331_
 
 ## [0.13.1] - 2024-02-12
 - Accept `field(ty = "...")` as an alias for `field(type = "...")` in preparation for moving to syn 2.0, which doesn't allow the use of keywords as meta item paths. #306

@@ -1,6 +1,6 @@
 [package]
 name = "derive_builder"
-version = "0.20.1"
+version = "0.20.2"
 authors = [
     "Colin Kiegel <kiegel@gmx.de>",
     "Pascal Hertleif <killercup@gmail.com>",
@@ -11,7 +11,7 @@ edition = "2018"
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
-documentation = "https://docs.rs/derive_builder/0.20.1"
+documentation = "https://docs.rs/derive_builder/0.20.2"
 
 license = "MIT OR Apache-2.0"
 categories = ["development-tools", "rust-patterns"]
@@ -25,7 +25,7 @@ clippy = ["derive_builder_macro/clippy"]
 alloc = ["derive_builder_macro/alloc"]
 
 [dependencies]
-derive_builder_macro = { version = "=0.20.1", path = "../derive_builder_macro" }
+derive_builder_macro = { version = "=0.20.2", path = "../derive_builder_macro" }
 
 [dev-dependencies]
 rustversion = "1.0.4"
