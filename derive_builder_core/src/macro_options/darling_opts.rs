@@ -137,6 +137,7 @@ pub struct BuildFn {
     skip: bool,
     name: Ident,
     validate: Option<Path>,
+    pattern: Option<BuilderPattern>,
     #[darling(flatten)]
     visibility: VisibilityAttr,
     /// Either the path to an existing error type that the build method should return or a meta
@@ -189,6 +190,7 @@ impl Default for BuildFn {
         BuildFn {
             skip: false,
             name: Ident::new("build", Span::call_site()),
+            pattern: None,
             validate: None,
             visibility: Default::default(),
             error: None,
@@ -697,7 +699,7 @@ impl Options {
             enabled: !self.build_fn.skip,
             ident: &self.build_fn.name,
             visibility: self.build_method_vis(),
-            pattern: self.pattern,
+            pattern: self.build_fn.pattern.unwrap_or(self.pattern),
             target_ty: &self.ident,
             target_ty_generics: Some(ty_generics),
             error_ty: self.builder_error_ident(),
