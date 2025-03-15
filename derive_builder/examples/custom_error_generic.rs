@@ -9,7 +9,7 @@ trait Popular {
     fn is_popular(&self) -> bool;
 }
 
-impl<'a> Popular for &'a str {
+impl Popular for &str {
     fn is_popular(&self) -> bool {
         !self.starts_with('b')
     }

@@ -66,7 +66,7 @@ pub struct Setter<'a> {
     pub each: Option<&'a Each>,
 }
 
-impl<'a> ToTokens for Setter<'a> {
+impl ToTokens for Setter<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.setter_enabled {
             let crate_root = self.crate_root;

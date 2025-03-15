@@ -42,7 +42,7 @@ pub struct BuilderField<'a> {
     pub attrs: &'a [syn::Attribute],
 }
 
-impl<'a> ToTokens for BuilderField<'a> {
+impl ToTokens for BuilderField<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = self.field_ident;
         let vis = &self.field_visibility;
@@ -54,7 +54,7 @@ impl<'a> ToTokens for BuilderField<'a> {
     }
 }
 
-impl<'a> BuilderField<'a> {
+impl BuilderField<'_> {
     /// Emits a struct field initializer that initializes the field to `Default::default`.
     pub fn default_initializer_tokens(&self) -> TokenStream {
         let ident = self.field_ident;
@@ -110,7 +110,7 @@ struct BuilderFieldTypeWithCrateRoot<'a> {
     field_type: &'a BuilderFieldType<'a>,
 }
 
-impl<'a> ToTokens for BuilderFieldTypeWithCrateRoot<'a> {
+impl ToTokens for BuilderFieldTypeWithCrateRoot<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let crate_root = self.crate_root;
         match self.field_type {

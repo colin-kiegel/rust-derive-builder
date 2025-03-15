@@ -64,7 +64,7 @@ pub struct Initializer<'a> {
     pub conversion: FieldConversion<'a>,
 }
 
-impl<'a> ToTokens for Initializer<'a> {
+impl ToTokens for Initializer<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let struct_field = &self.field_ident;
         let builder_field = struct_field;
@@ -179,7 +179,7 @@ enum MatchNone<'a> {
     },
 }
 
-impl<'a> ToTokens for MatchNone<'a> {
+impl ToTokens for MatchNone<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match *self {
             MatchNone::DefaultTo { expr, crate_root } => {

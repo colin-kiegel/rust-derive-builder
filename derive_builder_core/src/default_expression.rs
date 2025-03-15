@@ -62,7 +62,7 @@ struct DefaultExpressionWithCrateRoot<'a> {
     expr: &'a DefaultExpression,
 }
 
-impl<'a> ToTokens for DefaultExpressionWithCrateRoot<'a> {
+impl ToTokens for DefaultExpressionWithCrateRoot<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let crate_root = self.crate_root;
         match self.expr {

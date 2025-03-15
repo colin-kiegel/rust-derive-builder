@@ -14,7 +14,7 @@ impl From<IpAddr> for MyAddr {
     }
 }
 
-impl<'a> TryFrom<&'a str> for MyAddr {
+impl TryFrom<&str> for MyAddr {
     type Error = AddrParseError;
 
     fn try_from(v: &str) -> Result<Self, Self::Error> {

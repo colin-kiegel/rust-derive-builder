@@ -68,7 +68,7 @@ pub struct BuildMethod<'a> {
     pub validate_fn: Option<&'a syn::Path>,
 }
 
-impl<'a> ToTokens for BuildMethod<'a> {
+impl ToTokens for BuildMethod<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let vis = &self.visibility;
@@ -109,7 +109,7 @@ impl<'a> ToTokens for BuildMethod<'a> {
     }
 }
 
-impl<'a> BuildMethod<'a> {
+impl BuildMethod<'_> {
     /// Set a doc-comment for this item.
     pub fn doc_comment(&mut self, s: String) -> &mut Self {
         self.doc_comment = Some(doc_comment_from(s));

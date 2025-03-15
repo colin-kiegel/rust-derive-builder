@@ -148,7 +148,7 @@ pub struct Builder<'a> {
     pub std: bool,
 }
 
-impl<'a> ToTokens for Builder<'a> {
+impl ToTokens for Builder<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.enabled {
             let crate_root = self.crate_root;
@@ -304,7 +304,7 @@ impl<'a> ToTokens for Builder<'a> {
     }
 }
 
-impl<'a> Builder<'a> {
+impl Builder<'_> {
     /// Set a doc-comment for this item.
     pub fn doc_comment(&mut self, s: String) -> &mut Self {
         self.doc_comment = Some(doc_comment_from(s));
