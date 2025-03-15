@@ -5,7 +5,9 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use crate::{doc_comment_from, BuildMethod, BuilderField, BuilderPattern, Setter};
+use crate::{
+    doc_comment_from, BuildMethod, BuilderField, BuilderFieldType, BuilderPattern, Setter,
+};
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -119,6 +121,7 @@ pub struct Builder<'a> {
     ///
     /// Expects each entry to be terminated by a comma.
     pub fields: Vec<TokenStream>,
+    pub field_names: Vec<syn::Ident>,
     /// Builder field initializers, e.g. `foo: Default::default(),`
     ///
     /// Expects each entry to be terminated by a comma.
@@ -163,6 +166,7 @@ impl ToTokens for Builder<'_> {
             let (impl_generics, impl_ty_generics, impl_where_clause) =
                 bounded_generics.split_for_impl();
             let builder_fields = &self.fields;
+            let builder_field_names = &self.field_names;
             let builder_field_initializers = &self.field_initializers;
             let create_empty = &self.create_empty;
             let functions = &self.functions;
@@ -218,6 +222,14 @@ impl ToTokens for Builder<'_> {
                         Self {
                             #(#builder_field_initializers)*
                         }
+                    }
+
+                    /// Moves the values that are set in `other` to `self`
+                    pub fn patch(&mut self, other: Self) -> &mut Self {
+                        #(if let Some(value) = other.#builder_field_names {
+                            self.#builder_field_names = Some(value);
+                        })*
+                        self
                     }
                 }
             ));
@@ -315,6 +327,9 @@ impl Builder<'_> {
     pub fn push_field(&mut self, f: BuilderField) -> &mut Self {
         self.fields.push(quote!(#f));
         self.field_initializers.push(f.default_initializer_tokens());
+        if matches!(f.field_type, BuilderFieldType::Optional(_)) {
+            self.field_names.push(f.field_ident.clone());
+        }
         self
     }
 
@@ -383,6 +398,7 @@ macro_rules! default_builder {
             generics: None,
             visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             fields: vec![quote!(foo: u32,)],
+            field_names: vec![],
             field_initializers: vec![quote!(foo: ::db::export::core::default::Default::default(), )],
             functions: vec![quote!(fn bar() -> { unimplemented!() })],
             generate_error: true,
@@ -428,6 +444,9 @@ mod tests {
                         foo: ::db::export::core::default::Default::default(),
                     }
                 }
+
+                /// Moves the values that are set in `other` to `self`
+                pub fn patch(&mut self, other: Self) -> &mut Self { self }
             }
 
             impl ::db::export::core::default::Default for FooBuilder {
@@ -530,6 +549,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl ::db::export::core::default::Default for FooBuilder {
@@ -590,6 +612,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl<'a, T: Debug + ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
@@ -653,6 +678,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl<'a, T: 'a + Default + ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<'a, T> where T: PartialEq {
@@ -714,6 +742,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl<T: ::db::export::core::clone::Clone> ::db::export::core::default::Default for FooBuilder<T> {
@@ -774,6 +805,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl<'a, T: Debug> ::db::export::core::default::Default for FooBuilder<'a, T>
@@ -836,6 +870,9 @@ mod tests {
                                 foo: ::db::export::core::default::Default::default(),
                             }
                         }
+
+                        /// Moves the values that are set in `other` to `self`
+                        pub fn patch(&mut self, other: Self) -> &mut Self { self }
                     }
 
                     impl ::db::export::core::default::Default for FooBuilder {
