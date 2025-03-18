@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+- Add patch function to derived builders
+
 ## [0.20.2] - 2024-10-08
 - Allow unquoted expressions in `builder(default = ...)` #331
 
