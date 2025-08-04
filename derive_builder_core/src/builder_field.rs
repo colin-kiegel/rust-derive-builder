@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 
-/// Field for the builder struct, implementing `quote::ToTokens`.
+/// Field declaration for the builder struct, implementing `quote::ToTokens`.
 ///
 /// # Examples
 ///

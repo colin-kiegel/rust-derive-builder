@@ -883,10 +883,6 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Returns an `Initializer` according to the options.
-    ///
-    /// # Panics
-    ///
-    /// if `default_expression` can not be parsed as `Block`.
     pub fn as_initializer(&'a self) -> Initializer<'a> {
         Initializer {
             crate_root: &self.parent.crate_root,
