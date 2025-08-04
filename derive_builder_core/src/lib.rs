@@ -49,23 +49,15 @@ pub(crate) use default_expression::DefaultExpression;
 pub(crate) use doc_comment::doc_comment_from;
 pub(crate) use initializer::{FieldConversion, Initializer};
 pub(crate) use options::{BuilderPattern, Each};
+use quote::ToTokens;
 pub(crate) use setter::Setter;
 
 const DEFAULT_STRUCT_NAME: &str = "__default";
 
 /// Derive a builder for a struct
 pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
-    let opts = match macro_options::Options::from_derive_input(&ast) {
-        Ok(val) => val,
-        Err(err) => {
-            return err.write_errors();
-        }
-    };
-
-    let mut builder = opts.as_builder();
-    let build_fn = opts.as_build_method();
-
-    builder.push_build_fn(build_fn);
-
-    quote!(#builder)
+    match macro_options::Options::from_derive_input(&ast) {
+        Ok(val) => val.as_builder().into_token_stream(),
+        Err(err) => err.write_errors(),
+    }
 }

@@ -5,7 +5,7 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use crate::{BuildMethod, BuilderPattern};
+use crate::BuilderPattern;
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -305,12 +305,6 @@ impl<'a> ToTokens for Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-    /// Add final build function to the builder
-    pub fn push_build_fn(&mut self, f: BuildMethod) -> &mut Self {
-        self.functions.push(quote!(#f));
-        self
-    }
-
     /// Add `Clone` trait bound to generic types for non-owned builders.
     /// This enables target types to declare generics without requiring a
     /// `Clone` impl. This is the same as how the built-in derives for

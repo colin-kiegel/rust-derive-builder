@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::iter;
 use std::{borrow::Cow, vec::IntoIter};
 
 use crate::{doc_comment_from, BuildMethod};
@@ -675,6 +676,7 @@ impl Options {
             functions: self
                 .fields()
                 .map(|f| f.as_setter().into_token_stream())
+                .chain(iter::once(self.as_build_method().into_token_stream()))
                 .collect(),
             generate_error: self
                 .build_fn
@@ -699,7 +701,7 @@ impl Options {
         }
     }
 
-    pub fn as_build_method(&self) -> BuildMethod {
+    fn as_build_method(&self) -> BuildMethod {
         let (_, ty_generics, _) = self.generics.split_for_impl();
         BuildMethod {
             crate_root: &self.crate_root,
