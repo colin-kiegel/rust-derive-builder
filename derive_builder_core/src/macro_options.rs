@@ -27,7 +27,7 @@ enum VisibilityAttr {
 }
 
 impl VisibilityAttr {
-    pub fn to_explicit_visibility(&self) -> Option<Cow<syn::Visibility>> {
+    pub fn to_explicit_visibility(&self) -> Option<Cow<'_, syn::Visibility>> {
         match self {
             Self::Public(span) => Some(Cow::Owned(syn::Visibility::Public(
                 parse_quote_spanned!(*span=> pub),
@@ -614,7 +614,7 @@ impl Options {
     /// The visibility of the builder struct.
     /// If a visibility was declared in attributes, that will be used;
     /// otherwise the struct's own visibility will be used.
-    pub fn builder_vis(&self) -> Cow<syn::Visibility> {
+    pub fn builder_vis(&self) -> Cow<'_, syn::Visibility> {
         self.visibility
             .to_explicit_visibility()
             .unwrap_or_else(|| Cow::Borrowed(&self.vis))
@@ -622,7 +622,7 @@ impl Options {
 
     /// Get the visibility of the emitted `build` method.
     /// This defaults to the visibility of the parent builder, but can be overridden.
-    pub fn build_method_vis(&self) -> Cow<syn::Visibility> {
+    pub fn build_method_vis(&self) -> Cow<'_, syn::Visibility> {
         self.build_fn
             .visibility
             .to_explicit_visibility()
@@ -652,7 +652,7 @@ impl Options {
 
 /// Converters to codegen structs
 impl Options {
-    pub fn as_builder(&self) -> Builder {
+    pub fn as_builder(&self) -> Builder<'_> {
         Builder {
             crate_root: &self.crate_root,
             enabled: true,
@@ -701,7 +701,7 @@ impl Options {
         }
     }
 
-    fn as_build_method(&self) -> BuildMethod {
+    fn as_build_method(&self) -> BuildMethod<'_> {
         let (_, ty_generics, _) = self.generics.split_for_impl();
         BuildMethod {
             crate_root: &self.crate_root,
@@ -805,7 +805,7 @@ impl<'a> FieldWithDefaults<'a> {
     }
 
     /// Get the visibility of the emitted setter, if there will be one.
-    pub fn setter_vis(&self) -> Cow<syn::Visibility> {
+    pub fn setter_vis(&self) -> Cow<'_, syn::Visibility> {
         self.field
             .visibility
             .to_explicit_visibility()
@@ -822,7 +822,7 @@ impl<'a> FieldWithDefaults<'a> {
             .expect("Tuple structs are not supported")
     }
 
-    pub fn field_vis(&self) -> Cow<syn::Visibility> {
+    pub fn field_vis(&self) -> Cow<'_, syn::Visibility> {
         self.field
             .field
             .visibility
