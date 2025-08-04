@@ -5,7 +5,7 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use crate::{doc_comment_from, BuildMethod, BuilderPattern};
+use crate::{BuildMethod, BuilderPattern};
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -305,12 +305,6 @@ impl<'a> ToTokens for Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-    /// Set a doc-comment for this item.
-    pub fn doc_comment(&mut self, s: String) -> &mut Self {
-        self.doc_comment = Some(doc_comment_from(s));
-        self
-    }
-
     /// Add final build function to the builder
     pub fn push_build_fn(&mut self, f: BuildMethod) -> &mut Self {
         self.functions.push(quote!(#f));

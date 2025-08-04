@@ -4,7 +4,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use crate::{doc_comment_from, BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
+use crate::{BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
 
 /// Initializer for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -104,14 +104,6 @@ impl<'a> ToTokens for BuildMethod<'a> {
                 }
             ))
         }
-    }
-}
-
-impl<'a> BuildMethod<'a> {
-    /// Set a doc-comment for this item.
-    pub fn doc_comment(&mut self, s: String) -> &mut Self {
-        self.doc_comment = Some(doc_comment_from(s));
-        self
     }
 }
 

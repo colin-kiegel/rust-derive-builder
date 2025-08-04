@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::{borrow::Cow, vec::IntoIter};
 
-use crate::BuildMethod;
+use crate::{doc_comment_from, BuildMethod};
 
 use darling::util::{Flag, PathList, SpannedValue};
 use darling::{Error, FromMeta};
@@ -691,7 +691,10 @@ impl Options {
                 .unwrap_or(true),
             no_alloc: cfg!(not(any(feature = "alloc", feature = "lib_has_std"))),
             must_derive_clone: self.requires_clone(),
-            doc_comment: None,
+            doc_comment: Some(doc_comment_from(format!(
+                include_str!("doc_tpl/builder_struct.md"),
+                struct_name = self.ident
+            ))),
             std: !self.no_std.is_present(),
         }
     }
@@ -711,7 +714,10 @@ impl Options {
                 .fields()
                 .map(|f| f.as_initializer().into_token_stream())
                 .collect(),
-            doc_comment: None,
+            doc_comment: Some(doc_comment_from(format!(
+                include_str!("doc_tpl/builder_method.md"),
+                struct_name = self.ident
+            ))),
             default_struct: self.default.as_ref(),
             validate_fn: self.build_fn.validate.as_ref(),
         }

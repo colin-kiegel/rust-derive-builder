@@ -63,16 +63,7 @@ pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     };
 
     let mut builder = opts.as_builder();
-    let mut build_fn = opts.as_build_method();
-
-    builder.doc_comment(format!(
-        include_str!("doc_tpl/builder_struct.md"),
-        struct_name = ast.ident
-    ));
-    build_fn.doc_comment(format!(
-        include_str!("doc_tpl/builder_method.md"),
-        struct_name = ast.ident
-    ));
+    let build_fn = opts.as_build_method();
 
     builder.push_build_fn(build_fn);
 
