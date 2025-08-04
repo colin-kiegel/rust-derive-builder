@@ -645,7 +645,7 @@ impl Options {
 
     /// Get an iterator over the input struct's fields which pulls fallback
     /// values from struct-level settings.
-    pub fn fields(&self) -> FieldIter {
+    pub fn fields(&self) -> FieldIter<'_> {
         FieldIter(self, self.raw_fields().into_iter())
     }
 }
