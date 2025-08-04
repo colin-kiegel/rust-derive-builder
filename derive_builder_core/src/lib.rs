@@ -16,6 +16,8 @@
 //! [`derive_builder_core`]: https://!crates.io/crates/derive_builder_core
 
 #![deny(warnings, missing_docs)]
+// Uninlined format args are required to maintain MSRV of 1.56
+#![allow(clippy::uninlined_format_args)]
 #![cfg_attr(test, recursion_limit = "100")]
 
 #[macro_use]
