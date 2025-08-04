@@ -74,12 +74,6 @@ pub fn builder_for_struct(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
         struct_name = ast.ident
     ));
 
-    for field in opts.fields() {
-        builder.push_field(field.as_builder_field());
-        builder.push_setter_fn(field.as_setter());
-        build_fn.push_initializer(field.as_initializer());
-    }
-
     builder.push_build_fn(build_fn);
 
     quote!(#builder)

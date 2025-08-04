@@ -4,9 +4,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use crate::{
-    doc_comment_from, BuilderPattern, DefaultExpression, Initializer, DEFAULT_STRUCT_NAME,
-};
+use crate::{doc_comment_from, BuilderPattern, DefaultExpression, DEFAULT_STRUCT_NAME};
 
 /// Initializer for the struct fields in the build method, implementing
 /// `quote::ToTokens`.
@@ -113,16 +111,6 @@ impl<'a> BuildMethod<'a> {
     /// Set a doc-comment for this item.
     pub fn doc_comment(&mut self, s: String) -> &mut Self {
         self.doc_comment = Some(doc_comment_from(s));
-        self
-    }
-
-    /// Populate the `BuildMethod` with appropriate initializers of the
-    /// underlying struct.
-    ///
-    /// For each struct field this must be called with the appropriate
-    /// initializer.
-    pub fn push_initializer(&mut self, init: Initializer) -> &mut Self {
-        self.initializers.push(quote!(#init));
         self
     }
 }

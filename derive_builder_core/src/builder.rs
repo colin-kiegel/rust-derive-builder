@@ -5,7 +5,7 @@ use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 
-use crate::{doc_comment_from, BuildMethod, BuilderField, BuilderPattern, Setter};
+use crate::{doc_comment_from, BuildMethod, BuilderPattern};
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
 * enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
@@ -308,19 +308,6 @@ impl<'a> Builder<'a> {
     /// Set a doc-comment for this item.
     pub fn doc_comment(&mut self, s: String) -> &mut Self {
         self.doc_comment = Some(doc_comment_from(s));
-        self
-    }
-
-    /// Add a field to the builder
-    pub fn push_field(&mut self, f: BuilderField) -> &mut Self {
-        self.fields.push(quote!(#f));
-        self.field_initializers.push(f.default_initializer_tokens());
-        self
-    }
-
-    /// Add a setter function to the builder
-    pub fn push_setter_fn(&mut self, f: Setter) -> &mut Self {
-        self.functions.push(quote!(#f));
         self
     }
 
@@ -646,7 +633,7 @@ mod tests {
                         fn bar() -> {
                             unimplemented!()
                         }
-                        
+
                         /// Create an empty builder, with all fields set to `None` or `PhantomData`.
                         fn create_empty() -> Self {
                             Self {

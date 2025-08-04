@@ -6,6 +6,7 @@ use crate::BuildMethod;
 use darling::util::{Flag, PathList, SpannedValue};
 use darling::{Error, FromMeta};
 use proc_macro2::Span;
+use quote::ToTokens;
 use syn::{spanned::Spanned, Attribute, Generics, Ident, Meta, Path};
 
 use crate::{
@@ -646,10 +647,6 @@ impl Options {
     pub fn fields(&self) -> FieldIter {
         FieldIter(self, self.raw_fields().into_iter())
     }
-
-    pub fn field_count(&self) -> usize {
-        self.raw_fields().len()
-    }
 }
 
 /// Converters to codegen structs
@@ -667,9 +664,18 @@ impl Options {
             create_empty: self.create_empty.clone(),
             generics: Some(&self.generics),
             visibility: self.builder_vis(),
-            fields: Vec::with_capacity(self.field_count()),
-            field_initializers: Vec::with_capacity(self.field_count()),
-            functions: Vec::with_capacity(self.field_count()),
+            fields: self
+                .fields()
+                .map(|f| f.as_builder_field().into_token_stream())
+                .collect(),
+            field_initializers: self
+                .fields()
+                .map(|f| f.as_builder_field().default_initializer_tokens())
+                .collect(),
+            functions: self
+                .fields()
+                .map(|f| f.as_setter().into_token_stream())
+                .collect(),
             generate_error: self
                 .build_fn
                 .error
@@ -701,7 +707,10 @@ impl Options {
             target_ty: &self.ident,
             target_ty_generics: Some(ty_generics),
             error_ty: self.builder_error_ident(),
-            initializers: Vec::with_capacity(self.field_count()),
+            initializers: self
+                .fields()
+                .map(|f| f.as_initializer().into_token_stream())
+                .collect(),
             doc_comment: None,
             default_struct: self.default.as_ref(),
             validate_fn: self.build_fn.validate.as_ref(),
