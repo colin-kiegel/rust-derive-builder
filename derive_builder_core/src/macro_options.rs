@@ -131,13 +131,25 @@ impl FromMeta for BuildFnError {
 }
 
 /// Options for the `build_fn` property in struct-level builder options.
-/// There is no inheritance for these settings from struct-level to field-level,
-/// so we don't bother using `Option` for values in this struct.
 #[derive(Debug, Clone, FromMeta)]
 #[darling(default, and_then = Self::validation_needs_error)]
 pub struct BuildFn {
+    /// If `true`, then no build method will be generated.
+    ///
+    /// Using this is rare - it's more common to use `#[builder(build_fn(private))]`
+    /// to hide the generated method and to then manually add a public build method
+    /// that calls the private one.
     skip: bool,
+    /// The name of the build method. Defaults to `build`.
     name: Ident,
+    /// The path of a function that will be called with a reference to the builder for
+    /// validation before constructing the target type.
+    ///
+    /// For a type `ExampleBuilder`, the signature of this function must be
+    /// `(&ExampleBuilder) -> Result<(), impl Into<ExampleBuilderError>>`.
+    ///
+    /// Generated builder errors include a `From<String>` impl, so returning a `Result<(), String>`
+    /// will work without declaring any additional types or `impl` blocks.
     validate: Option<Path>,
     #[darling(flatten)]
     visibility: VisibilityAttr,
@@ -214,9 +226,38 @@ pub struct FieldLevelFieldMeta {
 
 #[derive(Debug, Clone, Default, FromMeta)]
 pub struct StructLevelSetter {
+    /// A prefix that will be added to the idents for generated setters.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// #[derive(Builder)]
+    /// #[builder(setter(prefix = "with"))]
+    /// struct Example {
+    ///     name: String,
+    /// }
+    ///
+    /// let example = ExampleBuilder::default()
+    ///     .set_name("John".to_string())
+    ///     .build()?;
+    /// ```
     prefix: Option<Ident>,
+    /// If `true`, setters will default to taking an argument that impls `Into<T>`, where `T` is the type of that field
+    /// in the deriving struct.
     into: Option<bool>,
+    /// If `true`, setters will default to stripping `Option` type when it's encountered on fields in the deriving struct.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// #[derive(Builder)]
+    /// struct Example {
+    ///     title: Option<&'static str>,
+    ///     name: &'static str,
+    /// }
+    ///
+    ///
+    /// ```
     strip_option: Option<bool>,
+    /// If `true`, setters will only be generated for fields that opt-in.
     skip: Option<bool>,
 }
 
@@ -250,8 +291,25 @@ fn parse_each(meta: &Meta) -> darling::Result<Option<Each>> {
 /// name overrides.
 #[derive(Debug, Clone, Default, FromMeta)]
 pub struct FieldLevelSetter {
+    /// A prefix that will be added to the field ident to name the setter.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// #[derive(Builder)]
+    /// struct Example {
+    ///     #[builder(setter(prefix = "with"))]
+    ///     name: String,
+    /// }
+    ///
+    /// let example = ExampleBuilder::default()
+    ///     .set_name("John".to_string())
+    ///     .build()?;
+    /// ```
     prefix: Option<Ident>,
+    /// A custom name for the setter method. This overrules the `prefix` field.
     name: Option<Ident>,
+    /// If `true`, this setter takes an argument that impls `Into<T>`, where `T` is the type of that field
+    /// in the deriving struct. Otherwise, the argument's type will be `T`.
     into: Option<bool>,
     strip_option: Option<bool>,
     skip: Option<bool>,
@@ -531,6 +589,9 @@ impl TryFrom<Vec<Attribute>> for StructForwardedAttrs {
 pub struct Options {
     ident: Ident,
 
+    /// Attributes that are forwarded to the generated builder.
+    /// - `builder_struct_attr` attributes are forwarded to the struct definition after the `#[derive(...)]` attribute.
+    /// - `builder_impl_attr` attributes are forwarded to the builder struct's generated `impl` block.
     #[darling(with = TryFrom::try_from)]
     attrs: StructForwardedAttrs,
 
@@ -548,6 +609,7 @@ pub struct Options {
     #[darling(rename = "crate", default = default_crate_root)]
     crate_root: Path,
 
+    /// Controls how `self` is passed to the builder's setter and build methods.
     #[darling(default)]
     pattern: BuilderPattern,
 
@@ -558,6 +620,34 @@ pub struct Options {
     #[darling(default)]
     derive: PathList,
 
+    /// If `true`, no `Default` impl will be generated for the builder.
+    /// The crate calling the macro is expected to provide one or more
+    /// constructor methods.
+    ///
+    /// Builders that want to expose infallible build methods often use
+    /// this setting in conjunction with `#[builder(build_fn(private))]`.
+    /// The deriving struct exposes a `new` method that sets all required
+    /// fields, and then exposes a public `build` method that returns the
+    /// deriving struct by calling the internal build method and then calling
+    /// `expect` on the returned result.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// #[derive(Builder)]
+    /// struct Example {
+    ///     required: String,
+    ///     optional: Option<String>,
+    /// }
+    ///
+    /// impl ExampleBuilder {
+    ///     pub fn new(required: impl Into<String>) -> Self {
+    ///         Self {
+    ///             required: required.into(),
+    ///             optional: None,
+    ///         }
+    ///     }
+    /// }
+    /// ```
     custom_constructor: Flag,
 
     /// The ident of the inherent method which takes no arguments and returns
@@ -581,6 +671,11 @@ pub struct Options {
     /// The parsed body of the derived struct.
     data: darling::ast::Data<darling::util::Ignored, Field>,
 
+    /// If set, the generated implementation will not reference types that are only
+    /// available in `std`.
+    ///
+    /// Note that currently, the only such usage comes in generating an impl of [`std::error::Error`]
+    /// for the generated builder error enum.
     no_std: Flag,
 
     /// When present, emit additional fallible setters alongside each regular
