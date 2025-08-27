@@ -288,7 +288,7 @@ macro_rules! default_setter {
             try_setter: false,
             visibility: ::std::borrow::Cow::Owned(parse_quote!(pub)),
             pattern: BuilderPattern::Mutable,
-            attrs: &vec![],
+            attrs: &[],
             ident: syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_ident: &syn::Ident::new("foo", ::proc_macro2::Span::call_site()),
             field_type: BuilderFieldType::Optional(Box::leak(Box::new(parse_quote!(Foo)))),

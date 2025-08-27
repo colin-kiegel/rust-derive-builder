@@ -38,7 +38,7 @@ fn generic_builder() {
     assert_eq!(
         x,
         Generic {
-            ipsum: "Generic".into(),
+            ipsum: "Generic",
             dolor: true,
         }
     );
