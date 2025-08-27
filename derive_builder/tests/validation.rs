@@ -112,7 +112,7 @@ impl IpsumBuilder {
             }
 
             if let Some(their_effort) = self.their_effort {
-                if their_effort < my_effort {
+                if their_effort >= my_effort {
                     return Err(BuildIpsumError::EffortOutOfRange("Team", their_effort));
                 }
             }
