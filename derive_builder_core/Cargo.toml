@@ -11,6 +11,7 @@ edition = "2018"
 description = "Internal helper library for the derive_builder crate."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
 documentation = "https://docs.rs/derive_builder_core"
+rust-version = "1.56.0"
 
 license = "MIT OR Apache-2.0"
 readme = "README.md"

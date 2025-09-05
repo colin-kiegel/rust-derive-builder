@@ -8,6 +8,7 @@ authors = [
     "Ted Driggs <ted.driggs@outlook.com>",
 ]
 edition = "2018"
+rust-version = "1.56.0"
 
 description = "Rust macro to automatically implement the builder pattern for arbitrary structs."
 repository = "https://github.com/colin-kiegel/rust-derive-builder"
