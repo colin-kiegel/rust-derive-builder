@@ -15,13 +15,18 @@ error[E0433]: failed to resolve: could not find `export` in `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing one of these items
   |
-5 | use core::option::Option;
+1 | use core::option::Option;
   |
-5 | use derive_builder::export::core::option::Option;
+1 | use derive_builder::export::core::option::Option;
   |
-5 | use serde::__private::Option;
+1 | use serde::__private::Option;
   |
-5 | use std::option::Option;
+1 | use std::option::Option;
+  |
+help: if you import `Option`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive()]
   |
 
 error[E0433]: failed to resolve: could not find `export` in `empty`
@@ -33,13 +38,18 @@ error[E0433]: failed to resolve: could not find `export` in `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing one of these items
   |
-5 | use core::clone::Clone;
+1 | use core::clone::Clone;
   |
-5 | use derive_builder::export::core::clone::Clone;
+1 | use derive_builder::export::core::clone::Clone;
   |
-5 | use serde::__private::Clone;
+1 | use serde::__private::Clone;
   |
-5 | use std::clone::Clone;
+1 | use std::clone::Clone;
+  |
+help: if you import `Clone`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive()]
   |
 
 error[E0433]: failed to resolve: could not find `export` in `empty`
@@ -51,15 +61,20 @@ error[E0433]: failed to resolve: could not find `export` in `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing one of these items
   |
-5 | use core::fmt::Result;
+1 | use core::fmt::Result;
   |
-5 | use core::result::Result;
+1 | use core::result::Result;
   |
-5 | use derive_builder::export::core::fmt::Result;
+1 | use derive_builder::export::core::fmt::Result;
   |
-5 | use derive_builder::export::core::io::Result;
+1 | use derive_builder::export::core::io::Result;
   |
     and 9 other candidates
+help: if you import `Result`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive(Builder)]
+  |
 
 error[E0433]: failed to resolve: could not find `export` in `empty`
  --> tests/compile-fail/crate_root.rs:7:10
@@ -70,13 +85,18 @@ error[E0433]: failed to resolve: could not find `export` in `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing one of these items
   |
-5 | use core::convert::Into;
+1 | use core::convert::Into;
   |
-5 | use derive_builder::export::core::convert::Into;
+1 | use derive_builder::export::core::convert::Into;
   |
-5 | use serde::__private::Into;
+1 | use serde::__private::Into;
   |
-5 | use std::convert::Into;
+1 | use std::convert::Into;
+  |
+help: if you import `Into`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive(Builder)]
   |
 
 error[E0433]: failed to resolve: could not find `UninitializedFieldError` in `empty`
@@ -88,7 +108,12 @@ error[E0433]: failed to resolve: could not find `UninitializedFieldError` in `em
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing this struct
   |
-5 | use derive_builder::UninitializedFieldError;
+1 | use derive_builder::UninitializedFieldError;
+  |
+help: if you import `UninitializedFieldError`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive(Builder)]
   |
 
 error[E0433]: failed to resolve: could not find `export` in `empty`
@@ -100,13 +125,18 @@ error[E0433]: failed to resolve: could not find `export` in `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing one of these items
   |
-5 | use core::default::Default;
+1 | use core::default::Default;
   |
-5 | use derive_builder::export::core::default::Default;
+1 | use derive_builder::export::core::default::Default;
   |
-5 | use serde::__private::Default;
+1 | use serde::__private::Default;
   |
-5 | use std::default::Default;
+1 | use std::default::Default;
+  |
+help: if you import `Default`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive()]
   |
 
 error[E0412]: cannot find type `UninitializedFieldError` in module `empty`
@@ -118,5 +148,10 @@ error[E0412]: cannot find type `UninitializedFieldError` in module `empty`
   = note: this error originates in the derive macro `Builder` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider importing this struct
   |
-5 | use derive_builder::UninitializedFieldError;
+1 | use derive_builder::UninitializedFieldError;
+  |
+help: if you import `UninitializedFieldError`, refer to it directly
+  |
+7 - #[derive(Builder)]
+7 + #[derive()]
   |

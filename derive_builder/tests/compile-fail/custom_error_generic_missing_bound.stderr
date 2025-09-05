@@ -11,5 +11,5 @@ note: required by a bound in `check_person`
    |                    ^^^^^^^ required by this bound in `check_person`
 help: consider restricting type parameter `N`
    |
-18 | struct Person<N: Popular> {
-   |                +++++++++
+16 | #[derive(Debug, Builder Popular)]
+   |                         +++++++
