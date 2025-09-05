@@ -93,7 +93,7 @@ pub struct Ipsum {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum BuildIpsumError {
+pub enum BuildIpsumError {
     UninitializedField(&'static str),
     EffortOutOfRange(&'static str, u8),
 }
