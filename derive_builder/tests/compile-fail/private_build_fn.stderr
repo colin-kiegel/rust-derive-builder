@@ -6,11 +6,11 @@ warning: unused import: `Lorem`
    |
    = note: `#[warn(unused_imports)]` on by default
 
-error[E0624]: associated function `build` is private
+error[E0624]: method `build` is private
   --> tests/compile-fail/private_build_fn.rs:27:42
    |
 7  |     #[derive(Debug, Default, Builder)]
-   |                              ------- private associated function defined here
+   |                              ------- private method defined here
 ...
 27 |     let lorem2 = LoremBuilder::default().build().unwrap();
-   |                                          ^^^^^ private associated function
+   |                                          ^^^^^ private method

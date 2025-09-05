@@ -13,7 +13,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: dtolnay/rust-toolchain@1.63.0
+            - uses: dtolnay/rust-toolchain@1.89.0
 
             - name: main crate
               run: |

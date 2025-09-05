@@ -9,7 +9,3 @@ note: required by a bound in `check_person`
    |
 34 | fn check_person<N: Popular + Clone>(builder: &PersonBuilder<N>) -> Result<(), Error<N>> {
    |                    ^^^^^^^ required by this bound in `check_person`
-help: consider restricting type parameter `N`
-   |
-16 | #[derive(Debug, Builder Popular)]
-   |                         +++++++

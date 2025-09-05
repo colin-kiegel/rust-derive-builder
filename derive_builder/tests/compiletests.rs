@@ -3,7 +3,7 @@
 extern crate rustversion;
 extern crate trybuild;
 
-#[rustversion::stable(1.63.0)]
+#[rustversion::stable(1.89.0)]
 #[test]
 fn compile_test() {
     let t = trybuild::TestCases::new();
