@@ -8,7 +8,7 @@ use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
 use crate::BuilderPattern;
 
 const ALLOC_NOT_ENABLED_ERROR: &str = r#"`alloc` is disabled within 'derive_builder', consider one of the following:
-* enable feature `alloc` on 'dervie_builder' if a `global_allocator` is present
+* enable feature `alloc` on 'derive_builder' if a `global_allocator` is present
 * use a custom error `#[builder(build_fn(error = "path::to::Error"))]
 * disable the validation error `#[builder(build_fn(error(validation_error = false)))]"#;
 
