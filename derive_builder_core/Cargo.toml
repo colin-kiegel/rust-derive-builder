@@ -22,7 +22,7 @@ clippy = []
 lib_has_std = []
 
 [dependencies]
-darling = "0.20.10"
+darling = "0.21.3"
 proc-macro2 = "1.0.37"
 quote = "1.0.35"
 syn = { version = "2.0.15", features = ["full", "extra-traits"] }
