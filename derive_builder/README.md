@@ -118,7 +118,7 @@ It's as simple as three steps:
 -   **Hidden fields**: You can skip setters via `#[builder(setter(skip))]` on each field individually.
 -   **Setter visibility**: You can opt into private setter by preceding your struct with `#[builder(private)]`.
 -   **Setter type conversions**: With `#[builder(setter(into))]`, setter methods will be generic over the input types – you can then supply every argument that implements the [`Into`][into] trait for the field type.
--   **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter'type for field of type `Option<T>`.
+-   **Setter strip option**: With `#[builder(setter(strip_option))]`, setter methods will take `T` as parameter type for field of type `Option<T>`.
 -   **Collection setters**: Adding `#[builder(setter(each(name = "method_name")))]` to fields whose types implement `Default` and `Extend` will generate a setter which adds items to the builder collection for that field. It's possible for these setters to be generic over the `Into<T>` trait too, like so: `#[builder(setter(each(name = "foo", into)))]`.
 -   **Builder field visibility**: You can use `#[builder(field(private))]` or `..(public)`, to set field visibility of your builder.
 -   **Generic structs**: Are also supported, but you **must not** use a type parameter named `VALUE`, if you also activate setter type conversions.
