@@ -145,6 +145,7 @@ pub struct Builder<'a> {
     /// Doc-comment of the builder struct.
     pub doc_comment: Option<syn::Attribute>,
     /// Whether or not a libstd is used.
+    #[allow(dead_code)]
     pub std: bool,
 }
 
@@ -294,11 +295,9 @@ impl<'a> ToTokens for Builder<'a> {
                     }
                 ));
 
-                if self.std {
-                    tokens.append_all(quote!(
-                        impl std::error::Error for #builder_error_ident {}
-                    ));
-                }
+                tokens.append_all(quote!(
+                    impl core::error::Error for #builder_error_ident {}
+                ));
             }
         }
     }
