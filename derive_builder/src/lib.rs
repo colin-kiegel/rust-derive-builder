@@ -266,6 +266,39 @@
 //! }
 //! ```
 //!
+//! ## Collection Setters
+//!
+//! For fields whose type implements [`Default`] and [`Extend`], such as `Vec`, `String`, or
+//! `HashMap`, you can generate a setter that appends a single item to the collection instead of
+//! replacing the whole field. Add `#[builder(setter(each(name = "...")))]` and each call to the
+//! generated setter extends the collection.
+//!
+//! ```rust
+//! # use derive_builder::Builder;
+//! #
+//! #[derive(Builder, Debug, PartialEq)]
+//! struct Lorem {
+//!     #[builder(setter(each(name = "ipsum")))]
+//!     ipsums: Vec<String>,
+//! }
+//!
+//! fn main() {
+//!     let x = LoremBuilder::default()
+//!         .ipsum("foo".to_string())
+//!         .ipsum("bar".to_string())
+//!         .build()
+//!         .unwrap();
+//!
+//!     assert_eq!(x, Lorem {
+//!         ipsums: vec!["foo".to_string(), "bar".to_string()],
+//!     });
+//! }
+//! ```
+//!
+//! You can also make the generated item setter generic over the `Into`-trait by adding `into`, as
+//! in `#[builder(setter(each(name = "ipsum", into)))]`. The shorthand
+//! `#[builder(setter(each = "ipsum"))]` is equivalent to `each(name = "ipsum")`.
+//!
 //! ## Setters for Option
 //!
 //! You can avoid wrapping values in `Some(...)` for fields of type `Option<T>`. It's as simple as adding
