@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use proc_macro2::TokenStream;
 use quote::{format_ident, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
-use syn::{Path, TraitBound, TraitBoundModifier, TypeParamBound};
+use syn::{Path, TraitBound, TraitBoundModifiers, TypeParamBound};
 
 use crate::BuilderPattern;
 
@@ -321,7 +321,8 @@ impl<'a> Builder<'a> {
 
             let clone_bound = TypeParamBound::Trait(TraitBound {
                 paren_token: None,
-                modifier: TraitBoundModifier::None,
+                modifiers: TraitBoundModifiers::default(),
+                maybe: None,
                 lifetimes: None,
                 path: syn::parse_quote!(#crate_root::export::core::clone::Clone),
             });
