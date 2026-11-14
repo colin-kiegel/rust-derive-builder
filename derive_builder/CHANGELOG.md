@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+- Support collection setters (`setter(each = ...)`) on custom builder field types (`field(ty = "...")`) #287
+
 ## [0.20.2] - 2024-10-08
 - Allow unquoted expressions in `builder(default = ...)` #331
 

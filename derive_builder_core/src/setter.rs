@@ -176,17 +176,37 @@ impl<'a> ToTokens for Setter<'a> {
                 let ident_each = &each.name;
 
                 // Access the collection to extend, initialising with default value if necessary.
-                let get_initialized_collection = if stripped_option {
-                    // Outer (builder) Option -> Inner (field) Option -> collection.
-                    quote!(get_or_insert_with(|| Some(
-                        #crate_root::export::core::default::Default::default()
-                    ))
-                    .get_or_insert_with(#crate_root::export::core::default::Default::default))
+                let field_inner = match (builder_field_is_option, stripped_option) {
+                    (true, true) => {
+                        // Outer (builder) Option -> Inner (field) Option -> collection.
+                        quote!(
+                            new.#field_ident
+                                .get_or_insert_with(|| #crate_root::export::core::option::Option::Some(
+                                    #crate_root::export::core::default::Default::default()
+                                ))
+                                .get_or_insert_with(#crate_root::export::core::default::Default::default)
+                        )
+                    }
+                    (true, false) | (false, true) => {
+                        // Builder field is `Option<collection>` (either from the builder wrapping
+                        // a non-Option field, or a custom `Option<collection>` field with `strip_option`).
+                        quote!(
+                            new.#field_ident
+                                .get_or_insert_with(#crate_root::export::core::default::Default::default)
+                        )
+                    }
+                    (false, false) => {
+                        // Custom builder field is already the collection itself.
+                        quote!(new.#field_ident)
+                    }
+                };
+
+                let field_inner_bound = if builder_field_is_option || stripped_option {
+                    quote!(
+                        #crate_root::export::core::default::Default + #crate_root::export::core::iter::Extend<VALUE>
+                    )
                 } else {
-                    // Outer (builder) Option -> collection.
-                    quote!(get_or_insert_with(
-                        #crate_root::export::core::default::Default::default
-                    ))
+                    quote!(#crate_root::export::core::iter::Extend<VALUE>)
                 };
 
                 let ty_params: TokenStream;
@@ -208,12 +228,10 @@ impl<'a> ToTokens for Setter<'a> {
                     #[allow(unused_mut)]
                     #vis fn #ident_each #ty_params(#self_param, item: #param_ty) -> #return_ty
                     where
-                        #ty: #crate_root::export::core::default::Default + #crate_root::export::core::iter::Extend<VALUE>,
+                        #ty: #field_inner_bound,
                     {
                         let mut new = #self_into_return_ty;
-                        new.#field_ident
-                            .#get_initialized_collection
-                            .extend(#crate_root::export::core::option::Option::Some(#into_item));
+                        #field_inner.extend(#crate_root::export::core::option::Option::Some(#into_item));
                         new
                     }
                 ));
@@ -626,5 +644,81 @@ mod tests {
         ] {
             assert_eq!(extract_type_from_option(&s), Some(&ty_foo));
         }
+    }
+
+    #[test]
+    fn each_precise_field() {
+        let ty = parse_quote!(Vec<i32>);
+        let each = Each {
+            name: syn::Ident::new("add_foo", Span::call_site()),
+            into: true,
+        };
+        let mut setter = default_setter!();
+        setter.field_type = BuilderFieldType::Precise(&ty);
+        setter.each = Some(&each);
+
+        #[rustfmt::skip]
+        assert_eq!(
+            quote!(#setter).to_string(),
+            quote!(
+                #[allow(unused_mut)]
+                pub fn foo(&mut self, value: Vec<i32>) -> &mut Self {
+                    let mut new = self;
+                    new.foo = value;
+                    new
+                }
+                #[allow(unused_mut)]
+                pub fn add_foo<VALUE, FROM_VALUE: ::db::export::core::convert::Into<VALUE>>(
+                    &mut self,
+                    item: FROM_VALUE
+                ) -> &mut Self
+                where
+                    Vec<i32>: ::db::export::core::iter::Extend<VALUE>,
+                {
+                    let mut new = self;
+                    new.foo.extend(::db::export::core::option::Option::Some(
+                        ::db::export::core::convert::Into::into(item)
+                    ));
+                    new
+                }
+            )
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn each_precise_option_field_strip_option() {
+        let ty = parse_quote!(Option<Vec<i32>>);
+        let each = Each::from(syn::Ident::new("add_foo", Span::call_site()));
+        let mut setter = default_setter!();
+        setter.field_type = BuilderFieldType::Precise(&ty);
+        setter.strip_option = true;
+        setter.each = Some(&each);
+
+        #[rustfmt::skip]
+        assert_eq!(
+            quote!(#setter).to_string(),
+            quote!(
+                #[allow(unused_mut)]
+                pub fn foo(&mut self, value: Vec<i32>) -> &mut Self {
+                    let mut new = self;
+                    new.foo = ::db::export::core::option::Option::Some(value);
+                    new
+                }
+                #[allow(unused_mut)]
+                pub fn add_foo<VALUE>(&mut self, item: VALUE) -> &mut Self
+                where
+                    Vec<i32>: ::db::export::core::default::Default
+                        + ::db::export::core::iter::Extend<VALUE>,
+                {
+                    let mut new = self;
+                    new.foo
+                        .get_or_insert_with(::db::export::core::default::Default::default)
+                        .extend(::db::export::core::option::Option::Some(item));
+                    new
+                }
+            )
+            .to_string()
+        );
     }
 }
